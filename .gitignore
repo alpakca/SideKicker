@@ -1,0 +1,8 @@
+Content/*/
+
+bin/
+obj/
+.vs/
+
+Icon.bmp
+Icon.ico
