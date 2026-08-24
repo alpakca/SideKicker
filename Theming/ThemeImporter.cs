@@ -10,7 +10,7 @@ namespace SideKicker.Theming
 {
     internal static class ThemeImporter
     {
-        private static readonly string ThemesDirectoryPath = Path.Combine(ThemeService.AssetsFolderRelativePath, "themes");
+        private static readonly string ThemesDirectoryPath = Path.Combine(ThemeService.AssetsFolderPath, "themes");
         private static readonly JsonSerializerOptions _options = new JsonSerializerOptions
         {
             Converters = { new ColorConverter() }

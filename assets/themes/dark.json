@@ -1,0 +1,15 @@
+{
+  "Id": "dark",
+  "DisplayName": "Dark Theme",
+  "Colors": {
+    "base.border": "145,132,238,255",
+    "base.borderaccent": "14,14,14,255",
+    "base.background": "27,27,27,255",
+    "base.surface": "44,44,44,255",
+    "base.hoveroverlay": "104,104,104,72",
+    "base.heldoverlay": "72,72,72,72",
+    "base.textcolor": "232,232,232,255",
+    "base.verticalbarcolor": "235,235,235,255"
+  },
+  "Icons": {}
+}

@@ -7,9 +7,13 @@ namespace SideKicker.PanelSystem
 {
     internal class ControllerLayoutCalculator
     {
-        private const int FrameThickness = 4;
-        private const int LeftMargin = 8;
-        private const int ContextPanelIconLength = 64;
+        private const int FrameThickness = 6;
+        private const int LeftMargin = 12;
+        private const int ContextPanelIconLength = 32;
+
+        private const int OpenPanelVerticalBarMargin = 8;
+        private const int OpenPanelVerticalBarWidth = 2;
+        private const int OpenPanelVerticalBarHeight = 24;
 
         public Point GetSidePanelSize(int contextPanelCount)
         {
@@ -19,6 +23,13 @@ namespace SideKicker.PanelSystem
         public Rectangle GetContextPanelIconBounds(int index)
         {
             return new Rectangle(LeftMargin, FrameThickness + index * (ContextPanelIconLength + FrameThickness), ContextPanelIconLength, ContextPanelIconLength);
+        }
+
+        public Rectangle GetOpenPanelBarBounds(int index)
+        {
+            int yOffset = (ContextPanelIconLength - OpenPanelVerticalBarHeight) / 2;
+            return new Rectangle(OpenPanelVerticalBarMargin, FrameThickness + index * (ContextPanelIconLength + FrameThickness) + yOffset,
+                                 OpenPanelVerticalBarWidth, OpenPanelVerticalBarHeight);
         }
     }
 }

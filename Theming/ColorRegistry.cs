@@ -18,6 +18,7 @@ namespace SideKicker.Theming
         public const string HeldOverlayId = "base.heldoverlay";
 
         public const string TextColorId = "base.textcolor";
+        public const string VerticalBarColorId = "base.verticalbarcolor";
 
         private static readonly Dictionary<string, ColorDefinition> _definitions = new Dictionary<string, ColorDefinition>();
 
@@ -33,6 +34,7 @@ namespace SideKicker.Theming
             Register(new ColorDefinition { Id = HoverOverlayId });
             Register(new ColorDefinition { Id = HeldOverlayId });
             Register(new ColorDefinition { Id = TextColorId });
+            Register(new ColorDefinition { Id = VerticalBarColorId });
         }
 
         public static void Register(ColorDefinition definition)

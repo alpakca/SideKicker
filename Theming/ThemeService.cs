@@ -10,7 +10,7 @@ namespace SideKicker.Theming
 {
     internal static class ThemeService
     {
-        public static string AssetsFolderRelativePath { get; } = Path.Combine(Program.RootPath, "assets");
+        public static string AssetsFolderPath { get; } = Path.Combine(Program.RootPath, "assets");
 
         private static Dictionary<string, Theme> _loadedThemes;
 
@@ -89,7 +89,7 @@ namespace SideKicker.Theming
 
             if (theme.Icons.TryGetValue(id, out string path))
             {
-                return ContentAssistant.FromLoaded<Texture2D>(Path.Combine(AssetsFolderRelativePath, path));
+                return ContentAssistant.FromLoaded<Texture2D>(Path.Combine(AssetsFolderPath, path));
             }
 
             IconDefinition definition = IconRegistry.Get(id)
@@ -97,7 +97,7 @@ namespace SideKicker.Theming
 
             if (definition.DefaultPath != null)
             {
-                return ContentAssistant.FromLoaded<Texture2D>(Path.Combine(AssetsFolderRelativePath, definition.DefaultPath));
+                return ContentAssistant.FromLoaded<Texture2D>(Path.Combine(AssetsFolderPath, definition.DefaultPath));
             }
 
             if (definition.FallbackIconId == null)

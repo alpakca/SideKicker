@@ -10,6 +10,10 @@ namespace SideKicker
         {
             RootPath = AppContext.BaseDirectory;
 
+#if DEBUG
+            RootPath = "C:\\Users\\user\\Desktop\\C#\\SideKicker\\SideKicker";
+#endif
+
             using var game = new Game1();
             game.Run();
         }
