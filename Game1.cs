@@ -27,6 +27,10 @@ namespace SideKicker
         {
             PopUpUIManager.Initialize(this, _graphics);
 
+            Window.IsBorderless = true;
+            Window.Title = "";
+            WindowTransparency.EnableDwmPerPixelAlpha(Window.Handle);
+
             base.Initialize();
         }
 
@@ -59,7 +63,7 @@ namespace SideKicker
             PopUpUIManager.RenderUpdate(gameTime);
 
             GraphicsDevice.SetRenderTarget(null);
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.Transparent);
 
             _spriteBatch.Begin();
 

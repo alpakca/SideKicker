@@ -4,23 +4,25 @@ using PopUpUI.Surface;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace SideKicker.PanelSystem
 {
     internal class PanelWindow : PopWindow
     {
+        private readonly ContextPanelController _controller;
         private readonly PanelToggle[] _panelToggles;
-        private readonly ControllerLayoutCalculator _layoutCalculator;
         private readonly ControllerRenderer _renderer;
 
-        public PanelWindow(ContextPanel[] panels) : base(new BatchDrawOptions { BlendState = Microsoft.Xna.Framework.Graphics.BlendState.AlphaBlend })
+        public PanelWindow(ContextPanelController controller, ContextPanel[] panels) 
+            : base(new BatchDrawOptions { BlendState = BlendState.AlphaBlend })
         {
-            _layoutCalculator = new ControllerLayoutCalculator();
-            _renderer = new ControllerRenderer(_layoutCalculator);
-            Boundaries = new Rectangle(default, _layoutCalculator.GetSidePanelSize(panels.Length));
+            _controller = controller;
+            Boundaries = new Rectangle(default, ControllerLayoutCalculator.GetSidePanelSize(panels.Length));
 
             _panelToggles = new PanelToggle[panels.Length];
             InitializeToggles(panels);
+            _renderer = new ControllerRenderer(_panelToggles);
 
             Elements.AddRange(_panelToggles);
         }
@@ -32,8 +34,7 @@ namespace SideKicker.PanelSystem
 
             ActionCommander<ToggleButton> toggleCommand = new ActionCommander<ToggleButton>(button =>
             {
-                foreach (var toggle in _panelToggles) toggle.SetStatusWithoutCommander(false);
-                button.SetStatusWithoutCommander(true);
+                _controller.OpenPanelAt(((PanelToggle)button).PanelIndex);
             });
 
             for (int i = 0; i < panels.Length; i++)
@@ -41,7 +42,9 @@ namespace SideKicker.PanelSystem
                 _panelToggles[i] = new PanelToggle
                 {
                     Panel = panels[i],
-                    Boundaries = _layoutCalculator.GetContextPanelIconBounds(i),
+                    PanelIndex = i,
+
+                    Boundaries = ControllerLayoutCalculator.GetContextPanelIconBounds(i),
                     ToggleCommand = toggleCommand,
 
                     SelectablePacket = selectPacket,
@@ -54,7 +57,7 @@ namespace SideKicker.PanelSystem
         {
             DrawHelper.SetBeginBatch(WindowTexture, DrawOptions);
 
-            _renderer.Render(_panelToggles, this.Boundaries.Location);
+            _renderer.Render();
 
             DrawHelper.EndBatch();
         }
