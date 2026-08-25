@@ -29,7 +29,11 @@ namespace SideKicker
 
             Window.IsBorderless = true;
             Window.Title = "";
+
+            WindowTransparency.MakeBorderless(Window.Handle);
             WindowTransparency.EnableDwmPerPixelAlpha(Window.Handle);
+            WindowTransparency.SetTopMost(Window.Handle);
+            WindowTransparency.EnableRegionHitTesting(Window.Handle);
 
             base.Initialize();
         }

@@ -53,8 +53,10 @@ namespace SideKicker.PanelSystem
             WindowOptions.Position = _origin - minimumWindowSize;
             WindowOptions.Size = minimumWindowSize;
 
-            _openPanel.Window.Boundaries = new Rectangle(new Point(), _openPanel.Size);
+            _openPanel.Window.Boundaries = new Rectangle(default, _openPanel.Size);
             _panelWindow.Boundaries = new Rectangle(minimumWindowSize - _panelWindow.Boundaries.Size, _panelWindow.Boundaries.Size);
+
+            WindowTransparency.SetClickableRegions([_openPanel.Window.Boundaries, _panelWindow.Boundaries]);
         }
 
         private void InitializeTheme()
@@ -74,7 +76,7 @@ namespace SideKicker.PanelSystem
 
             public override string IconPath => "panels\\test.png";
 
-            public override Point Size { get; } = new Point(1);
+            public override Point Size { get; } = new Point(200, 200);
 
             public override PopWindow Window { get; } = new PopWindow();
         }
