@@ -57,7 +57,7 @@ namespace SideKicker
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             ContentAssistant.LoadTexture2Ds(
-                Directory.EnumerateFiles(ThemeService.AssetsFolderPath, "*.png", SearchOption.AllDirectories)
+                Directory.EnumerateFiles(Program.AssetsFolderPath, "*.png", SearchOption.AllDirectories)
                 .Where(path => Path.GetExtension(path) != ".pui")
                 .Select(path => (path, path))
                 .ToArray()

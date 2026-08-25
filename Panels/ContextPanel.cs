@@ -11,7 +11,6 @@ namespace SideKicker.Panels
         public abstract string IconId { get; }
         public abstract string IconPath { get; }
 
-        public abstract Point Size { get; }
         public abstract PopWindow Window { get; }
     }
 }

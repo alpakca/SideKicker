@@ -72,12 +72,9 @@ namespace SideKicker.PanelSystem
         private class Test : ContextPanel
         {
             public override string IconId => "test";
-
             public override string IconPath => "panels\\test.png";
 
-            public override Point Size { get; } = new Point(200, 200);
-
-            public override PopWindow Window { get; } = new PopWindow();
+            public override PopWindow Window => throw new NotImplementedException();
         }
     }
 }
