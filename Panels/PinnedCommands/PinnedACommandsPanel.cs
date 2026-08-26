@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SideKicker.Panels.PinnedActions
+namespace SideKicker.Panels.PinnedCommands
 {
-    internal class PinnedActionsPanel : ContextPanel
+    internal class PinnedACommandsPanel : ContextPanel
     {
         public override string IconId => "PinnedActions";
         public override string IconPath => @"panels\PinnedActionsPanelIcon.png";

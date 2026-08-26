@@ -21,8 +21,8 @@ namespace SideKicker.Panels
 
         private readonly TextureDrawInfo _drawInfo = new TextureDrawInfo();
 
-        private Rectangle SelectableArea => new Rectangle(Boundaries.X - SelectableMargin, Boundaries.Y - SelectableMargin, 
-                                                          Boundaries.Width + 2 * SelectableMargin, Boundaries.Height + 2 * SelectableMargin);
+        public Rectangle SelectableArea => new Rectangle(Boundaries.X - SelectableMargin, Boundaries.Y - SelectableMargin, 
+                                                         Boundaries.Width + 2 * SelectableMargin, Boundaries.Height + 2 * SelectableMargin);
 
         SelectablePacket ISelectable.SelectablePacket { get; } = new SelectablePacket();
         KeyReceiverPacket IKeyReceiver.KeyReceiverPacket { get; } = new KeyReceiverPacket();
