@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SideKicker.Panels.PinnedContents
+namespace SideKicker.Panels.PinnedActions
 {
     internal class PinnedActionsPanel : ContextPanel
     {

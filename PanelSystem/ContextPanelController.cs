@@ -32,9 +32,6 @@ namespace SideKicker.PanelSystem
 
         public void OpenPanelAt(int index)
         {
-            if (_allPanels.IndexOf(_openPanel) == index)
-                return;
-
             PopWindowManager.ActiveWindows.Remove(_openPanel?.Window);
 
             _openPanel = _allPanels[index];
@@ -47,7 +44,7 @@ namespace SideKicker.PanelSystem
 
         public void UpdateWindowLocations()
         {
-            Point minimumWindowSize = new Point(_openPanel.Size.X + _panelWindow.Boundaries.Width,
+            Point minimumWindowSize = new Point(_openPanel.Window.Boundaries.Width + _panelWindow.Boundaries.Width,
                                                 Math.Max(_panelWindow.Boundaries.Height, _openPanel.Window.Boundaries.Height));
 
             Point openPanelPosition = _origin - minimumWindowSize;
@@ -74,7 +71,7 @@ namespace SideKicker.PanelSystem
             public override string IconId => "test";
             public override string IconPath => "panels\\test.png";
 
-            public override PopWindow Window => throw new NotImplementedException();
+            public override PopWindow Window { get; } = new PopWindow { Boundaries = new Rectangle(0, 0, 1, 1) };
         }
     }
 }
