@@ -22,7 +22,24 @@ namespace SideKicker.Panels.PinnedCommands
             _contextWindow = new ContextWindow();
 
             _contextWindow.EditorButtonPressed += Window_EditorButtonPressed;
-            _contextWindow.CommandListButtonPressed += Window_CommandListButtonPressed;
+            _contextWindow.CommandListButtonBodyPressed += Window_CommandListButtonBodyPressed;
+            _contextWindow.CommandListButtonEditPressed += Window_CommandListButtonEditPressed;
+            _contextWindow.CommandListButtonsSwaped += Window_CommandListButtonsSwaped;
+        }
+
+        private void Window_CommandListButtonBodyPressed(int buttonIndex)
+        {
+            // run command
+        }
+
+        private void Window_CommandListButtonEditPressed(int buttonIndex)
+        {
+            // change state of editor to "edit"
+        }
+
+        private void Window_CommandListButtonsSwaped(int firstButtonIndex, int secondButtonIndex)
+        {
+            // swap two commands in the list
         }
 
         private void Window_EditorButtonPressed(EditorButton buttonType)
@@ -36,21 +53,6 @@ namespace SideKicker.Panels.PinnedCommands
                     break;
 
                 case EditorButton.Delete:
-                    break;
-            }
-        }
-
-        private void Window_CommandListButtonPressed(int buttonIndex, CommandButtonLayout layout)
-        {
-            switch (layout)
-            {
-                case CommandButtonLayout.Body:
-                    break;
-
-                case CommandButtonLayout.EditButton:
-                    break;
-
-                case CommandButtonLayout.ReorderButton:
                     break;
             }
         }

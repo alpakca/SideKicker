@@ -28,6 +28,17 @@ namespace SideKicker.Panels
                                  Boundaries.Width - 2 * ButtonMargin, ButtonHeight);
         }
 
+        public int GetButtonOn(Point relativePosition)
+        {
+            for (int i = 0; i < ButtonCount; i++)
+            {
+                if (GetButtonBounds(i).Contains(relativePosition))
+                    return i;
+            }
+
+            return -1;
+        }
+
         public void Scroll(PopWindowMouseEventArgs e, int amount)
         {
             int maxScroll = ButtonMargin + ButtonCount * (ButtonHeight + ButtonMargin) - Boundaries.Height;

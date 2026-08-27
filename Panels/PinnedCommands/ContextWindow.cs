@@ -22,7 +22,9 @@ namespace SideKicker.Panels.PinnedCommands
         private readonly ScrollableButtonList _commandsList;
 
         public event Action<EditorButton> EditorButtonPressed;
-        public event Action<int, CommandButtonLayout> CommandListButtonPressed;
+        public event Action<int> CommandListButtonBodyPressed;
+        public event Action<int> CommandListButtonEditPressed;
+        public event Action<int, int> CommandListButtonsSwaped;
 
         public ContextWindow()
         {
@@ -48,8 +50,14 @@ namespace SideKicker.Panels.PinnedCommands
                 _inReorderMode = true;
                 _reorderingButtonIndex = buttonIndex;
             }
-
-            CommandListButtonPressed?.Invoke(buttonIndex, layout);
+            else if (layout == CommandButtonLayout.EditButton)
+            {
+                CommandListButtonEditPressed?.Invoke(buttonIndex);
+            }
+            else if (layout == CommandButtonLayout.Body)
+            {
+                CommandListButtonBodyPressed?.Invoke(buttonIndex);
+            }
         }
 
         public void ShowCommand(SavedCommand? command)
@@ -159,7 +167,20 @@ namespace SideKicker.Panels.PinnedCommands
 
         protected override void OnMousePositionChange(PopWindowMouseEventArgs e)
         {
-            _commandsList.MousePositionChanged(e);
+            if (_inReorderMode)
+            {
+                int onButton = _commandsList.GetButtonOn(e.MousePosition - _commandsList.Boundaries.Location);
+                if (onButton != -1 && onButton != _reorderingButtonIndex)
+                {
+                    CommandListButtonsSwaped?.Invoke(onButton, _reorderingButtonIndex);
+                    _reorderingButtonIndex = onButton;
+                }
+            }
+            else
+            {
+                _commandsList.MousePositionChanged(e);
+            }
+
             base.OnMousePositionChange(e);
         }
 
