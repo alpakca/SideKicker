@@ -30,12 +30,26 @@ namespace SideKicker
             Window.IsBorderless = true;
             Window.Title = "";
 
-            WindowTransparency.MakeBorderless(Window.Handle);
-            WindowTransparency.EnableDwmPerPixelAlpha(Window.Handle);
-            WindowTransparency.SetTopMost(Window.Handle);
-            WindowTransparency.EnableRegionHitTesting(Window.Handle);
+            Window.Position = Point.Zero;
+            _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+            _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+            _graphics.ApplyChanges();
+
+            OverlayManager.Initialize(Window.Handle);
+            OverlayManager.SetOpenCloseHotKey(0x0001 | 0x0002 | 0x4000, 0x4B); // install the VM_Keys and MOD_modifiers here
+            // OverlayManager.HotKeyTriggered +=
 
             base.Initialize();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                OverlayManager.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
 
         protected override void LoadContent()

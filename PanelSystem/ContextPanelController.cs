@@ -50,13 +50,12 @@ namespace SideKicker.PanelSystem
             Point minimumWindowSize = new Point(_openPanel.Size.X + _panelWindow.Boundaries.Width,
                                                 Math.Max(_panelWindow.Boundaries.Height, _openPanel.Window.Boundaries.Height));
 
-            WindowOptions.Position = _origin - minimumWindowSize;
-            WindowOptions.Size = minimumWindowSize;
+            Point openPanelPosition = _origin - minimumWindowSize;
 
-            _openPanel.Window.Boundaries = new Rectangle(default, _openPanel.Size);
-            _panelWindow.Boundaries = new Rectangle(minimumWindowSize - _panelWindow.Boundaries.Size, _panelWindow.Boundaries.Size);
+            _openPanel.Window.Boundaries = new Rectangle(openPanelPosition, _openPanel.Size);
+            _panelWindow.Boundaries = new Rectangle(openPanelPosition + minimumWindowSize - _panelWindow.Boundaries.Size, _panelWindow.Boundaries.Size);
 
-            WindowTransparency.SetClickableRegions([_openPanel.Window.Boundaries, _panelWindow.Boundaries]);
+            OverlayManager.SetAreas(_openPanel.Window.Boundaries, _panelWindow.Boundaries);
         }
 
         private void InitializeTheme()
