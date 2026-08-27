@@ -25,6 +25,8 @@ namespace SideKicker.Panels.PinnedCommands
             _contextWindow.CommandListButtonBodyPressed += Window_CommandListButtonBodyPressed;
             _contextWindow.CommandListButtonEditPressed += Window_CommandListButtonEditPressed;
             _contextWindow.CommandListButtonsSwaped += Window_CommandListButtonsSwaped;
+
+            _contextWindow.ShowCommand(null);
         }
 
         private void Window_CommandListButtonBodyPressed(int buttonIndex)

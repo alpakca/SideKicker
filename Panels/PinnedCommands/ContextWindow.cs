@@ -35,19 +35,20 @@ namespace SideKicker.Panels.PinnedCommands
         {
             _savedCommands = savedCommands;
 
-            // occopies an area of (0, 0, 220, 280)
+            // occopies an area of (0, 0, 220, 240)
             _textBoxes = new Dictionary<CommandEditorTextBox, LinearTextBox>();
             InitializeCommandEditor(out _commandEditorTexts, out _addingCommandButtons, out _editingCommandButtons);
 
             _commandsList = new ScrollableButtonList
             {
-                Boundaries = new Rectangle(250, 30, 200, 230),
+                Boundaries = new Rectangle(350, 20, 200, 210),
                 ButtonHeight = CommandListLayoutCalculator.ButtonHeight,
                 ButtonMargin = 4
             };
             _commandsList.ButtonPressed += CommandsList_ButtonPressed;
 
-            this.Boundaries = new Rectangle(0, 0, 470, 260);
+            this.Boundaries = new Rectangle(0, 0, 570, 240);
+            this.Elements.AddRange(_textBoxes.Values);
         }
 
         private void CommandsList_ButtonPressed(int buttonIndex)
@@ -77,14 +78,28 @@ namespace SideKicker.Panels.PinnedCommands
                 _textBoxes[CommandEditorTextBox.Name].Text = command.Name;
                 _textBoxes[CommandEditorTextBox.PathToRunCommand].Text = command.PathToRunCommand;
                 _textBoxes[CommandEditorTextBox.Command].Text = command.Command;
+
+                if (!_inEditingMode)
+                {
+                    foreach (var button in _addingCommandButtons) this.Elements.Remove(button);
+                }
+
                 _inEditingMode = true;
+                this.Elements.AddRange(_editingCommandButtons);
             }
             else
             {
                 _textBoxes[CommandEditorTextBox.Name].Text = "";
                 _textBoxes[CommandEditorTextBox.PathToRunCommand].Text = "";
                 _textBoxes[CommandEditorTextBox.Command].Text = "";
+
+                if (_inEditingMode)
+                {
+                    foreach (var button in _editingCommandButtons) this.Elements.Remove(button);
+                }
+
                 _inEditingMode = false;
+                this.Elements.AddRange(_addingCommandButtons);
             }
         }
 
@@ -104,21 +119,21 @@ namespace SideKicker.Panels.PinnedCommands
             _textBoxes.Add(CommandEditorTextBox.Name, new LinearTextBox
             {
                 TextSize = PanelTextSize,
-                Boundaries = new Rectangle(20, 70, 200, 40),
+                Boundaries = new Rectangle(20, 40, 200, 30),
                 SelectableMargin = 4
             });
 
             _textBoxes.Add(CommandEditorTextBox.PathToRunCommand, new LinearTextBox
             {
                 TextSize = PanelTextSize,
-                Boundaries = new Rectangle(20, 160, 200, 40),
+                Boundaries = new Rectangle(20, 100, 200, 30),
                 SelectableMargin = 4
             });
 
             _textBoxes.Add(CommandEditorTextBox.Command, new LinearTextBox
             {
                 TextSize = PanelTextSize,
-                Boundaries = new Rectangle(20, 250, 200, 40),
+                Boundaries = new Rectangle(20, 160, 200, 30),
                 SelectableMargin = 4
             });
 
@@ -128,19 +143,19 @@ namespace SideKicker.Panels.PinnedCommands
                 {
                     Text = "Visible Name Of Command:",
                     TextSize = PanelTextSize,
-                    Position = new Vector2(20, 30)
+                    Position = new Vector2(20, 20)
                 },
                 new TextPlaque
                 {
                     Text = "Directory To Run The Command In:",
                     TextSize = PanelTextSize,
-                    Position = new Vector2(20, 120)
+                    Position = new Vector2(20, 80)
                 },
                 new TextPlaque
                 {
                     Text = "Command To Run:",
                     TextSize = PanelTextSize,
-                    Position = new Vector2(20, 210)
+                    Position = new Vector2(20, 140)
                 }
             };
 
@@ -149,8 +164,10 @@ namespace SideKicker.Panels.PinnedCommands
                 new TextedButton
                 {
                     Text = "Add",
-                    Boundaries = new Rectangle(220 - 60, 220, 60, 40),
-                    ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Add))
+                    Boundaries = new Rectangle(220 - 90, 200, 90, 30),
+                    ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Add)),
+                    SelectablePacket = new SelectablePacket(),
+                    HoldPacket = new HoldablePacket()
                 }
             };
 
@@ -159,14 +176,18 @@ namespace SideKicker.Panels.PinnedCommands
                 new TextedButton
                 {
                     Text = "Delete",
-                    Boundaries = new Rectangle(140 - 60, 220, 60, 40),
-                    ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Delete))
+                    Boundaries = new Rectangle(20, 200, 90, 30),
+                    ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Delete)),
+                    SelectablePacket = new SelectablePacket(),
+                    HoldPacket = new HoldablePacket()
                 },
                 new TextedButton
                 {
                     Text = "Save",
-                    Boundaries = new Rectangle(220 - 60, 220, 60, 40),
-                    ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Save))
+                    Boundaries = new Rectangle(220 - 90, 200, 90, 30),
+                    ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Save)),
+                    SelectablePacket = new SelectablePacket(),
+                    HoldPacket = new HoldablePacket()
                 }
             };
         }
@@ -209,7 +230,7 @@ namespace SideKicker.Panels.PinnedCommands
                                                   theme.GetColor(ColorRegistry.BackgroundId), 1);
 
                 FontService.Regular.DrawVerticallyCenteredText(PanelTextSize, textBox.Text, 
-                    new Vector2(textBox.Boundaries.X + textBox.TextOffset, textBox.Boundaries.Y), this.Boundaries.Height,
+                    new Vector2(textBox.Boundaries.X + textBox.TextOffset, textBox.Boundaries.Y), textBox.Boundaries.Height,
                     textColor);
 
                 if (textBox.ReceivingInput)
@@ -217,7 +238,9 @@ namespace SideKicker.Panels.PinnedCommands
                     const int CaretWidth = 2;
                     int caretX = (int)FontService.Regular.MeasureWidth(PanelTextSize, textBox.Text[..textBox.CaretPosition]) + textBox.TextOffset;
 
-                    DrawHelper.DrawBackground(new Rectangle(caretX, textBox.Boundaries.Y, CaretWidth, FontService.Regular.GetLineSpacing(PanelTextSize)), 
+                    int caretHeight = FontService.Regular.GetLineSpacing(PanelTextSize);
+                    DrawHelper.DrawBackground(new Rectangle(textBox.Boundaries.X + caretX, textBox.Boundaries.Y + (textBox.Boundaries.Height - caretHeight) / 2,
+                                                            CaretWidth, caretHeight), 
                                               textColor);
                 }
                 

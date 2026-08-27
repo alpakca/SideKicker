@@ -50,7 +50,7 @@ namespace SideKicker.PanelSystem
 
             Point openPanelPosition = _origin - minimumWindowSize;
 
-            _openPanel.Window.Boundaries = new Rectangle(openPanelPosition, _openPanel.Size);
+            _openPanel.Window.Boundaries = new Rectangle(openPanelPosition, _openPanel.Window.Boundaries.Size);
             _panelWindow.Boundaries = new Rectangle(openPanelPosition + minimumWindowSize - _panelWindow.Boundaries.Size, _panelWindow.Boundaries.Size);
 
             OverlayManager.SetAreas(_openPanel.Window.Boundaries, _panelWindow.Boundaries);
