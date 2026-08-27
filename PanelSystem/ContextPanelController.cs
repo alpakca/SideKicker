@@ -20,7 +20,7 @@ namespace SideKicker.PanelSystem
 
         public ContextPanelController()
         {
-            _allPanels = [new PinnedACommandsPanel(), new Test(), new Test()]; // replace with creation of context panel instances
+            _allPanels = [new PinnedCommandsPanel(), new Test(), new Test()]; // replace with creation of context panel instances
             _panelWindow = new PanelWindow(this, _allPanels);
 
             InitializeTheme();

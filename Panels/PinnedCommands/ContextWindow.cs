@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using PopUpUI.Input;
 using PopUpUI.Toolkit;
 using SideKicker.Theming;
+using System.Collections.ObjectModel;
 
 namespace SideKicker.Panels.PinnedCommands
 {
@@ -31,7 +32,7 @@ namespace SideKicker.Panels.PinnedCommands
         public event Action<int> CommandListButtonEditPressed;
         public event Action<int, int> CommandListButtonsSwaped;
 
-        public ContextWindow(IReadOnlyList<SavedCommand> savedCommands)
+        public ContextWindow(ObservableCollection<SavedCommand> savedCommands)
         {
             _savedCommands = savedCommands;
 
@@ -46,6 +47,8 @@ namespace SideKicker.Panels.PinnedCommands
                 ButtonMargin = 4
             };
             _commandsList.ButtonPressed += CommandsList_ButtonPressed;
+            _commandsList.ButtonHeld += CommandsList_ButtonHeld;
+            savedCommands.CollectionChanged += (sender, _) => _commandsList.ButtonCount = ((IReadOnlyList<SavedCommand>)sender).Count;
 
             this.Boundaries = new Rectangle(0, 0, 570, 240);
             this.Elements.AddRange(_textBoxes.Values);
@@ -53,21 +56,28 @@ namespace SideKicker.Panels.PinnedCommands
 
         private void CommandsList_ButtonPressed(int buttonIndex)
         {
-            CommandButtonLayout layout = CommandListLayoutCalculator.GetLayout(_commandsList.GetButtonBounds(buttonIndex), 
+            CommandButtonLayout layout = CommandListLayoutCalculator.GetLayout(_commandsList.GetButtonBounds(buttonIndex).Size, 
                                                                                _commandsList.RelativeMouseToHovered);
 
-            if (layout == CommandButtonLayout.ReorderButton)
-            {
-                _inReorderMode = true;
-                _reorderingButtonIndex = buttonIndex;
-            }
-            else if (layout == CommandButtonLayout.EditButton)
+            if (layout == CommandButtonLayout.EditButton)
             {
                 CommandListButtonEditPressed?.Invoke(buttonIndex);
             }
             else if (layout == CommandButtonLayout.Body)
             {
                 CommandListButtonBodyPressed?.Invoke(buttonIndex);
+            }
+        }
+
+        private void CommandsList_ButtonHeld(int buttonIndex)
+        {
+            CommandButtonLayout layout = CommandListLayoutCalculator.GetLayout(_commandsList.GetButtonBounds(buttonIndex).Size,
+                                                                   _commandsList.RelativeMouseToHovered);
+
+            if (layout == CommandButtonLayout.ReorderButton)
+            {
+                _inReorderMode = true;
+                _reorderingButtonIndex = buttonIndex;
             }
         }
 
@@ -261,7 +271,7 @@ namespace SideKicker.Panels.PinnedCommands
                                                                relativeButtonBounds.Height, textColor);
                 // draw edit icon here -> CommandLineLayoutCalculator.EditButtonBounds(buttonScreenBounds)
 
-                if (_commandsList.HoveredButtonIndex == i)
+                if (i == _commandsList.HoveredButtonIndex)
                 {
                     DrawHelper.DrawBackground(buttonScreenBounds, _commandsList.IsHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
                                                                                                     : theme.GetColor(ColorRegistry.HoverOverlayId));
@@ -275,6 +285,11 @@ namespace SideKicker.Panels.PinnedCommands
 
         protected override void OnMouseButtonStateChange(PopWindowMouseEventArgs e)
         {
+            if (e.ReleasedButtons.HasLeft)
+            {
+                _inReorderMode = false;
+            }
+
             _commandsList.MouseStateChangeUpdate(e);
             base.OnMouseButtonStateChange(e);
         }
@@ -290,11 +305,8 @@ namespace SideKicker.Panels.PinnedCommands
                     _reorderingButtonIndex = onButton;
                 }
             }
-            else
-            {
-                _commandsList.MousePositionChanged(e);
-            }
 
+            _commandsList.MousePositionChanged(e);
             base.OnMousePositionChange(e);
         }
 

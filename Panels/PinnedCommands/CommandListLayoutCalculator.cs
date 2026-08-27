@@ -7,7 +7,7 @@ namespace SideKicker.Panels.PinnedCommands
         public const int ButtonHeight = 32;
         private const int NameTextMargin = 4;
 
-        public static CommandButtonLayout GetLayout(Rectangle buttonBounds, Point relativeMousePosition)
+        public static CommandButtonLayout GetLayout(Point buttonSize, Point relativeMousePosition)
         {
             if (0 <= relativeMousePosition.X && relativeMousePosition.X < ButtonHeight &&
                 0 <= relativeMousePosition.Y && relativeMousePosition.Y < ButtonHeight)
@@ -15,7 +15,7 @@ namespace SideKicker.Panels.PinnedCommands
                 return CommandButtonLayout.ReorderButton;
             }
 
-            if (buttonBounds.Right - ButtonHeight <= relativeMousePosition.X && relativeMousePosition.X < buttonBounds.Right &&
+            if (buttonSize.X - ButtonHeight <= relativeMousePosition.X && relativeMousePosition.X < buttonSize.X &&
                 0 <= relativeMousePosition.Y && relativeMousePosition.Y < ButtonHeight)
             {
                 return CommandButtonLayout.EditButton;

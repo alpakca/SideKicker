@@ -3,6 +3,7 @@ using PopUpUI.Elements;
 using PopUpUI.Input;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace SideKicker.Panels
 {
@@ -21,6 +22,7 @@ namespace SideKicker.Panels
         public Point RelativeMouseToHovered { get; private set; }
 
         public event Action<int> ButtonPressed;
+        public event Action<int> ButtonHeld;
 
         public Rectangle GetButtonBounds(int index)
         {
@@ -65,6 +67,7 @@ namespace SideKicker.Panels
             if (e.FirstTimeButtons.HasLeft && HoveredButtonIndex != -1)
             {
                 IsHoveredButtonHeld = true;
+                ButtonHeld?.Invoke(HoveredButtonIndex);
             }
             else if (e.ReleasedButtons.HasLeft)
             {
@@ -80,20 +83,17 @@ namespace SideKicker.Panels
 
         private void HandleHovering(PopWindowMouseEventArgs e)
         {
-            if (!IsHoveredButtonHeld)
-            {
-                HoveredButtonIndex = -1;
-                RelativeMouseToHovered = new Point(-1);
+            HoveredButtonIndex = -1;
+            RelativeMouseToHovered = new Point(-1);
 
-                for (int i = 0; i < ButtonCount; i++)
+            for (int i = 0; i < ButtonCount; i++)
+            {
+                Rectangle bounds = GetButtonBounds(i);
+                if (bounds.Contains(e.MousePosition - Boundaries.Location))
                 {
-                    Rectangle bounds = GetButtonBounds(i);
-                    if (bounds.Contains(e.MousePosition - Boundaries.Location))
-                    {
-                        HoveredButtonIndex = i;
-                        RelativeMouseToHovered = e.MousePosition - bounds.Location;
-                        break;
-                    }
+                    HoveredButtonIndex = i;
+                    RelativeMouseToHovered = e.MousePosition - Boundaries.Location - bounds.Location;
+                    break;
                 }
             }
         }
