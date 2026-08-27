@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using PopUpUI.Toolkit;
 
 namespace SideKicker.Theming
 {
@@ -8,12 +9,9 @@ namespace SideKicker.Theming
     {
         public static FontProvider Regular { get; } = new FontProvider(new Dictionary<int, SpriteFont>
         {
-
-        });
-
-        public static FontProvider Bold { get; } = new FontProvider(new Dictionary<int, SpriteFont>
-        {
-
+            { 12, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_12") },
+            { 16, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_16") },
+            { 24, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_24") },
         });
 
         public static Action FontChanged;

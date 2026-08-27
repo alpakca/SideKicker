@@ -2,6 +2,7 @@
 using PopUpUI.Surface;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
+using SideKicker.Panels.PinnedCommands;
 using SideKicker.Theming;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace SideKicker.PanelSystem
 
         public ContextPanelController()
         {
-            _allPanels = [new Test(), new Test(), new Test()]; // replace with creation of context panel instances
+            _allPanels = [new PinnedACommandsPanel(), new Test(), new Test()]; // replace with creation of context panel instances
             _panelWindow = new PanelWindow(this, _allPanels);
 
             InitializeTheme();

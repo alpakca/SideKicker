@@ -1,30 +1,23 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PopUpUI.Elements;
 using PopUpUI.Input;
-using PopUpUI.Surface;
-using PopUpUI.Toolkit;
 using SideKicker.Theming;
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace SideKicker.Panels
 {
-    internal class LinearTextBox : PopElement, ISelectable, IKeyReceiver, ITextReceiver, IDisposable
+    internal class LinearTextBox : PopElement, ISelectable, IKeyReceiver, ITextReceiver
     {
         private int _caretPosition;
         private int _textOffset;
-        private string _text;
-        private RenderTarget2D _target;
-
-        private readonly TextureDrawInfo _drawInfo = new TextureDrawInfo();
+        private string _text = "";
 
         public Rectangle SelectableArea => new Rectangle(Boundaries.X - SelectableMargin, Boundaries.Y - SelectableMargin, 
                                                          Boundaries.Width + 2 * SelectableMargin, Boundaries.Height + 2 * SelectableMargin);
 
-        SelectablePacket ISelectable.SelectablePacket { get; } = new SelectablePacket();
+        SelectablePacket ISelectable.SelectablePacket { get; } = new SelectablePacket { EnabledOutsideSelecting = true };
         KeyReceiverPacket IKeyReceiver.KeyReceiverPacket { get; } = new KeyReceiverPacket();
         TextReceiverPacket ITextReceiver.TextReceiverPacket { get; } = new TextReceiverPacket();
 
@@ -44,53 +37,8 @@ namespace SideKicker.Panels
             }
         }
 
-        public override Rectangle Boundaries 
-        {
-            set
-            {
-                if (value.Width != 0 && value.Height != 0)
-                {
-                    base.Boundaries = value;
-                    _drawInfo.DestinationArea = value;
-
-                    _target?.Dispose();
-                    _target = DrawHelper.CreateRenderTarget(value.Width, value.Height);
-                    _drawInfo.Texture = _target;
-                }
-            }
-        }
-
-        public void Dispose()
-        {
-            _target?.Dispose();
-        }
-
-        public override void RenderUpdate()
-        {
-            DrawHelper.SetBeginBatch(_target);
-
-            FontService.Regular.DrawText(TextSize, _text, new Vector2(_textOffset), ThemeService.CurrentTheme.GetColor(ColorRegistry.TextColorId));
-
-            if (ReceivingInput)
-            {
-                const int CaretWidth = 2;
-
-                int caretX = (int)FontService.Regular.MeasureWidth(TextSize, _text[.._caretPosition]) + _textOffset;
-                caretX = Math.Clamp(caretX, 0, this.Boundaries.Width - CaretWidth);
-
-                DrawHelper.DrawBackground(new Rectangle(caretX, 0, CaretWidth, FontService.Regular.GetLineSpacing(TextSize)),
-                                          ThemeService.CurrentTheme.GetColor(ColorRegistry.TextColorId));
-            }
-
-            DrawHelper.EndBatch();
-
-            base.RenderUpdate();
-        }
-
-        public override IEnumerable<UIDrawInfo> GetDrawInfos()
-        {
-            return base.GetDrawInfos();
-        }
+        public int TextOffset => _textOffset;
+        public int CaretPosition => _caretPosition;
 
         public void InsertText(string str)
         {

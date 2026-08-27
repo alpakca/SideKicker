@@ -18,7 +18,7 @@ namespace SideKicker
 #endif
             AssetsFolderPath = Path.Combine(RootPath, "assets");
             SavesFolderPath = Path.Combine(RootPath, "saves");
-            
+
             using var game = new Game1();
             game.Run();
         }

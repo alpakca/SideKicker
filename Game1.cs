@@ -63,6 +63,15 @@ namespace SideKicker
                 .ToArray()
             );
 
+            ContentAssistant.LoadWithContentManager<SpriteFont>(
+                Directory.EnumerateFiles(Path.Combine(Program.AssetsFolderPath, "fonts"))
+                .Select(path =>
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(path);
+                    return (fileName, "Font_" + fileName);
+                }).ToArray()
+            );
+
             panelController = new ContextPanelController();
         }
 

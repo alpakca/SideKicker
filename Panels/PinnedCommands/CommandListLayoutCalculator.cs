@@ -5,6 +5,7 @@ namespace SideKicker.Panels.PinnedCommands
     internal static class CommandListLayoutCalculator
     {
         public const int ButtonHeight = 32;
+        private const int NameTextMargin = 4;
 
         public static CommandButtonLayout GetLayout(Rectangle buttonBounds, Point relativeMousePosition)
         {
@@ -23,9 +24,19 @@ namespace SideKicker.Panels.PinnedCommands
             return CommandButtonLayout.Body;
         }
 
-        public static Rectangle ReorderButtonBounds(Rectangle buttonBounds)
+        public static Rectangle ReorderButtonBounds(Rectangle buttonScreenBounds)
         {
-            return new Rectangle(buttonBounds.X, buttonBounds.Y, ButtonHeight, ButtonHeight);
+            return new Rectangle(buttonScreenBounds.X, buttonScreenBounds.Y, ButtonHeight, ButtonHeight);
+        }
+
+        public static Rectangle EditButtonBounds(Rectangle buttonScreenBounds)
+        {
+            return new Rectangle(buttonScreenBounds.Right - ButtonHeight, buttonScreenBounds.Y, ButtonHeight, ButtonHeight);
+        }
+
+        public static Vector2 ButtonNamePosition(Rectangle buttonScreenBounds)
+        {
+            return new Vector2(buttonScreenBounds.X + ButtonHeight + NameTextMargin, buttonScreenBounds.Y);
         }
     }
 }

@@ -9,8 +9,7 @@ namespace SideKicker.Panels.PinnedCommands
     internal class PinnedACommandsPanel : ContextPanel
     {
         private readonly ContextWindow _contextWindow;
-
-        private bool _inEditingCommandState;
+        private readonly List<SavedCommand> _savedCommands;
 
         public override string IconId => "PinnedActions";
         public override string IconPath => @"panels\PinnedActionsPanelIcon.png";
@@ -19,7 +18,8 @@ namespace SideKicker.Panels.PinnedCommands
 
         public PinnedACommandsPanel()
         {
-            _contextWindow = new ContextWindow();
+            _savedCommands = new List<SavedCommand>();
+            _contextWindow = new ContextWindow(_savedCommands);
 
             _contextWindow.EditorButtonPressed += Window_EditorButtonPressed;
             _contextWindow.CommandListButtonBodyPressed += Window_CommandListButtonBodyPressed;
