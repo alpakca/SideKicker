@@ -14,12 +14,15 @@ namespace SideKicker.Panels
         public int ButtonHeight { get; set; }
 
         public Rectangle Boundaries { get; set; }
-        public List<Clickable> Buttons { get; } = new List<Clickable>();
+        public int ButtonCount { get; set; }
 
         public int HoveredButtonIndex { get; private set; }
         public bool IsHoveredButtonHeld { get; private set; }
+        public Point RelativeMouseToHovered { get; private set; }
 
-        public Rectangle GetButtonOffset(int index)
+        public event Action<int> ButtonPressed;
+
+        public Rectangle GetButtonBounds(int index)
         {
             return new Rectangle(ButtonMargin, ButtonMargin + index * (ButtonHeight + ButtonMargin) - scrolledLength,
                                  Boundaries.Width - 2 * ButtonMargin, ButtonHeight);
@@ -27,7 +30,7 @@ namespace SideKicker.Panels
 
         public void Scroll(PopWindowMouseEventArgs e, int amount)
         {
-            int maxScroll = ButtonMargin + Buttons.Count * (ButtonHeight + ButtonMargin) - Boundaries.Height;
+            int maxScroll = ButtonMargin + ButtonCount * (ButtonHeight + ButtonMargin) - Boundaries.Height;
             if (maxScroll <= 0)
                 return;
 
@@ -54,9 +57,9 @@ namespace SideKicker.Panels
             }
             else if (e.ReleasedButtons.HasLeft)
             {
-                if (HoveredButtonIndex != -1 && GetButtonOffset(HoveredButtonIndex).Contains(e.MousePosition - Boundaries.Location))
+                if (HoveredButtonIndex != -1 && GetButtonBounds(HoveredButtonIndex).Contains(e.MousePosition - Boundaries.Location))
                 {
-                    Buttons[HoveredButtonIndex].ClickCommand?.Execute(Buttons[HoveredButtonIndex]);
+                    ButtonPressed?.Invoke(HoveredButtonIndex);
                 }
 
                 IsHoveredButtonHeld = false;
@@ -69,11 +72,15 @@ namespace SideKicker.Panels
             if (!IsHoveredButtonHeld)
             {
                 HoveredButtonIndex = -1;
-                for (int i = 0; i < Buttons.Count; i++)
+                RelativeMouseToHovered = new Point(-1);
+
+                for (int i = 0; i < ButtonCount; i++)
                 {
-                    if (GetButtonOffset(i).Contains(e.MousePosition - Boundaries.Location))
+                    Rectangle bounds = GetButtonBounds(i);
+                    if (bounds.Contains(e.MousePosition - Boundaries.Location))
                     {
                         HoveredButtonIndex = i;
+                        RelativeMouseToHovered = e.MousePosition - bounds.Location;
                         break;
                     }
                 }

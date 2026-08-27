@@ -1,6 +1,9 @@
 ﻿using PopUpUI.Elements;
 using PopUpUI.Surface;
 using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
+using PopUpUI.Input;
 
 namespace SideKicker.Panels.PinnedCommands
 {
@@ -9,40 +12,95 @@ namespace SideKicker.Panels.PinnedCommands
         private const string SaveFileName = "pinnedcommands.json";
         private const int PanelTextSize = 12;
 
-        private bool _isEditingCommand;
-        private readonly CommandEditor _commandEditor;
+        private readonly Dictionary<CommandEditorTextBox, LinearTextBox> _textBoxes;
         private readonly TextPlaque[] _commandEditorTexts;
         private readonly TextedButton[] _addingCommandButtons;
         private readonly TextedButton[] _editingCommandButtons;
 
+        private bool _inReorderMode;
+        private int _reorderingButtonIndex;
+        private readonly ScrollableButtonList _commandsList;
+
+        public event Action<EditorButton> EditorButtonPressed;
+        public event Action<int, CommandButtonLayout> CommandListButtonPressed;
+
         public ContextWindow()
         {
-            InitializeCommandEditor(out _commandEditorTexts, out _commandEditor, out _addingCommandButtons, out _editingCommandButtons);
+            _textBoxes = new Dictionary<CommandEditorTextBox, LinearTextBox>();
+            InitializeCommandEditor(out _commandEditorTexts, out _addingCommandButtons, out _editingCommandButtons);
+
+            _commandsList = new ScrollableButtonList
+            {
+                Boundaries = new Rectangle(),
+                ButtonHeight = CommandListLayoutCalculator.ButtonHeight,
+                ButtonMargin = 4
+            };
+            _commandsList.ButtonPressed += CommandsList_ButtonPressed;
         }
 
-        private void InitializeCommandEditor(out TextPlaque[] commandEditorTexts, out CommandEditor commandEditor,
-                                             out TextedButton[] addingCommandButtons, out TextedButton[] editingCommandButtons)
+        private void CommandsList_ButtonPressed(int buttonIndex)
         {
-            LinearTextBox commandName = new LinearTextBox
-            {
-                TextSize = PanelTextSize,
-                Boundaries = new Rectangle(),
-                SelectableMargin = 4
-            };
+            CommandButtonLayout layout = CommandListLayoutCalculator.GetLayout(_commandsList.GetButtonBounds(buttonIndex), 
+                                                                               _commandsList.RelativeMouseToHovered);
 
-            LinearTextBox pathToRunCommand = new LinearTextBox
+            if (layout == CommandButtonLayout.ReorderButton)
             {
-                TextSize = PanelTextSize,
-                Boundaries = new Rectangle(),
-                SelectableMargin = 4
-            };
+                _inReorderMode = true;
+                _reorderingButtonIndex = buttonIndex;
+            }
 
-            LinearTextBox command = new LinearTextBox
+            CommandListButtonPressed?.Invoke(buttonIndex, layout);
+        }
+
+        public void ShowCommand(SavedCommand? command)
+        {
+            if (command != null)
+            {
+                _textBoxes[CommandEditorTextBox.Name].Text = command.Name;
+                _textBoxes[CommandEditorTextBox.PathToRunCommand].Text = command.PathToRunCommand;
+                _textBoxes[CommandEditorTextBox.Command].Text = command.Command;
+            }
+            else
+            {
+                _textBoxes[CommandEditorTextBox.Name].Text = "";
+                _textBoxes[CommandEditorTextBox.PathToRunCommand].Text = "";
+                _textBoxes[CommandEditorTextBox.Command].Text = "";
+            }
+        }
+
+        public SavedCommand CreateCommand()
+        {
+            return new SavedCommand
+            {
+                Name = _textBoxes[CommandEditorTextBox.Name].Text,
+                PathToRunCommand = _textBoxes[CommandEditorTextBox.PathToRunCommand].Text,
+                Command = _textBoxes[CommandEditorTextBox.Command].Text
+            };
+        }
+
+        private void InitializeCommandEditor(out TextPlaque[] commandEditorTexts, out TextedButton[] addingCommandButtons, 
+                                             out TextedButton[] editingCommandButtons)
+        {
+            _textBoxes.Add(CommandEditorTextBox.Name, new LinearTextBox
             {
                 TextSize = PanelTextSize,
                 Boundaries = new Rectangle(),
                 SelectableMargin = 4
-            };
+            });
+
+            _textBoxes.Add(CommandEditorTextBox.PathToRunCommand, new LinearTextBox
+            {
+                TextSize = PanelTextSize,
+                Boundaries = new Rectangle(),
+                SelectableMargin = 4
+            });
+
+            _textBoxes.Add(CommandEditorTextBox.Command, new LinearTextBox
+            {
+                TextSize = PanelTextSize,
+                Boundaries = new Rectangle(),
+                SelectableMargin = 4
+            });
 
             commandEditorTexts = new TextPlaque[]
             {
@@ -72,7 +130,7 @@ namespace SideKicker.Panels.PinnedCommands
                 {
                     Text = "Add",
                     Boundaries = new Rectangle(),
-                    ClickCommand = new ActionCommander<Clickable>(_ => { })
+                    ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Add))
                 }
             };
 
@@ -82,19 +140,37 @@ namespace SideKicker.Panels.PinnedCommands
                 {
                     Text = "Delete",
                     Boundaries = new Rectangle(),
-                    ClickCommand = new ActionCommander<Clickable>(_ => { })
+                    ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Delete))
                 },
                 new TextedButton
                 {
                     Text = "Save",
                     Boundaries = new Rectangle(),
-                    ClickCommand = new ActionCommander<Clickable>(_ => { })
+                    ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Save))
                 }
             };
+        }
 
-            commandEditor = new CommandEditor(commandName, pathToRunCommand, command);
-            commandEditor.ShowEmptyCommand();
-            _isEditingCommand = false;
+        protected override void OnMouseButtonStateChange(PopWindowMouseEventArgs e)
+        {
+            _commandsList.MouseStateChangeUpdate(e);
+            base.OnMouseButtonStateChange(e);
+        }
+
+        protected override void OnMousePositionChange(PopWindowMouseEventArgs e)
+        {
+            _commandsList.MousePositionChanged(e);
+            base.OnMousePositionChange(e);
+        }
+
+        protected override void OnMouseVerticalScrollChange(PopWindowMouseEventArgs e, int change)
+        {
+            if (_commandsList.Boundaries.Contains(e.MousePosition))
+            {
+                _commandsList.Scroll(e, -change / 6);
+            }
+
+            base.OnMouseVerticalScrollChange(e, change);
         }
     }
 }
