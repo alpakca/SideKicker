@@ -51,6 +51,18 @@ namespace SideKicker.Panels
             MousePositionChanged(e); // update hover
         }
 
+        public void UpdateScrolledLength()
+        {
+            int maxScroll = ButtonMargin + ButtonCount * (ButtonHeight + ButtonMargin) - Boundaries.Height;
+            if (maxScroll <= 0)
+            {
+                scrolledLength = 0;
+                return;
+            }
+
+            scrolledLength = Math.Clamp(scrolledLength, 0, maxScroll);
+        }
+
         public void MouseStateChangeUpdate(PopWindowMouseEventArgs e)
         {
             HandleHolding(e);

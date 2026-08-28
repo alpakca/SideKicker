@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using PopUpUI.Input;
 using PopUpUI.Toolkit;
-using SideKicker.Theming;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
 
@@ -15,10 +14,11 @@ namespace SideKicker.Panels.PinnedCommands
 {
     internal class ContextWindow : PopWindow
     {
-        private const int PanelTextSize = 12;
+        public const int PanelTextSize = 12;
 
         private float _remainingSaveTime;
         private readonly IReadOnlyList<SavedCommand> _savedCommands;
+        private readonly ContextWindowRenderer _renderer;
 
         private bool _inEditingMode;
         private readonly Dictionary<CommandEditorTextBox, LinearTextBox> _textBoxes;
@@ -48,8 +48,7 @@ namespace SideKicker.Panels.PinnedCommands
             {
                 Boundaries = new Rectangle(270, 20, 250, 210),
                 ButtonHeight = CommandListLayoutCalculator.ButtonHeight,
-                ButtonMargin = 4,
-                ButtonCount = _savedCommands.Count
+                ButtonMargin = 4
             };
             _commandsList.ButtonPressed += CommandsList_ButtonPressed;
             _commandsList.ButtonHeld += CommandsList_ButtonHeld;
@@ -60,9 +59,11 @@ namespace SideKicker.Panels.PinnedCommands
             pasteLeftCtrl.FirstTriggerAction = pasteRightCtrl.FirstTriggerAction = KeyboardPasteAction;
             shortcutManager.AddCombinations(pasteLeftCtrl, pasteRightCtrl);
 
-            this.Boundaries = new Rectangle(0, 0, 540, 250);
             this.Elements.Add(shortcutManager);
             this.Elements.AddRange(_textBoxes.Values);
+
+            this.Boundaries = new Rectangle(0, 0, 540, 250);
+            _renderer = new ContextWindowRenderer(WindowTexture);
         }
 
         private void CommandsList_ButtonPressed(int buttonIndex)
@@ -151,6 +152,9 @@ namespace SideKicker.Panels.PinnedCommands
         public void SetSavedCommandCount(int count)
         {
             _commandsList.ButtonCount = count;
+            _commandsList.UpdateScrolledLength();
+
+            _renderer.RefreshIcons(_savedCommands);
         }
 
         public void SetSaveTimer(float milliseconds)
@@ -253,102 +257,19 @@ namespace SideKicker.Panels.PinnedCommands
 
         protected override void RenderUpdate()
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
+            _renderer.RenderMainElements(_commandEditorTexts, _inEditingMode ? _editingCommandButtons : _addingCommandButtons);
 
-            DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaBlendDrawOptions);
-
-            DrawHelper.DrawBorderedBackground(new Rectangle(Point.Zero, this.Boundaries.Size), theme.GetColor(ColorRegistry.BorderId),
-                                              theme.GetColor(ColorRegistry.SurfaceId), 1);
-
-            foreach (var textPlaque in _commandEditorTexts)
+            foreach (LinearTextBox textBox in _textBoxes.Values)
             {
-                FontService.Regular.DrawText(PanelTextSize, textPlaque.Text, textPlaque.Position, textColor);
+                _renderer.RenderTextBox(textBox);
             }
 
-            foreach (var button in (_inEditingMode ? _editingCommandButtons : _addingCommandButtons))
-            {
-                DrawHelper.DrawBackground(button.Boundaries, theme.GetColor(ColorRegistry.BackgroundId));
-                FontService.Regular.DrawCenteredText(PanelTextSize, button.Text, button.Boundaries, textColor);
-
-                if (button.IsHovered)
-                {
-                    DrawHelper.DrawBackground(button.Boundaries, button.IsHeld ? theme.GetColor(ColorRegistry.HeldOverlayId) 
-                                                                               : theme.GetColor(ColorRegistry.HoverOverlayId));
-                }
-            }
-
-            DrawHelper.DrawBackground(new Rectangle(250, 20, 1, this.Boundaries.Height - 20 * 2), theme.GetColor(ColorRegistry.BorderId));
-
-            DrawHelper.EndBatch();
-
-            foreach (var textBox in _textBoxes.Values)
-            {
-                DrawHelper.Device.ScissorRectangle = textBox.Boundaries;
-                DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-                DrawHelper.DrawBorderedBackground(textBox.SelectableArea, theme.GetColor(ColorRegistry.BorderAccentId),
-                                                  theme.GetColor(ColorRegistry.BackgroundId), 1);
-
-                FontService.Regular.DrawVerticallyCenteredText(PanelTextSize, textBox.Text, 
-                    new Vector2(textBox.Boundaries.X + textBox.TextOffset, textBox.Boundaries.Y), textBox.Boundaries.Height,
-                    textColor);
-
-                if (textBox.ReceivingInput)
-                {
-                    const int CaretWidth = 2;
-                    int caretX = (int)FontService.Regular.MeasureWidth(PanelTextSize, textBox.Text[..textBox.CaretPosition]) + textBox.TextOffset;
-
-                    int caretHeight = FontService.Regular.GetLineSpacing(PanelTextSize);
-                    DrawHelper.DrawBackground(new Rectangle(textBox.Boundaries.X + caretX, textBox.Boundaries.Y + (textBox.Boundaries.Height - caretHeight) / 2,
-                                                            CaretWidth, caretHeight), 
-                                              textColor);
-                }
-                
-                DrawHelper.EndBatch();
-            }
-
-            int verticalCenterOffset = (_commandsList.ButtonHeight - FontService.Regular.GetLineSpacing(PanelTextSize)) / 2;
             for (int i = 0; i < _savedCommands.Count; i++)
             {
-                Rectangle relativeButtonBounds = _commandsList.GetButtonBounds(i);
-                Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + _commandsList.Boundaries.Location, relativeButtonBounds.Size);
-                Rectangle buttonNameScreenBounds = CommandListLayoutCalculator.ButtonNameBounds(buttonScreenBounds);
-
-                Vector2 textPosition = buttonNameScreenBounds.Location.ToVector2() + new Vector2(0, verticalCenterOffset);
-                if (i == _commandsList.HoveredButtonIndex)
-                {
-                    float textWidth = FontService.Regular.MeasureWidth(PanelTextSize, _savedCommands[i].Name);
-                    textPosition.X += CommandListLayoutCalculator.GetCommandListTextSlideOffset(textWidth, buttonScreenBounds.Width);
-                }
-
-                DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(_commandsList.Boundaries, buttonNameScreenBounds);
-                DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-                FontService.Regular.DrawText(PanelTextSize, _savedCommands[i].Name, textPosition, textColor);
-
-                DrawHelper.EndBatch();
+                _renderer.RenderCommandListButtonText(_commandsList, i, _savedCommands[i].Name);
             }
 
-            DrawHelper.Device.ScissorRectangle = _commandsList.Boundaries;
-            DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaScissoredDrawOptions);
-            for (int i = 0; i < _savedCommands.Count; i++)
-            {
-                // draw reorder icon here -> CommandLineLayoutCalculator.ReorderButtonBounds(buttonScreenBounds)
-                // draw file icon here -> CommandLineLayoutCalculator.ButtonFileIconBounds(buttonScreenBounds)
-                // draw edit icon here -> CommandLineLayoutCalculator.EditButtonBounds(buttonScreenBounds)
-
-                if (i == _commandsList.HoveredButtonIndex)
-                {
-                    Rectangle relativeButtonBounds = _commandsList.GetButtonBounds(i);
-                    Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + _commandsList.Boundaries.Location, relativeButtonBounds.Size);
-
-                    DrawHelper.DrawBackground(buttonScreenBounds, _commandsList.IsHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
-                                                                                                    : theme.GetColor(ColorRegistry.HoverOverlayId));
-                }
-            }
-
-            DrawHelper.EndBatch();
+            _renderer.RenderCommandListBackgrounds(_commandsList, _savedCommands);
 
             base.RenderUpdate();
         }

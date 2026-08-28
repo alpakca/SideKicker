@@ -12,6 +12,7 @@ namespace SideKicker.Panels
     {
         private int _caretPosition;
         private int _textOffset;
+        private int _caretX;
         private string _text = "";
 
         public Rectangle SelectableArea => new Rectangle(Boundaries.X - SelectableMargin, Boundaries.Y - SelectableMargin, 
@@ -38,7 +39,8 @@ namespace SideKicker.Panels
         }
 
         public int TextOffset => _textOffset;
-        public int CaretPosition => _caretPosition;
+        /// <summary>X position of caret, TextOffset not included.</summary>
+        public int CaretX => _caretX;
 
         public void InsertText(string str)
         {
@@ -120,18 +122,18 @@ namespace SideKicker.Panels
         private void UpdateCaret(int value)
         {
             _caretPosition = Math.Clamp(value, 0, _text.Length);
-            int caretX = (int)FontService.Regular.MeasureWidth(TextSize, _text[.._caretPosition]);
+            _caretX = (int)FontService.Regular.MeasureWidth(TextSize, _text[.._caretPosition]);
 
             int previousCharWidth = _caretPosition > 0 ? (int)FontService.Regular.MeasureWidth(TextSize, _text[_caretPosition - 1].ToString())
                                                        : 0;
 
-            if (_textOffset + caretX + SelectableMargin > this.Boundaries.Width)
+            if (_textOffset + _caretX + SelectableMargin > this.Boundaries.Width)
             {
-                _textOffset = this.Boundaries.Width - caretX - SelectableMargin;
+                _textOffset = this.Boundaries.Width - _caretX - SelectableMargin;
             }
-            else if (_textOffset + caretX - previousCharWidth < 0)
+            else if (_textOffset + _caretX - previousCharWidth < 0)
             {
-                _textOffset = previousCharWidth - caretX;
+                _textOffset = previousCharWidth - _caretX;
             }
 
             _textOffset = Math.Min(0, _textOffset);

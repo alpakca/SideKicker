@@ -25,6 +25,7 @@ namespace SideKicker.Panels.PinnedCommands
         {
             _savedCommands = new List<SavedCommand>(CommandSerializer.Load());
             _contextWindow = new ContextWindow(_savedCommands);
+            _contextWindow.SetSavedCommandCount(_savedCommands.Count);
 
             _contextWindow.EditorButtonPressed += Window_EditorButtonPressed;
             _contextWindow.CommandListButtonBodyPressed += Window_CommandListButtonBodyPressed;
@@ -92,9 +93,6 @@ namespace SideKicker.Panels.PinnedCommands
 
                     _savedCommands.Add(command);
                     SetEditorShowCommand(null);
-
-                    _contextWindow.SetSavedCommandCount(_savedCommands.Count);
-                    CommandListUpdated();
                     break;
 
                 case EditorButton.Save:
@@ -115,11 +113,11 @@ namespace SideKicker.Panels.PinnedCommands
 
                     _savedCommands.RemoveAt(indexOfDelete);
                     SetEditorShowCommand(null);
-
-                    _contextWindow.SetSavedCommandCount(_savedCommands.Count);
-                    CommandListUpdated();
                     break;
             }
+
+            _contextWindow.SetSavedCommandCount(_savedCommands.Count);
+            CommandListUpdated();
         }
 
         private void SetEditorShowCommand(SavedCommand command)
