@@ -4,5 +4,7 @@ bin/
 obj/
 .vs/
 
+saves/
+
 Icon.bmp
 Icon.ico

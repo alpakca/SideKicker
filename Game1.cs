@@ -101,5 +101,11 @@ namespace SideKicker
 
             base.Draw(gameTime);
         }
+
+        protected override void OnExiting(object sender, ExitingEventArgs args)
+        {
+            panelController.OnExiting();
+            base.OnExiting(sender, args);
+        }
     }
 }

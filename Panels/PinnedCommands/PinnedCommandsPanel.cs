@@ -1,6 +1,6 @@
 ﻿using PopUpUI.Surface;
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -8,10 +8,13 @@ namespace SideKicker.Panels.PinnedCommands
 {
     internal class PinnedCommandsPanel : ContextPanel
     {
+        private const int SavingBufferTime = 5000; // in milliseconds
+
+        private bool _commandListDirty;
         private SavedCommand _editorShownCommand;
 
         private readonly ContextWindow _contextWindow;
-        private readonly ObservableCollection<SavedCommand> _savedCommands;
+        private readonly List<SavedCommand> _savedCommands;
 
         public override string IconId => "PinnedActions";
         public override string IconPath => @"panels\PinnedActionsPanelIcon.png";
@@ -20,23 +23,26 @@ namespace SideKicker.Panels.PinnedCommands
 
         public PinnedCommandsPanel()
         {
-            _savedCommands = new ObservableCollection<SavedCommand>();
+            _savedCommands = new List<SavedCommand>(CommandSerializer.Load());
             _contextWindow = new ContextWindow(_savedCommands);
 
             _contextWindow.EditorButtonPressed += Window_EditorButtonPressed;
             _contextWindow.CommandListButtonBodyPressed += Window_CommandListButtonBodyPressed;
             _contextWindow.CommandListButtonEditPressed += Window_CommandListButtonEditPressed;
             _contextWindow.CommandListButtonsSwaped += Window_CommandListButtonsSwaped;
+            _contextWindow.SaveTimerElapsed += Window_SaveTimerElapsed;
 
             _editorShownCommand = null;
             _contextWindow.ShowCommand(null);
+        }
 
-            _savedCommands.Add(new SavedCommand 
+        public override void OnExiting()
+        {
+            if (_commandListDirty)
             {
-                Name = "SideKicker Git", 
-                FileName = "C:\\Program Files\\Git\\git-bash.exe", 
-                PathToRunCommand = @"C:\Users\user\Desktop\C#\SideKicker\SideKicker" 
-            });
+                _commandListDirty = false;
+                CommandSerializer.Save(_savedCommands);
+            }
         }
 
         private void Window_CommandListButtonBodyPressed(int buttonIndex)
@@ -44,7 +50,7 @@ namespace SideKicker.Panels.PinnedCommands
             SavedCommand command = _savedCommands[buttonIndex];
             try
             {
-                using Process cmdWindow = Process.Start(new ProcessStartInfo
+                using Process proc = Process.Start(new ProcessStartInfo
                 {
                     WorkingDirectory = command.PathToRunCommand,
                     FileName = command.FileName,
@@ -53,11 +59,9 @@ namespace SideKicker.Panels.PinnedCommands
             }
             catch (Win32Exception)
             {
-
             }
             catch (InvalidOperationException)
-            {
-                
+            { 
             }
         }
 
@@ -69,6 +73,7 @@ namespace SideKicker.Panels.PinnedCommands
         private void Window_CommandListButtonsSwaped(int firstButtonIndex, int secondButtonIndex)
         {
             (_savedCommands[firstButtonIndex], _savedCommands[secondButtonIndex]) = (_savedCommands[secondButtonIndex], _savedCommands[firstButtonIndex]);
+            CommandListUpdated();
         }
 
         private void Window_EditorButtonPressed(EditorButton buttonType)
@@ -87,6 +92,9 @@ namespace SideKicker.Panels.PinnedCommands
 
                     _savedCommands.Add(command);
                     SetEditorShowCommand(null);
+
+                    _contextWindow.SetSavedCommandCount(_savedCommands.Count);
+                    CommandListUpdated();
                     break;
 
                 case EditorButton.Save:
@@ -107,6 +115,9 @@ namespace SideKicker.Panels.PinnedCommands
 
                     _savedCommands.RemoveAt(indexOfDelete);
                     SetEditorShowCommand(null);
+
+                    _contextWindow.SetSavedCommandCount(_savedCommands.Count);
+                    CommandListUpdated();
                     break;
             }
         }
@@ -115,6 +126,21 @@ namespace SideKicker.Panels.PinnedCommands
         {
             _editorShownCommand = command;
             _contextWindow.ShowCommand(command);
+        }
+
+        private void CommandListUpdated()
+        {
+            _commandListDirty = true;
+            _contextWindow.SetSaveTimer(SavingBufferTime);
+        }
+
+        private void Window_SaveTimerElapsed()
+        {
+            if (_commandListDirty)
+            {
+                _commandListDirty = false;
+                _ = CommandSerializer.SaveAsync(_savedCommands);
+            }
         }
     }
 }

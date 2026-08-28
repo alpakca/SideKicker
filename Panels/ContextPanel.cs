@@ -12,5 +12,7 @@ namespace SideKicker.Panels
         public abstract string IconPath { get; }
 
         public abstract PopWindow Window { get; }
+
+        public abstract void OnExiting();
     }
 }

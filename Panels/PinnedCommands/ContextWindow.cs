@@ -6,15 +6,14 @@ using System.Collections.Generic;
 using PopUpUI.Input;
 using PopUpUI.Toolkit;
 using SideKicker.Theming;
-using System.Collections.ObjectModel;
 
 namespace SideKicker.Panels.PinnedCommands
 {
     internal class ContextWindow : PopWindow
     {
-        private const string SaveFileName = "pinnedcommands.json";
         private const int PanelTextSize = 12;
 
+        private float _remainingSaveTime;
         private readonly IReadOnlyList<SavedCommand> _savedCommands;
 
         private bool _inEditingMode;
@@ -31,8 +30,9 @@ namespace SideKicker.Panels.PinnedCommands
         public event Action<int> CommandListButtonBodyPressed;
         public event Action<int> CommandListButtonEditPressed;
         public event Action<int, int> CommandListButtonsSwaped;
+        public event Action SaveTimerElapsed;
 
-        public ContextWindow(ObservableCollection<SavedCommand> savedCommands)
+        public ContextWindow(IReadOnlyList<SavedCommand> savedCommands)
         {
             _savedCommands = savedCommands;
 
@@ -44,11 +44,11 @@ namespace SideKicker.Panels.PinnedCommands
             {
                 Boundaries = new Rectangle(270, 20, 200, 210),
                 ButtonHeight = CommandListLayoutCalculator.ButtonHeight,
-                ButtonMargin = 4
+                ButtonMargin = 4,
+                ButtonCount = _savedCommands.Count
             };
             _commandsList.ButtonPressed += CommandsList_ButtonPressed;
             _commandsList.ButtonHeld += CommandsList_ButtonHeld;
-            savedCommands.CollectionChanged += (sender, _) => _commandsList.ButtonCount = ((IReadOnlyList<SavedCommand>)sender).Count;
 
             this.Boundaries = new Rectangle(0, 0, 490, 250);
             this.Elements.AddRange(_textBoxes.Values);
@@ -121,6 +121,16 @@ namespace SideKicker.Panels.PinnedCommands
                 PathToRunCommand = _textBoxes[CommandEditorTextBox.PathToRunCommand].Text,
                 FileName = _textBoxes[CommandEditorTextBox.FileName].Text
             };
+        }
+
+        public void SetSavedCommandCount(int count)
+        {
+            _commandsList.ButtonCount = count;
+        }
+
+        public void SetSaveTimer(float milliseconds)
+        {
+            _remainingSaveTime = milliseconds;
         }
 
         private void InitializeCommandEditor(out TextPlaque[] commandEditorTexts, out TextedButton[] addingCommandButtons, 
@@ -200,6 +210,20 @@ namespace SideKicker.Panels.PinnedCommands
                     HoldPacket = new HoldablePacket()
                 }
             };
+        }
+
+        protected override void Update()
+        {
+            if (_remainingSaveTime > 0)
+            {
+                _remainingSaveTime -= Time.DeltaTime;
+                if (_remainingSaveTime <= 0)
+                {
+                    SaveTimerElapsed?.Invoke();
+                }
+            }
+
+            base.Update();
         }
 
         protected override void RenderUpdate()

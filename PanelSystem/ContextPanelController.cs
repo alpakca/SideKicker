@@ -31,6 +31,11 @@ namespace SideKicker.PanelSystem
             PopWindowManager.ActiveWindows.Add(_panelWindow);
         }
 
+        public void OnExiting()
+        {
+            foreach (var panel in _allPanels) panel.OnExiting();
+        }
+
         public void OpenPanelAt(int index)
         {
             PopWindowManager.ActiveWindows.Remove(_openPanel?.Window);
@@ -73,6 +78,10 @@ namespace SideKicker.PanelSystem
             public override string IconPath => "panels\\test.png";
 
             public override PopWindow Window { get; } = new PopWindow { Boundaries = new Rectangle(0, 0, 1, 1) };
+
+            public override void OnExiting()
+            {
+            }
         }
     }
 }
