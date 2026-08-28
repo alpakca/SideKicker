@@ -9,6 +9,7 @@ namespace SideKicker
         public static string AssetsFolderPath { get; private set; }
         public static string SavesFolderPath { get; private set; }
 
+        [STAThread]
         public static void Main(string[] args)
         {
             RootPath = AppContext.BaseDirectory;

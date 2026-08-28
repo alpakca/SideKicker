@@ -98,7 +98,7 @@ namespace SideKicker.Panels
                 return;
             }
 
-            Point inTextBoxPosition = e.MousePosition - SelectableArea.Location;
+            Point inTextBoxPosition = e.MousePosition - SelectableArea.Location - new Point(_textOffset, 0); // don't forget to include text offset
 
             // input inside box will be single line, so we can directly pass zero as Y value
             StringBuilder builder = new StringBuilder();
@@ -120,16 +120,21 @@ namespace SideKicker.Panels
         private void UpdateCaret(int value)
         {
             _caretPosition = Math.Clamp(value, 0, _text.Length);
-            int width = (int)FontService.Regular.MeasureWidth(TextSize, _text[.._caretPosition]);
+            int caretX = (int)FontService.Regular.MeasureWidth(TextSize, _text[.._caretPosition]);
 
-            if (_textOffset + width > this.Boundaries.Width)
+            int previousCharWidth = _caretPosition > 0 ? (int)FontService.Regular.MeasureWidth(TextSize, _text[_caretPosition - 1].ToString())
+                                                       : 0;
+
+            if (_textOffset + caretX + SelectableMargin > this.Boundaries.Width)
             {
-                _textOffset = this.Boundaries.Width - width;
+                _textOffset = this.Boundaries.Width - caretX - SelectableMargin;
             }
-            else if (_textOffset + width < 0)
+            else if (_textOffset + caretX - previousCharWidth < 0)
             {
-                _textOffset = -width;
+                _textOffset = previousCharWidth - caretX;
             }
+
+            _textOffset = Math.Min(0, _textOffset);
         }
 
         public void OnSelectingOutside(PopWindowMouseEventArgs e)

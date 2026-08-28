@@ -6,6 +6,10 @@ using System.Collections.Generic;
 using PopUpUI.Input;
 using PopUpUI.Toolkit;
 using SideKicker.Theming;
+using Microsoft.Xna.Framework.Input;
+using System.Linq;
+
+using Clipboard = System.Windows.Forms.Clipboard;
 
 namespace SideKicker.Panels.PinnedCommands
 {
@@ -42,7 +46,7 @@ namespace SideKicker.Panels.PinnedCommands
 
             _commandsList = new ScrollableButtonList
             {
-                Boundaries = new Rectangle(270, 20, 200, 210),
+                Boundaries = new Rectangle(270, 20, 250, 210),
                 ButtonHeight = CommandListLayoutCalculator.ButtonHeight,
                 ButtonMargin = 4,
                 ButtonCount = _savedCommands.Count
@@ -50,7 +54,14 @@ namespace SideKicker.Panels.PinnedCommands
             _commandsList.ButtonPressed += CommandsList_ButtonPressed;
             _commandsList.ButtonHeld += CommandsList_ButtonHeld;
 
-            this.Boundaries = new Rectangle(0, 0, 490, 250);
+            KeyboardShortcutManager shortcutManager = new KeyboardShortcutManager();
+            KeyboardCombination pasteLeftCtrl = KeyboardCombination.GetSingleUse([Keys.LeftControl, Keys.V]);
+            KeyboardCombination pasteRightCtrl = KeyboardCombination.GetSingleUse([Keys.RightControl, Keys.V]);
+            pasteLeftCtrl.FirstTriggerAction = pasteRightCtrl.FirstTriggerAction = KeyboardPasteAction;
+            shortcutManager.AddCombinations(pasteLeftCtrl, pasteRightCtrl);
+
+            this.Boundaries = new Rectangle(0, 0, 540, 250);
+            this.Elements.Add(shortcutManager);
             this.Elements.AddRange(_textBoxes.Values);
         }
 
@@ -78,6 +89,20 @@ namespace SideKicker.Panels.PinnedCommands
             {
                 _inReorderMode = true;
                 _reorderingButtonIndex = buttonIndex;
+            }
+        }
+
+        private void KeyboardPasteAction()
+        {
+            LinearTextBox activeBox = _textBoxes.Values.FirstOrDefault(box => box.ReceivingInput);
+            if (activeBox == null)
+            {
+                return;
+            }
+
+            if (Clipboard.ContainsText())
+            {
+                activeBox.InsertText(Clipboard.GetText());
             }
         }
 
@@ -283,22 +308,41 @@ namespace SideKicker.Panels.PinnedCommands
                 DrawHelper.EndBatch();
             }
 
-            DrawHelper.Device.ScissorRectangle = _commandsList.Boundaries;
-            DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
+            int verticalCenterOffset = (_commandsList.ButtonHeight - FontService.Regular.GetLineSpacing(PanelTextSize)) / 2;
             for (int i = 0; i < _savedCommands.Count; i++)
             {
                 Rectangle relativeButtonBounds = _commandsList.GetButtonBounds(i);
                 Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + _commandsList.Boundaries.Location, relativeButtonBounds.Size);
+                Rectangle buttonNameScreenBounds = CommandListLayoutCalculator.ButtonNameBounds(buttonScreenBounds);
 
+                Vector2 textPosition = buttonNameScreenBounds.Location.ToVector2() + new Vector2(0, verticalCenterOffset);
+                if (i == _commandsList.HoveredButtonIndex)
+                {
+                    float textWidth = FontService.Regular.MeasureWidth(PanelTextSize, _savedCommands[i].Name);
+                    textPosition.X += CommandListLayoutCalculator.GetCommandListTextSlideOffset(textWidth, buttonScreenBounds.Width);
+                }
+
+                DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(_commandsList.Boundaries, buttonNameScreenBounds);
+                DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaScissoredDrawOptions);
+
+                FontService.Regular.DrawText(PanelTextSize, _savedCommands[i].Name, textPosition, textColor);
+
+                DrawHelper.EndBatch();
+            }
+
+            DrawHelper.Device.ScissorRectangle = _commandsList.Boundaries;
+            DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaScissoredDrawOptions);
+            for (int i = 0; i < _savedCommands.Count; i++)
+            {
                 // draw reorder icon here -> CommandLineLayoutCalculator.ReorderButtonBounds(buttonScreenBounds)
-                FontService.Regular.DrawVerticallyCenteredText(PanelTextSize, _savedCommands[i].Name, 
-                                                               CommandListLayoutCalculator.ButtonNamePosition(buttonScreenBounds), 
-                                                               relativeButtonBounds.Height, textColor);
+                // draw file icon here -> CommandLineLayoutCalculator.ButtonFileIconBounds(buttonScreenBounds)
                 // draw edit icon here -> CommandLineLayoutCalculator.EditButtonBounds(buttonScreenBounds)
 
                 if (i == _commandsList.HoveredButtonIndex)
                 {
+                    Rectangle relativeButtonBounds = _commandsList.GetButtonBounds(i);
+                    Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + _commandsList.Boundaries.Location, relativeButtonBounds.Size);
+
                     DrawHelper.DrawBackground(buttonScreenBounds, _commandsList.IsHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
                                                                                                     : theme.GetColor(ColorRegistry.HoverOverlayId));
                 }

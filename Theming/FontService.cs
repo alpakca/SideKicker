@@ -14,6 +14,6 @@ namespace SideKicker.Theming
             { 24, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_24") },
         });
 
-        public static Action FontChanged;
+        public static event Action FontChanged;
     }
 }
