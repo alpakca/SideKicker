@@ -8,6 +8,6 @@ namespace SideKicker.Panels.PinnedCommands
     {
         Name,
         PathToRunCommand,
-        Command
+        FileName
     }
 }

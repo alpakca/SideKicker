@@ -29,6 +29,7 @@ namespace SideKicker
 
             Window.IsBorderless = true;
             Window.Title = "";
+            this.IsFixedTimeStep = false;
 
             Window.Position = Point.Zero;
             _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;

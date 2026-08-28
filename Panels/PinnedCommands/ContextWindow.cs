@@ -36,13 +36,13 @@ namespace SideKicker.Panels.PinnedCommands
         {
             _savedCommands = savedCommands;
 
-            // occopies an area of (0, 0, 220, 240)
+            // occopies an area of (0, 0, 220, 250)
             _textBoxes = new Dictionary<CommandEditorTextBox, LinearTextBox>();
             InitializeCommandEditor(out _commandEditorTexts, out _addingCommandButtons, out _editingCommandButtons);
 
             _commandsList = new ScrollableButtonList
             {
-                Boundaries = new Rectangle(350, 20, 200, 210),
+                Boundaries = new Rectangle(270, 20, 200, 210),
                 ButtonHeight = CommandListLayoutCalculator.ButtonHeight,
                 ButtonMargin = 4
             };
@@ -50,7 +50,7 @@ namespace SideKicker.Panels.PinnedCommands
             _commandsList.ButtonHeld += CommandsList_ButtonHeld;
             savedCommands.CollectionChanged += (sender, _) => _commandsList.ButtonCount = ((IReadOnlyList<SavedCommand>)sender).Count;
 
-            this.Boundaries = new Rectangle(0, 0, 570, 240);
+            this.Boundaries = new Rectangle(0, 0, 490, 250);
             this.Elements.AddRange(_textBoxes.Values);
         }
 
@@ -87,7 +87,7 @@ namespace SideKicker.Panels.PinnedCommands
             {
                 _textBoxes[CommandEditorTextBox.Name].Text = command.Name;
                 _textBoxes[CommandEditorTextBox.PathToRunCommand].Text = command.PathToRunCommand;
-                _textBoxes[CommandEditorTextBox.Command].Text = command.Command;
+                _textBoxes[CommandEditorTextBox.FileName].Text = command.FileName;
 
                 if (!_inEditingMode)
                 {
@@ -101,7 +101,7 @@ namespace SideKicker.Panels.PinnedCommands
             {
                 _textBoxes[CommandEditorTextBox.Name].Text = "";
                 _textBoxes[CommandEditorTextBox.PathToRunCommand].Text = "";
-                _textBoxes[CommandEditorTextBox.Command].Text = "";
+                _textBoxes[CommandEditorTextBox.FileName].Text = "";
 
                 if (_inEditingMode)
                 {
@@ -119,7 +119,7 @@ namespace SideKicker.Panels.PinnedCommands
             {
                 Name = _textBoxes[CommandEditorTextBox.Name].Text,
                 PathToRunCommand = _textBoxes[CommandEditorTextBox.PathToRunCommand].Text,
-                Command = _textBoxes[CommandEditorTextBox.Command].Text
+                FileName = _textBoxes[CommandEditorTextBox.FileName].Text
             };
         }
 
@@ -140,7 +140,7 @@ namespace SideKicker.Panels.PinnedCommands
                 SelectableMargin = 4
             });
 
-            _textBoxes.Add(CommandEditorTextBox.Command, new LinearTextBox
+            _textBoxes.Add(CommandEditorTextBox.FileName, new LinearTextBox
             {
                 TextSize = PanelTextSize,
                 Boundaries = new Rectangle(20, 160, 200, 30),
@@ -157,13 +157,13 @@ namespace SideKicker.Panels.PinnedCommands
                 },
                 new TextPlaque
                 {
-                    Text = "Directory To Run The Command In:",
+                    Text = "Directory To Open File:",
                     TextSize = PanelTextSize,
                     Position = new Vector2(20, 80)
                 },
                 new TextPlaque
                 {
-                    Text = "Command To Run:",
+                    Text = "File Path:",
                     TextSize = PanelTextSize,
                     Position = new Vector2(20, 140)
                 }
@@ -228,6 +228,8 @@ namespace SideKicker.Panels.PinnedCommands
                                                                                : theme.GetColor(ColorRegistry.HoverOverlayId));
                 }
             }
+
+            DrawHelper.DrawBackground(new Rectangle(250, 20, 1, this.Boundaries.Height - 20 * 2), theme.GetColor(ColorRegistry.BorderId));
 
             DrawHelper.EndBatch();
 

@@ -1,5 +1,8 @@
 ﻿using PopUpUI.Surface;
+using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
 
 namespace SideKicker.Panels.PinnedCommands
 {
@@ -28,12 +31,34 @@ namespace SideKicker.Panels.PinnedCommands
             _editorShownCommand = null;
             _contextWindow.ShowCommand(null);
 
-            _savedCommands.Add(new SavedCommand { Name = "SideKicker Git", Command = "", PathToRunCommand = "" });
+            _savedCommands.Add(new SavedCommand 
+            {
+                Name = "SideKicker Git", 
+                FileName = "C:\\Program Files\\Git\\git-bash.exe", 
+                PathToRunCommand = @"C:\Users\user\Desktop\C#\SideKicker\SideKicker" 
+            });
         }
 
         private void Window_CommandListButtonBodyPressed(int buttonIndex)
         {
-            // run command
+            SavedCommand command = _savedCommands[buttonIndex];
+            try
+            {
+                using Process cmdWindow = Process.Start(new ProcessStartInfo
+                {
+                    WorkingDirectory = command.PathToRunCommand,
+                    FileName = command.FileName,
+                    UseShellExecute = true,
+                });
+            }
+            catch (Win32Exception)
+            {
+
+            }
+            catch (InvalidOperationException)
+            {
+                
+            }
         }
 
         private void Window_CommandListButtonEditPressed(int buttonIndex)
@@ -52,7 +77,15 @@ namespace SideKicker.Panels.PinnedCommands
             {
                 case EditorButton.Add:
 
-                    _savedCommands.Add(_contextWindow.CreateCommand());
+                    SavedCommand command = _contextWindow.CreateCommand();
+                    if (command.FileName == "" || command.Name == "")
+                    {
+                        // do not allow empty names
+                        // do not allow empty file names as they throw InvalidOperationException in process creation
+                        return;
+                    }
+
+                    _savedCommands.Add(command);
                     SetEditorShowCommand(null);
                     break;
 
