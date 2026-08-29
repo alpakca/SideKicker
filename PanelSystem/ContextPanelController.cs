@@ -20,7 +20,7 @@ namespace SideKicker.PanelSystem
 
         public ContextPanelController()
         {
-            _allPanels = [new PinnedCommandsPanel(), new Test(), new Test()]; // replace with creation of context panel instances
+            _allPanels = [new PinnedCommandsPanel()];
             _panelWindow = new PanelWindow(this, _allPanels);
 
             InitializeTheme();
@@ -70,18 +70,6 @@ namespace SideKicker.PanelSystem
 
             ThemeService.Refresh();
             ThemeService.SetTheme("dark"); // replace with a preference setting reading
-        }
-
-        private class Test : ContextPanel
-        {
-            public override string IconId => "test";
-            public override string IconPath => "panels\\test.png";
-
-            public override PopWindow Window { get; } = new PopWindow { Boundaries = new Rectangle(0, 0, 1, 1) };
-
-            public override void OnExiting()
-            {
-            }
         }
     }
 }
