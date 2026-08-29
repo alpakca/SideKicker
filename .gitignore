@@ -4,5 +4,9 @@ bin/
 obj/
 .vs/
 
+saves/
+assets/panels
+assets/themes
+
 Icon.bmp
 Icon.ico

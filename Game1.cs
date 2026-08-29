@@ -29,6 +29,7 @@ namespace SideKicker
 
             Window.IsBorderless = true;
             Window.Title = "";
+            this.IsFixedTimeStep = false;
 
             Window.Position = Point.Zero;
             _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
@@ -57,10 +58,19 @@ namespace SideKicker
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             ContentAssistant.LoadTexture2Ds(
-                Directory.EnumerateFiles(ThemeService.AssetsFolderPath, "*.png", SearchOption.AllDirectories)
+                Directory.EnumerateFiles(Program.AssetsFolderPath, "*.png", SearchOption.AllDirectories)
                 .Where(path => Path.GetExtension(path) != ".pui")
                 .Select(path => (path, path))
                 .ToArray()
+            );
+
+            ContentAssistant.LoadWithContentManager<SpriteFont>(
+                Directory.EnumerateFiles(Path.Combine(Program.AssetsFolderPath, "fonts"))
+                .Select(path =>
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(path);
+                    return (fileName, "Font_" + fileName);
+                }).ToArray()
             );
 
             panelController = new ContextPanelController();
@@ -90,6 +100,12 @@ namespace SideKicker
             _spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+
+        protected override void OnExiting(object sender, ExitingEventArgs args)
+        {
+            panelController.OnExiting();
+            base.OnExiting(sender, args);
         }
     }
 }

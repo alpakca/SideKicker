@@ -1,0 +1,144 @@
+﻿using PopUpUI.Surface;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
+
+namespace SideKicker.Panels.PinnedCommands
+{
+    internal class PinnedCommandsPanel : ContextPanel
+    {
+        private const int SavingBufferTime = 5000; // in milliseconds
+
+        private bool _commandListDirty;
+        private SavedCommand _editorShownCommand;
+
+        private readonly ContextWindow _contextWindow;
+        private readonly List<SavedCommand> _savedCommands;
+
+        public override string IconId => "PinnedActions";
+        public override string IconPath => @"panels\PinnedActionsPanelIcon.png";
+
+        public override PopWindow Window => _contextWindow;
+
+        public PinnedCommandsPanel()
+        {
+            _savedCommands = new List<SavedCommand>(CommandSerializer.Load());
+            _contextWindow = new ContextWindow(_savedCommands);
+            _contextWindow.SetSavedCommandCount(_savedCommands.Count);
+
+            _contextWindow.EditorButtonPressed += Window_EditorButtonPressed;
+            _contextWindow.CommandListButtonBodyPressed += Window_CommandListButtonBodyPressed;
+            _contextWindow.CommandListButtonEditPressed += Window_CommandListButtonEditPressed;
+            _contextWindow.CommandListButtonsSwaped += Window_CommandListButtonsSwaped;
+            _contextWindow.SaveTimerElapsed += Window_SaveTimerElapsed;
+
+            _editorShownCommand = null;
+            _contextWindow.ShowCommand(null);
+        }
+
+        public override void OnExiting()
+        {
+            if (_commandListDirty)
+            {
+                _commandListDirty = false;
+                CommandSerializer.Save(_savedCommands);
+            }
+        }
+
+        private void Window_CommandListButtonBodyPressed(int buttonIndex)
+        {
+            SavedCommand command = _savedCommands[buttonIndex];
+            try
+            {
+                using Process proc = Process.Start(new ProcessStartInfo
+                {
+                    WorkingDirectory = command.PathToRunCommand,
+                    FileName = command.FileName,
+                    UseShellExecute = true,
+                });
+            }
+            catch (Win32Exception)
+            {
+            }
+            catch (InvalidOperationException)
+            { 
+            }
+        }
+
+        private void Window_CommandListButtonEditPressed(int buttonIndex)
+        {
+            SetEditorShowCommand(_savedCommands[buttonIndex]);
+        }
+
+        private void Window_CommandListButtonsSwaped(int firstButtonIndex, int secondButtonIndex)
+        {
+            (_savedCommands[firstButtonIndex], _savedCommands[secondButtonIndex]) = (_savedCommands[secondButtonIndex], _savedCommands[firstButtonIndex]);
+            CommandListUpdated();
+        }
+
+        private void Window_EditorButtonPressed(EditorButton buttonType)
+        {
+            switch (buttonType)
+            {
+                case EditorButton.Add:
+
+                    SavedCommand command = _contextWindow.CreateCommand();
+                    if (command.FileName == "" || command.Name == "")
+                    {
+                        // do not allow empty names
+                        // do not allow empty file names as they throw InvalidOperationException in process creation
+                        return;
+                    }
+
+                    _savedCommands.Add(command);
+                    SetEditorShowCommand(null);
+                    break;
+
+                case EditorButton.Save:
+
+                    int indexOfSave = _savedCommands.IndexOf(_editorShownCommand);
+                    if (indexOfSave == -1) return;
+
+                    SavedCommand newCommand = _contextWindow.CreateCommand();
+
+                    _savedCommands[indexOfSave] = newCommand;
+                    SetEditorShowCommand(null);
+                    break;
+
+                case EditorButton.Delete:
+
+                    int indexOfDelete = _savedCommands.IndexOf(_editorShownCommand);
+                    if (indexOfDelete == -1) return;
+
+                    _savedCommands.RemoveAt(indexOfDelete);
+                    SetEditorShowCommand(null);
+                    break;
+            }
+
+            _contextWindow.SetSavedCommandCount(_savedCommands.Count);
+            CommandListUpdated();
+        }
+
+        private void SetEditorShowCommand(SavedCommand command)
+        {
+            _editorShownCommand = command;
+            _contextWindow.ShowCommand(command);
+        }
+
+        private void CommandListUpdated()
+        {
+            _commandListDirty = true;
+            _contextWindow.SetSaveTimer(SavingBufferTime);
+        }
+
+        private void Window_SaveTimerElapsed()
+        {
+            if (_commandListDirty)
+            {
+                _commandListDirty = false;
+                _ = CommandSerializer.SaveAsync(_savedCommands);
+            }
+        }
+    }
+}

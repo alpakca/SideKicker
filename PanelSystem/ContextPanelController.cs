@@ -2,6 +2,7 @@
 using PopUpUI.Surface;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
+using SideKicker.Panels.PinnedCommands;
 using SideKicker.Theming;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace SideKicker.PanelSystem
 
         public ContextPanelController()
         {
-            _allPanels = [new Test(), new Test(), new Test()]; // replace with creation of context panel instances
+            _allPanels = [new PinnedCommandsPanel()];
             _panelWindow = new PanelWindow(this, _allPanels);
 
             InitializeTheme();
@@ -30,11 +31,13 @@ namespace SideKicker.PanelSystem
             PopWindowManager.ActiveWindows.Add(_panelWindow);
         }
 
+        public void OnExiting()
+        {
+            foreach (var panel in _allPanels) panel.OnExiting();
+        }
+
         public void OpenPanelAt(int index)
         {
-            if (_allPanels.IndexOf(_openPanel) == index)
-                return;
-
             PopWindowManager.ActiveWindows.Remove(_openPanel?.Window);
 
             _openPanel = _allPanels[index];
@@ -47,12 +50,12 @@ namespace SideKicker.PanelSystem
 
         public void UpdateWindowLocations()
         {
-            Point minimumWindowSize = new Point(_openPanel.Size.X + _panelWindow.Boundaries.Width,
+            Point minimumWindowSize = new Point(_openPanel.Window.Boundaries.Width + _panelWindow.Boundaries.Width,
                                                 Math.Max(_panelWindow.Boundaries.Height, _openPanel.Window.Boundaries.Height));
 
             Point openPanelPosition = _origin - minimumWindowSize;
 
-            _openPanel.Window.Boundaries = new Rectangle(openPanelPosition, _openPanel.Size);
+            _openPanel.Window.Boundaries = new Rectangle(openPanelPosition, _openPanel.Window.Boundaries.Size);
             _panelWindow.Boundaries = new Rectangle(openPanelPosition + minimumWindowSize - _panelWindow.Boundaries.Size, _panelWindow.Boundaries.Size);
 
             OverlayManager.SetAreas(_openPanel.Window.Boundaries, _panelWindow.Boundaries);
@@ -67,17 +70,6 @@ namespace SideKicker.PanelSystem
 
             ThemeService.Refresh();
             ThemeService.SetTheme("dark"); // replace with a preference setting reading
-        }
-
-        private class Test : ContextPanel
-        {
-            public override string IconId => "test";
-
-            public override string IconPath => "panels\\test.png";
-
-            public override Point Size { get; } = new Point(200, 200);
-
-            public override PopWindow Window { get; } = new PopWindow();
         }
     }
 }

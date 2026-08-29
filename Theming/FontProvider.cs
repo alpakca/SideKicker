@@ -27,7 +27,13 @@ namespace SideKicker.Theming
         public void DrawCenteredText(int size, string text, Rectangle boundaries, Color color)
         {
             Vector2 textSize = MeasureSize(size, text);
-            DrawText(size, text, new Vector2(boundaries.X + (boundaries.Width - textSize.X) / 2, boundaries.Y + (boundaries.Height - textSize.Y) / 2), color);
+            DrawText(size, text, new Vector2(boundaries.X + (int)((boundaries.Width - textSize.X) / 2), boundaries.Y + (int)((boundaries.Height - textSize.Y) / 2)), color);
+        }
+
+        public void DrawVerticallyCenteredText(int size, string text, Vector2 position, int height, Color color)
+        {
+            position = new Vector2(position.X, position.Y + (height - _fonts[size].LineSpacing) / 2);
+            DrawText(size, text, position, color);
         }
 
         public float MeasureWidth(int size, string text)
