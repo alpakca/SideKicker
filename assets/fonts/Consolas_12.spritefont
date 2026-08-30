@@ -8,16 +8,16 @@ with.
 <XnaContent xmlns:Graphics="Microsoft.Xna.Framework.Content.Pipeline.Graphics">
   <Asset Type="Graphics:FontDescription">
 
-    <!--
+	  <!--
     Modify this string to change the font that will be imported.
     -->
-    <FontName>Consolas</FontName>
+	  <FontName>Segoe UI</FontName>
 
-    <!--
+	  <!--
     Size is a float value, measured in points. Modify this value to change
     the size of the font.
     -->
-    <Size>12</Size>
+	  <Size>12</Size>
 
     <!--
     Spacing is a float value, measured in pixels. Modify this value to change

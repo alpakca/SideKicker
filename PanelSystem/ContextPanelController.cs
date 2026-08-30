@@ -1,12 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Surface;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
 using SideKicker.Panels.PinnedCommands;
+using SideKicker.Panels.Timers;
 using SideKicker.Theming;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SideKicker.PanelSystem
 {
@@ -20,7 +18,7 @@ namespace SideKicker.PanelSystem
 
         public ContextPanelController()
         {
-            _allPanels = [new PinnedCommandsPanel()];
+            _allPanels = [new PinnedCommandsPanel(), new TimersPanel()];
             _panelWindow = new PanelWindow(this, _allPanels);
 
             InitializeTheme();

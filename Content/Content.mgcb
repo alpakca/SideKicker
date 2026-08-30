@@ -10,27 +10,31 @@
 
 #-------------------------------- References --------------------------------#
 
+/reference:..\..\..\DefringedFontProcessor\DefringedFontProcessor\bin\Debug\net8.0\DefringedFontProcessor.dll
 
 #---------------------------------- Content ---------------------------------#
 
 #begin ../assets/fonts/Consolas_12.spritefont
 /importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
+/processor:DefringedFontProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
+/processorParam:TextureFormat=Color
+/processorParam:Version=1.0.0.0
 /build:../assets/fonts/Consolas_12.spritefont;Consolas_12.spritefont
 
 #begin ../assets/fonts/Consolas_16.spritefont
 /importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
+/processor:DefringedFontProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
+/processorParam:TextureFormat=Color
+/processorParam:Version=1.0.0.0
 /build:../assets/fonts/Consolas_16.spritefont;Consolas_16.spritefont
 
 #begin ../assets/fonts/Consolas_24.spritefont
 /importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
+/processor:DefringedFontProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
+/processorParam:TextureFormat=Color
+/processorParam:Version=1.0.0.0
 /build:../assets/fonts/Consolas_24.spritefont;Consolas_24.spritefont
 

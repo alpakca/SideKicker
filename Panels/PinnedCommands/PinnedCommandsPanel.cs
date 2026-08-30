@@ -16,8 +16,8 @@ namespace SideKicker.Panels.PinnedCommands
         private readonly ContextWindow _contextWindow;
         private readonly List<SavedCommand> _savedCommands;
 
-        public override string IconId => "PinnedActions";
-        public override string IconPath => @"panels\PinnedActionsPanelIcon.png";
+        public override string IconId { get; } = "PinnedActions";
+        public override string IconPath { get; } = @"panels\PinnedActionsPanelIcon.png";
 
         public override PopWindow Window => _contextWindow;
 
