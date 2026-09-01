@@ -11,7 +11,6 @@ namespace SideKicker.Panels.Timers
 
         private TimeInfo _shownAlarm;
         private TimeInfo _shownTimer;
-        private bool _isShownTimerStopped;
 
         public override string IconId { get; } = "Timers";
         public override string IconPath { get; } = @"panels\TimersPanelIcon.png";
@@ -20,13 +19,16 @@ namespace SideKicker.Panels.Timers
 
         public TimersPanel()
         {
-            _contextWindow = new ContextWindow();
             _registeredTimers = new SortedList<DateTime, TimeInfo>();
+            _contextWindow = new ContextWindow(_registeredTimers.Values);
 
             _contextWindow.AlarmButtonPressed += Window_AlarmButtonPressed;
             _contextWindow.TimerButtonPressed += Window_TimerButtonPressed;
             _contextWindow.TimesListButtonEditPressed += Window_TimesListButtonEditPressed;
             _contextWindow.UpdateCall += ContextWindow_UpdateCall;
+
+            ShowAlarm(null);
+            ShowTimer(null);
         }
 
         private void ContextWindow_UpdateCall()
@@ -43,7 +45,8 @@ namespace SideKicker.Panels.Timers
 
         private void TriggerTimeInfo(TimeInfo info)
         {
-
+            // trigger window to show the notification
+            // show the label of the info
         }
 
         private void Window_TimesListButtonEditPressed(int buttonIndex)
@@ -56,7 +59,7 @@ namespace SideKicker.Panels.Timers
             else
             {
                 ShowTimer(info);
-                _isShownTimerStopped = true;
+                _contextWindow.SetShownTimerStatus(true);
             }
         }
 
@@ -75,7 +78,7 @@ namespace SideKicker.Panels.Timers
                     _registeredTimers.Add(info.DueTime, info);
 
                     ShowTimer(info);
-                    _isShownTimerStopped = false;
+                    _contextWindow.SetShownTimerStatus(false);
                     _contextWindow.SetTimesListCount(_registeredTimers.Count);
 
                     break;
@@ -88,7 +91,7 @@ namespace SideKicker.Panels.Timers
                     }
 
                     ShowTimer(null);
-                    _isShownTimerStopped = false;
+                    _contextWindow.SetShownTimerStatus(false);
                     _contextWindow.SetTimesListCount(_registeredTimers.Count);
 
                     break;
@@ -96,14 +99,14 @@ namespace SideKicker.Panels.Timers
                 case TimerButtonType.Stop:
 
                     if (_shownTimer == null) return;
-                    _isShownTimerStopped = true;
+                    _contextWindow.SetShownTimerStatus(true);
 
                     break;
 
                 case TimerButtonType.Continue:
 
                     if (_shownTimer == null) return;
-                    _isShownTimerStopped = false;
+                    _contextWindow.SetShownTimerStatus(false);
 
                     break;
             }

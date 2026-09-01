@@ -12,6 +12,7 @@ namespace SideKicker.Theming
             { 12, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_12") },
             { 16, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_16") },
             { 24, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_24") },
+            { 20, ContentAssistant.FromLoaded<SpriteFont>("Font_SegoeUI_20") }
         });
 
         public static event Action FontChanged;

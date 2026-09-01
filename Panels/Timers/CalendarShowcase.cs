@@ -21,13 +21,13 @@ namespace SideKicker.Panels.Timers
         private Point _size;
 
         private readonly GregorianCalendar _calendar;
-        private readonly string[] _monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
         public int MaxDays => _calendar.GetDaysInMonth(_year, _month);
         public string ShownDateText => _shownDateText;
         public Point Size => _size;
 
-        public string[] WeekDayNames { get; } = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        public static string[] WeekDayNames { get; } = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        public static string[] MonthNames { get; } = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         public int SelectedDay => _day;
         public int SelectedMonth => _month;
         public int SelectedYear => _year;
@@ -51,22 +51,27 @@ namespace SideKicker.Panels.Timers
 
         private Point GetButtonSectionOffset()
         {
-            return new Point(ButtonMargin, ButtonMargin + 2 * ButtonHeight);
+            return new Point(ButtonMargin, ButtonMargin + 2 * (ButtonMargin + ButtonHeight));
+        }
+
+        public Rectangle GetWeekDayBounds(int columnIndex)
+        {
+            return new Rectangle(Location.X + ButtonMargin + columnIndex * (ButtonHeight + ButtonMargin), Location.Y + ButtonHeight + ButtonMargin, ButtonHeight, ButtonHeight);
         }
 
         public Rectangle NextMonthButtonBounds()
         {
-            return new Rectangle(_size.X - ButtonHeight - ButtonMargin, 0, ButtonHeight, ButtonHeight);
+            return new Rectangle(Location.X + _size.X - ButtonHeight - ButtonMargin, Location.Y, ButtonHeight, ButtonHeight);
         }
 
         public Rectangle PreviousMonthButtonBounds()
         {
-            return new Rectangle(_size.X - 2 * ButtonHeight - ButtonMargin, 0, ButtonHeight, ButtonHeight);
+            return new Rectangle(Location.X + _size.X - 2 * ButtonHeight - ButtonMargin, Location.Y, ButtonHeight, ButtonHeight);
         }
 
         public Rectangle ShownMonthDisplayBounds()
         {
-            return new Rectangle(ButtonMargin, 0, _size.X - 2 * (ButtonHeight + ButtonMargin), ButtonHeight);
+            return new Rectangle(Location.X + ButtonMargin, Location.Y, + _size.X - 2 * (ButtonHeight + ButtonMargin), ButtonHeight);
         }
 
         public int GetDay(int weekRowIndex, int dayColumnIndex)
@@ -109,7 +114,7 @@ namespace SideKicker.Panels.Timers
             _month = month;
             _day = day;
 
-            _shownDateText = $"{_monthNames[month - 1]} {_year}";
+            _shownDateText = $"{MonthNames[month - 1]} {_year}";
 
             int maxDays = _calendar.GetDaysInMonth(year, month);
             int maxDayRowIndex = GetDayIndexPosition(maxDays).Y;
@@ -131,12 +136,11 @@ namespace SideKicker.Panels.Timers
         {
             if (e.FirstTimeButtons.HasLeft)
             {
-                Point locationRelativeMouse = e.MousePosition - Location;
-                if (TryHitDay(locationRelativeMouse, out int day))
+                if (TryHitDay(e.MousePosition - Location, out int day))
                 {
                     SetDate(_year, _month, day);
                 }
-                else if (PreviousMonthButtonBounds().Contains(locationRelativeMouse))
+                else if (PreviousMonthButtonBounds().Contains(e.MousePosition))
                 {
                     if (_month == 1) // going back one year
                     {
@@ -147,7 +151,7 @@ namespace SideKicker.Panels.Timers
                         SetDate(_year, _month - 1, _day);
                     }
                 }
-                else if (NextMonthButtonBounds().Contains(locationRelativeMouse))
+                else if (NextMonthButtonBounds().Contains(e.MousePosition))
                 {
                     if (_month == MonthsInYear) // go to next year
                     {
