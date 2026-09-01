@@ -36,6 +36,7 @@ namespace SideKicker.Panels
         public int TextSize { get; set; }
 
         public int ScrollOffset => _scrolledOffset;
+        public string Text => _text.ToString();
         public IEnumerable<string> Lines
         {
             get
@@ -74,6 +75,14 @@ namespace SideKicker.Panels
         {
             _lines = new List<LineInfo>();
             _text = new StringBuilder();
+        }
+
+        public void SetText(string value)
+        {
+            _text.Clear();
+            _caret = 0;
+
+            InsertText(value);
         }
 
         public void InsertText(string str)

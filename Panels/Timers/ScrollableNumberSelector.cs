@@ -22,9 +22,11 @@ namespace SideKicker.Panels.Timers
         private int _lastKeyValue;
         private float _remainingNextKeyTime;
 
-        public string PreviousNumber => (_currentNumber == _startNumber ? _endNumber : _currentNumber - 1).ToString(_digitsStringFormat);
-        public string CurrentNumber => _currentNumber.ToString(_digitsStringFormat);
-        public string NextNumber => (_currentNumber == _endNumber ? _startNumber : _currentNumber + 1).ToString(_digitsStringFormat);
+        public int CurrentNumber => _currentNumber;
+
+        public string PreviousNumberFormatted => (_currentNumber == _startNumber ? _endNumber : _currentNumber - 1).ToString(_digitsStringFormat);
+        public string CurrentNumberFormatted => _currentNumber.ToString(_digitsStringFormat);
+        public string NextNumberFormatted => (_currentNumber == _endNumber ? _startNumber : _currentNumber + 1).ToString(_digitsStringFormat);
 
         public int DistanceToChangeNumber { get; set; }
 

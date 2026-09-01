@@ -13,6 +13,7 @@ namespace SideKicker.Panels.Timers
 
         private int _year;
         private int _month;
+        private int _day;
         private string _shownDateText;
 
         private int _maxWeekRowIndex;
@@ -27,7 +28,9 @@ namespace SideKicker.Panels.Timers
         public Point Size => _size;
 
         public string[] WeekDayNames { get; } = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-        public int SelectedDay { get; private set; }
+        public int SelectedDay => _day;
+        public int SelectedMonth => _month;
+        public int SelectedYear => _year;
 
         public int ButtonHeight { get; set; }
         public int ButtonMargin { get; set; }
@@ -100,11 +103,11 @@ namespace SideKicker.Panels.Timers
             return new Point(column, row);
         }
 
-        private void SetDate(int year, int month, int day)
+        public void SetDate(int year, int month, int day)
         {
             _year = year;
             _month = month;
-            SelectedDay = day;
+            _day = day;
 
             _shownDateText = $"{_monthNames[month - 1]} {_year}";
 
@@ -137,22 +140,22 @@ namespace SideKicker.Panels.Timers
                 {
                     if (_month == 1) // going back one year
                     {
-                        SetDate(_year - 1, MonthsInYear, SelectedDay);
+                        SetDate(_year - 1, MonthsInYear, _day);
                     }
                     else
                     {
-                        SetDate(_year, _month - 1, SelectedDay);
+                        SetDate(_year, _month - 1, _day);
                     }
                 }
                 else if (NextMonthButtonBounds().Contains(locationRelativeMouse))
                 {
                     if (_month == MonthsInYear) // go to next year
                     {
-                        SetDate(_year + 1, month: 1, SelectedDay);
+                        SetDate(_year + 1, month: 1, _day);
                     }
                     else
                     {
-                        SetDate(_year, _month + 1, SelectedDay);
+                        SetDate(_year, _month + 1, _day);
                     }
                 }
             }
