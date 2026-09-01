@@ -4,13 +4,19 @@ using System.Text;
 
 namespace SideKicker.Panels.Timers
 {
-    internal enum ButtonType
+    internal enum AlarmButtonType
     {
+        // alarm buttons
         Add,
         Delete,
-        Save,
+        Save
+    }
 
-        Start,
+    internal enum TimerButtonType
+    {
+        Add,
+        Discard,
         Stop,
+        Continue
     }
 }
