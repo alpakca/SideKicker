@@ -5,12 +5,19 @@ using PopUpUI.Toolkit;
 using SideKicker.Theming;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace SideKicker.Panels.Timers
 {
     internal class ContextWindowRenderer
     {
+        public const string AlarmCalendarPreviousMonthButtonId = "AlarmCalendarPreviousMonthButton";
+        public const string AlarmCalendarNextMonthButtonId = "AlarmCalendarNextMonthButtonId";
+        public const string TimerAddButton = "TimerAddButton";
+        public const string TimerDiscardButton = "TimerDiscardButton";
+        public const string TimerStopButton = "TimerStopButton";
+
         private readonly RenderTarget2D _windowTexture;
         private readonly Point _windowSize;
 
@@ -18,6 +25,40 @@ namespace SideKicker.Panels.Timers
         {
             _windowTexture = windowTexture;
             _windowSize = new Point(windowTexture.Width, windowTexture.Height);
+        }
+
+        [ModuleInitializer]
+        public static void InitializeIcons()
+        {
+            IconRegistry.Register(new IconDefinition
+            {
+                Id = AlarmCalendarNextMonthButtonId,
+                DefaultPath = @"panels\AlarmCalendarNextMonthButton.png"
+            });
+
+            IconRegistry.Register(new IconDefinition
+            {
+                Id = AlarmCalendarPreviousMonthButtonId,
+                DefaultPath = @"panels\AlarmCalendarPreviousMonthButton.png",
+            });
+
+            IconRegistry.Register(new IconDefinition
+            {
+                Id = TimerAddButton,
+                DefaultPath = @"panels\TimerAddButton.png"
+            });
+
+            IconRegistry.Register(new IconDefinition
+            {
+                Id = TimerDiscardButton,
+                DefaultPath = @"panels\TimerDiscardButton.png"
+            });
+
+            IconRegistry.Register(new IconDefinition
+            {
+                Id = TimerStopButton,
+                DefaultPath = @"panels\TimerStopButton.png"
+            });
         }
 
         public void StartMainBatch()
@@ -44,15 +85,13 @@ namespace SideKicker.Panels.Timers
             }
 
             // calendar
-            FontService.Regular.DrawText(12, calendar.ShownDateText, calendar.ShownMonthDisplayBounds().Location.ToVector2(), textColor);
-
-            DrawHelper.DrawBackground(calendar.PreviousMonthButtonBounds(), Color.Red); // replace with icon draw
-            DrawHelper.DrawBackground(calendar.NextMonthButtonBounds(), Color.Blue); // replace with icon draw
+            FontService.Regular.DrawText(12, calendar.ShownDateText, new Vector2(20, 45), textColor);
 
             int dayIndex = 0;
             foreach (var dayName in CalendarShowcase.WeekDayNames)
             {
-                FontService.Regular.DrawCenteredText(12, dayName, calendar.GetWeekDayBounds(dayIndex), textColor);
+                Rectangle weekDayBounds = TimesListLayoutCalculator.CalendarWeekDayBounds(dayIndex);
+                FontService.Regular.DrawCenteredText(12, dayName, new Rectangle(new Point(20, 70) + weekDayBounds.Location, weekDayBounds.Size), textColor);
                 dayIndex++;
             }
 
@@ -71,16 +110,22 @@ namespace SideKicker.Panels.Timers
             }
         }
 
-        public void RenderButtons(params ReadOnlySpan<Clickable> buttons)
+        public void RenderIconedButtons(params ReadOnlySpan<IconedButton> buttons)
         {
             ResolvedTheme theme = ThemeService.CurrentTheme;
             foreach (var button in buttons)
             {
-                DrawHelper.DrawBorderedBackground(button.Boundaries, theme.GetColor(ColorRegistry.BorderAccentId), theme.GetColor(ColorRegistry.BackgroundId), 1);
+                DrawHelper.Batch.Draw(theme.GetIcon(button.IconId), button.Boundaries, Color.White);
+
+                if (button.IsHovered)
+                {
+                    DrawHelper.DrawBackground(button.Boundaries, button.IsHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
+                                                                               : theme.GetColor(ColorRegistry.HoverOverlayId));
+                }
             }
         }
 
-        public void RenderButtons(params ReadOnlySpan<TextedButton> buttons)
+        public void RenderTextedButtons(params ReadOnlySpan<TextedButton> buttons)
         {
             ResolvedTheme theme = ThemeService.CurrentTheme;
             foreach (var button in buttons)

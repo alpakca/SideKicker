@@ -45,33 +45,8 @@ namespace SideKicker.Panels.Timers
 
         public Rectangle GetDayButtonBounds(int weekRowIndex, int dayColumnIndex)
         {
-            return new Rectangle(GetButtonSectionOffset() + new Point(dayColumnIndex * (ButtonHeight + ButtonMargin), weekRowIndex * (ButtonHeight + ButtonMargin)),
+            return new Rectangle(new Point(dayColumnIndex * (ButtonHeight + ButtonMargin), weekRowIndex * (ButtonHeight + ButtonMargin)),
                                  new Point(ButtonHeight, ButtonHeight));
-        }
-
-        private Point GetButtonSectionOffset()
-        {
-            return new Point(ButtonMargin, ButtonMargin + 2 * (ButtonMargin + ButtonHeight));
-        }
-
-        public Rectangle GetWeekDayBounds(int columnIndex)
-        {
-            return new Rectangle(Location.X + ButtonMargin + columnIndex * (ButtonHeight + ButtonMargin), Location.Y + ButtonHeight + ButtonMargin, ButtonHeight, ButtonHeight);
-        }
-
-        public Rectangle NextMonthButtonBounds()
-        {
-            return new Rectangle(Location.X + _size.X - ButtonHeight - ButtonMargin, Location.Y, ButtonHeight, ButtonHeight);
-        }
-
-        public Rectangle PreviousMonthButtonBounds()
-        {
-            return new Rectangle(Location.X + _size.X - 2 * ButtonHeight - ButtonMargin, Location.Y, ButtonHeight, ButtonHeight);
-        }
-
-        public Rectangle ShownMonthDisplayBounds()
-        {
-            return new Rectangle(Location.X + ButtonMargin, Location.Y, + _size.X - 2 * (ButtonHeight + ButtonMargin), ButtonHeight);
         }
 
         public int GetDay(int weekRowIndex, int dayColumnIndex)
@@ -126,6 +101,26 @@ namespace SideKicker.Panels.Timers
             _size = new Point(bottomRightDayButton.Right, bottomRightDayButton.Bottom);
         }
 
+        public void MoveMonth(int amount)
+        {
+            int newMonth = _month + amount;
+            int newYear = _year;
+
+            while (newMonth > MonthsInYear)
+            {
+                newMonth -= MonthsInYear;
+                newYear++;
+            }
+
+            while (newMonth < 1)
+            {
+                newMonth += MonthsInYear;
+                newYear--;
+            }
+
+            SetDate(newYear, newMonth, _day);
+        }
+
         private int GetDayColumn(int day)
         {
             DayOfWeek firstDay = _calendar.GetDayOfWeek(new DateTime(_year, _month, day));
@@ -134,43 +129,16 @@ namespace SideKicker.Panels.Timers
 
         public void MouseStateChangeUpdate(PopWindowMouseEventArgs e)
         {
-            if (e.FirstTimeButtons.HasLeft)
+            if (e.FirstTimeButtons.HasLeft && TryHitDay(e.MousePosition - Location, out int day))
             {
-                if (TryHitDay(e.MousePosition - Location, out int day))
-                {
-                    SetDate(_year, _month, day);
-                }
-                else if (PreviousMonthButtonBounds().Contains(e.MousePosition))
-                {
-                    if (_month == 1) // going back one year
-                    {
-                        SetDate(_year - 1, MonthsInYear, _day);
-                    }
-                    else
-                    {
-                        SetDate(_year, _month - 1, _day);
-                    }
-                }
-                else if (NextMonthButtonBounds().Contains(e.MousePosition))
-                {
-                    if (_month == MonthsInYear) // go to next year
-                    {
-                        SetDate(_year + 1, month: 1, _day);
-                    }
-                    else
-                    {
-                        SetDate(_year, _month + 1, _day);
-                    }
-                }
+                SetDate(_year, _month, day);
             }
         }
 
         private bool TryHitDay(Point locationRelativeMouse, out int day)
         {
-            Point removedOffset = locationRelativeMouse - GetButtonSectionOffset();
-
-            int weekRowIndex = removedOffset.Y / (ButtonHeight + ButtonMargin);
-            int dayColumnIndex = removedOffset.X / (ButtonHeight + ButtonMargin);
+            int weekRowIndex = locationRelativeMouse.Y / (ButtonHeight + ButtonMargin);
+            int dayColumnIndex = locationRelativeMouse.X / (ButtonHeight + ButtonMargin);
 
             if (0 > weekRowIndex || weekRowIndex > _maxDayColumnIndex ||
                 0 > dayColumnIndex || dayColumnIndex > _maxDayColumnIndex)
