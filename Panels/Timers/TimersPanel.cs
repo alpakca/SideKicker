@@ -43,8 +43,10 @@ namespace SideKicker.Panels.Timers
                 if (_shownTimer == first)
                 {
                     ShowTimer(null);
+                    _contextWindow.SetShownTimerStatus(false);
                 }
 
+                _contextWindow.SetTimesListCount(_registeredTimers.Count);
                 TriggerTimeInfo(first);
             }
         }

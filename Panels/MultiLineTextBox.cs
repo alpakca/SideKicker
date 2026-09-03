@@ -87,11 +87,6 @@ namespace SideKicker.Panels
 
         public void InsertText(string str)
         {
-            if (string.IsNullOrEmpty(str))
-            {
-                return;
-            }
-
             _text.Insert(_caret, str);
             RebuildLayout();
 

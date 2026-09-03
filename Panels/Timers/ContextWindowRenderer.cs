@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Elements;
 using PopUpUI.Toolkit;
+using SideKicker.Panels.PinnedCommands;
 using SideKicker.Theming;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,9 @@ namespace SideKicker.Panels.Timers
         public const string TimerDiscardButton = "TimerDiscardButton";
         public const string TimerStopButton = "TimerStopButton";
 
+        private const int TimesListTextSize = 12;
         private const int TimersNumberTextSize = 16;
+        private static readonly int TimesListTextLineSpacing = FontService.Regular.GetLineSpacing(TimesListTextSize);
 
         private readonly RenderTarget2D _windowTexture;
         private readonly Point _windowSize;
@@ -231,12 +234,54 @@ namespace SideKicker.Panels.Timers
 
         public void RenderTimesListBackgrounds(ScrollableButtonList timesList)
         {
+            ResolvedTheme theme = ThemeService.CurrentTheme;
 
+            DrawHelper.Device.ScissorRectangle = timesList.Boundaries;
+            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+
+            for (int i = 0; i < timesList.ButtonCount; i++)
+            {
+                Rectangle relativeButtonBounds = timesList.GetButtonBounds(i);
+                Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + timesList.Boundaries.Location, relativeButtonBounds.Size);
+
+                DrawHelper.Batch.Draw(theme.GetIcon(IconRegistry.EditButtonId), TimesListLayoutCalculator.EditButtonBounds(buttonScreenBounds), Color.White);
+
+                if (i == timesList.HoveredButtonIndex)
+                {
+                    bool hitEditButton = TimesListLayoutCalculator.HitEditButton(buttonScreenBounds.Size, timesList.RelativeMouseToHovered);
+                    Rectangle overlayBounds = hitEditButton ? TimesListLayoutCalculator.EditButtonBounds(buttonScreenBounds) : buttonScreenBounds;
+
+                    DrawHelper.DrawBackground(overlayBounds, timesList.IsHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
+                                                                                           : theme.GetColor(ColorRegistry.HoverOverlayId));
+                }
+            }
+
+            DrawHelper.EndBatch();
         }
 
         public void RenderTimesListText(ScrollableButtonList timesList, int buttonIndex, string buttonName)
         {
+            Rectangle relativeButtonBounds = timesList.GetButtonBounds(buttonIndex);
+            Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + timesList.Boundaries.Location, relativeButtonBounds.Size);
+            Rectangle buttonNameScreenBounds = TimesListLayoutCalculator.ButtonNameBounds(buttonScreenBounds);
 
+            int verticalCenterOffset = TimesListTextLineSpacing / 2;
+            Vector2 textPosition = buttonNameScreenBounds.Location.ToVector2() + new Vector2(0, verticalCenterOffset);
+
+            // apply sliding offset
+            if (buttonIndex == timesList.HoveredButtonIndex)
+            {
+                float textWidth = FontService.Regular.MeasureWidth(TimesListTextSize, buttonName);
+                textPosition.X += TimesListLayoutCalculator.GetTimesListTextSlideOffset(textWidth, buttonScreenBounds.Width);
+            }
+
+            // we need intersect here since button may have been cut through if because of scrolling, so text should be cut too
+            DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(timesList.Boundaries, buttonNameScreenBounds);
+            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+
+            FontService.Regular.DrawText(TimesListTextSize, buttonName, textPosition, ThemeService.CurrentTheme.GetColor(ColorRegistry.TextColorId));
+
+            DrawHelper.EndBatch();
         }
     }
 }

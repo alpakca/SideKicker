@@ -34,17 +34,17 @@ namespace SideKicker.Panels.Timers
         private readonly Dictionary<TimerButtonType, IconedButton> _stopwatchButtons;
 
         private readonly TextPlaque[] _textPlaques;
-        private readonly ScrollableButtonList _activeTimesList;
+        private readonly ScrollableButtonList _timesList;
 
         private readonly ContextWindowRenderer _renderer;
-        private readonly IEnumerable<TimeInfo> _registedTimes;
+        private readonly IList<TimeInfo> _registedTimes;
 
         public event Action<AlarmButtonType> AlarmButtonPressed;
         public event Action<TimerButtonType> TimerButtonPressed;
         public event Action<int> TimesListButtonEditPressed;
         public event Action UpdateCall;
 
-        public ContextWindow(IEnumerable<TimeInfo> registeredTimes)
+        public ContextWindow(IList<TimeInfo> registeredTimes)
         {
             _registedTimes = registeredTimes;
 
@@ -70,14 +70,13 @@ namespace SideKicker.Panels.Timers
                 new TextPlaque { IsBold = false, Text = "Set Timer", TextSize = HeaderTextSize, Position = new Vector2(260, 10)}
             };
 
-            _activeTimesList = new ScrollableButtonList
+            _timesList = new ScrollableButtonList
             {
-                Boundaries = new Rectangle(),
-                ButtonHeight = 0,
-                ButtonMargin = 0
+                Boundaries = new Rectangle(260, 301, 178, 114),
+                ButtonHeight = TimesListLayoutCalculator.TimesListButtonHeight,
+                ButtonMargin = 4
             };
-            _activeTimesList.ButtonPressed += ActiveTimesList_ButtonPressed;
-            _activeTimesList.ButtonHeld += ActiveTimesList_ButtonHeld;
+            _timesList.ButtonPressed += ActiveTimesList_ButtonPressed;
 
             this.Elements.AddRange([_alarmLabelTextbox, .. _alarmNumberSelectors.Values, .. _alarmButtons.Values, .. _alarmMonthChangeButtons, 
                                     _timerLabelTextbox, .. _timerNumberSelectors.Values, .. _timerButtons.Values,
@@ -89,8 +88,8 @@ namespace SideKicker.Panels.Timers
 
         public void SetTimesListCount(int value)
         {
-            _activeTimesList.ButtonCount = value;
-            _activeTimesList.UpdateScrolledLength();
+            _timesList.ButtonCount = value;
+            _timesList.UpdateScrolledLength();
         }
 
         public void SetShownTimerStatus(bool isPaused)
@@ -208,14 +207,12 @@ namespace SideKicker.Panels.Timers
             else _stopWatchShowcase.Resume();
         }
 
-        private void ActiveTimesList_ButtonHeld(int buttonIndex)
-        {
-
-        }
-
         private void ActiveTimesList_ButtonPressed(int buttonIndex)
         {
-
+            if (TimesListLayoutCalculator.HitEditButton(_timesList.GetButtonBounds(buttonIndex).Size, _timesList.RelativeMouseToHovered))
+            {
+                TimesListButtonEditPressed?.Invoke(buttonIndex);
+            }
         }
 
         protected override void Update()
@@ -280,41 +277,47 @@ namespace SideKicker.Panels.Timers
             _renderer.RenderTextBox(_alarmLabelTextbox);
             _renderer.RenderTextBox(_timerLabelTextbox);
 
-            _renderer.RenderTimesListBackgrounds(_activeTimesList);
-            int i = 0;
+            // times list
             DateTime now = DateTime.Now;
-            foreach (var timeInfo in _registedTimes)
+            for (int i = 0; i < _registedTimes.Count; i++)
             {
+                TimeInfo timeInfo = _registedTimes[i];
                 if (timeInfo.IsAlarm)
                 {
                     DateTime due = timeInfo.DueTime;
-                    _renderer.RenderTimesListText(_activeTimesList, i, $"{due.Day} {CalendarShowcase.MonthNames[due.Month]}, {due.Year}.");
+                    _renderer.RenderTimesListText(_timesList, i, $"{due.Day} {CalendarShowcase.MonthNames[due.Month]}, {due.Year}.");
                 }
                 else
                 {
                     TimeSpan remaining = timeInfo.GetRemainingTime(now);
                     if (remaining.Hours != 0)
                     {
-                        _renderer.RenderTimesListText(_activeTimesList, i, $"Timer ends in: {remaining.Hours}h, {remaining.Minutes}min, {remaining.Seconds}s.");
+                        _renderer.RenderTimesListText(_timesList, i, $"Timer ends in: {remaining.Hours}h, {remaining.Minutes}min, {remaining.Seconds}s.");
                     }
                     else if (remaining.Minutes != 0)
                     {
-                        _renderer.RenderTimesListText(_activeTimesList, i, $"Timer ends in: {remaining.Minutes}min, {remaining.Seconds}s.");
+                        _renderer.RenderTimesListText(_timesList, i, $"Timer ends in: {remaining.Minutes}min, {remaining.Seconds}s.");
                     }
                     else
                     {
-                        _renderer.RenderTimesListText(_activeTimesList, i, $"Timer ends in: {remaining.Seconds}s.");
+                        _renderer.RenderTimesListText(_timesList, i, $"Timer ends in: {remaining.Seconds}s.");
                     }
                 }
-
-                i++;
             }
+            _renderer.RenderTimesListBackgrounds(_timesList);
         }
 
         protected override void OnMouseButtonStateChange(PopWindowMouseEventArgs e)
         {
             _alarmCalendar.MouseStateChangeUpdate(e);
+            _timesList.MouseStateChangeUpdate(e);
             base.OnMouseButtonStateChange(e);
+        }
+
+        protected override void OnMousePositionChange(PopWindowMouseEventArgs e)
+        {
+            _timesList.MousePositionChanged(e);
+            base.OnMousePositionChange(e);
         }
 
         private void InitializeAlarmUI()
