@@ -18,6 +18,8 @@ namespace SideKicker.Panels.Timers
         public const string TimerDiscardButton = "TimerDiscardButton";
         public const string TimerStopButton = "TimerStopButton";
 
+        private const int TimersNumberTextSize = 16;
+
         private readonly RenderTarget2D _windowTexture;
         private readonly Point _windowSize;
 
@@ -172,7 +174,7 @@ namespace SideKicker.Panels.Timers
         {
             ResolvedTheme theme = ThemeService.CurrentTheme;
             Color textColor = theme.GetColor(ColorRegistry.TextColorId);
-            int lineSpacing = FontService.Regular.GetLineSpacing(16);
+            int lineSpacing = FontService.Regular.GetLineSpacing(TimersNumberTextSize);
 
             int index = 0;
             foreach (var selector in selectorGroup)
@@ -181,11 +183,11 @@ namespace SideKicker.Panels.Timers
                 int startX = selector.Boundaries.X;
                 int startY = selector.Boundaries.Y;
 
-                FontService.Regular.DrawText(16, selector.PreviousNumberFormatted, new Vector2(startX, startY), textColor * 0.5f);
-                FontService.Regular.DrawText(16, selector.CurrentNumberFormatted, new Vector2(startX, startY + marginBetween + lineSpacing), textColor);
-                FontService.Regular.DrawText(16, selector.NextNumberFormatted, new Vector2(startX, startY + 2 * (marginBetween + lineSpacing)), textColor * 0.5f);
+                FontService.Regular.DrawText(TimersNumberTextSize, selector.PreviousNumberFormatted, new Vector2(startX, startY), textColor * 0.5f);
+                FontService.Regular.DrawText(TimersNumberTextSize, selector.CurrentNumberFormatted, new Vector2(startX, startY + marginBetween + lineSpacing), textColor);
+                FontService.Regular.DrawText(TimersNumberTextSize, selector.NextNumberFormatted, new Vector2(startX, startY + 2 * (marginBetween + lineSpacing)), textColor * 0.5f);
 
-                // if not on last selector
+                // if not on last selector, draw middle points
                 if (index != selectorGroup.Count - 1)
                 {
                     int xMiddle = selector.Boundaries.Right + (selectorGroup[index + 1].Boundaries.X - selector.Boundaries.Right) / 2;
@@ -196,6 +198,34 @@ namespace SideKicker.Panels.Timers
 
                     index++;
                 }
+            }
+        }
+
+        public void RenderStopwatch(StopwatchShowcase stopwatch)
+        {
+            ResolvedTheme theme = ThemeService.CurrentTheme;
+            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
+            TimeSpan elapsed = stopwatch.Elapsed;
+
+            const int LeftMostStartX = 290;
+            const int NumbersMargin = 10;
+            const int NumberWidth = 20;
+            const int NumberTotalWidth = NumberWidth + NumbersMargin;
+            const int NumberY = 220;
+
+            FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Hours.ToString("00"), new Vector2(LeftMostStartX, NumberY), textColor);
+            FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Minutes.ToString("00"), new Vector2(LeftMostStartX + NumberTotalWidth, NumberY), textColor);
+            FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Seconds.ToString("00"), new Vector2(LeftMostStartX + 2 * NumberTotalWidth, NumberY), textColor); 
+            FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Milliseconds.ToString("000"), new Vector2(LeftMostStartX + 3 * NumberTotalWidth, NumberY), textColor);
+
+            // draw middle points
+            int yMiddle = NumberY + FontService.Regular.GetLineSpacing(TimersNumberTextSize) / 2;
+            for (int i = 0; i < 3; i++)
+            {
+                int xMiddle = LeftMostStartX + NumberWidth + i * NumberTotalWidth + (NumbersMargin / 2);
+
+                DrawHelper.DrawBackground(new Rectangle(xMiddle, yMiddle, 2, 2), textColor);
+                DrawHelper.DrawBackground(new Rectangle(xMiddle, yMiddle + 6, 2, 2), textColor);
             }
         }
 

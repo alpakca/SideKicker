@@ -29,6 +29,10 @@ namespace SideKicker.Panels.Timers
         private readonly OrderedDictionary<NumberSelectorType, ScrollableNumberSelector> _timerNumberSelectors;
         private readonly Dictionary<TimerButtonType, IconedButton> _timerButtons;
 
+        // stopwatch ui
+        private readonly StopwatchShowcase _stopWatchShowcase;
+        private readonly Dictionary<TimerButtonType, IconedButton> _stopwatchButtons;
+
         private readonly TextPlaque[] _textPlaques;
         private readonly ScrollableButtonList _activeTimesList;
 
@@ -56,6 +60,10 @@ namespace SideKicker.Panels.Timers
             _timerButtons = new Dictionary<TimerButtonType, IconedButton>();
             InitializeTimerUI();
 
+            _stopWatchShowcase = new StopwatchShowcase();
+            _stopwatchButtons = new Dictionary<TimerButtonType, IconedButton>();
+            InitializeStopwatchUI();
+
             _textPlaques = new TextPlaque[]
             {
                 new TextPlaque { IsBold = false, Text = "Set Alarm", TextSize = HeaderTextSize, Position = new Vector2(20, 10) },
@@ -72,7 +80,8 @@ namespace SideKicker.Panels.Timers
             _activeTimesList.ButtonHeld += ActiveTimesList_ButtonHeld;
 
             this.Elements.AddRange([_alarmLabelTextbox, .. _alarmNumberSelectors.Values, .. _alarmButtons.Values, .. _alarmMonthChangeButtons, 
-                                    _timerLabelTextbox, .. _timerNumberSelectors.Values, .. _timerButtons.Values]);
+                                    _timerLabelTextbox, .. _timerNumberSelectors.Values, .. _timerButtons.Values,
+                                                                                         .. _stopwatchButtons.Values]);
 
             this.Boundaries = new Rectangle(0, 0, 450, 450);
             _renderer = new ContextWindowRenderer(WindowTexture);
@@ -185,6 +194,20 @@ namespace SideKicker.Panels.Timers
             };
         }
 
+        private void SetStopwatchStatus(bool isStarted, bool isPaused)
+        {
+            _stopwatchButtons[TimerButtonType.Add].Enabled = !isStarted;
+            _stopwatchButtons[TimerButtonType.Discard].Enabled = isStarted;
+            _stopwatchButtons[TimerButtonType.Stop].Enabled = isStarted && !isPaused;
+            _stopwatchButtons[TimerButtonType.Continue].Enabled = isStarted && isPaused;
+
+            if (isStarted) _stopWatchShowcase.Start();
+            else _stopWatchShowcase.Stop();
+
+            if (isPaused) _stopWatchShowcase.Pause();
+            else _stopWatchShowcase.Resume();
+        }
+
         private void ActiveTimesList_ButtonHeld(int buttonIndex)
         {
 
@@ -208,6 +231,7 @@ namespace SideKicker.Panels.Timers
                 _timerNumberSelectors[NumberSelectorType.Seconds].SetNumber(remaining.Seconds);
             }
 
+            _stopWatchShowcase.Update();
             base.Update();
         }
 
@@ -239,6 +263,17 @@ namespace SideKicker.Panels.Timers
 
             _renderer.RenderNumberSelectors(_alarmNumberSelectors.Values);
             _renderer.RenderNumberSelectors(_timerNumberSelectors.Values);
+
+            _renderer.RenderStopwatch(_stopWatchShowcase);
+            if (_stopWatchShowcase.IsStarted)
+            {
+                _renderer.RenderIconedButtons(_stopwatchButtons[TimerButtonType.Discard], _stopWatchShowcase.IsPaused ? _stopwatchButtons[TimerButtonType.Continue]
+                                                                                                                      : _stopwatchButtons[TimerButtonType.Stop]);
+            }
+            else
+            {
+                _renderer.RenderIconedButtons(_stopwatchButtons[TimerButtonType.Add]);
+            }
 
             _renderer.EndMainBatch();
 
@@ -274,8 +309,6 @@ namespace SideKicker.Panels.Timers
 
                 i++;
             }
-
-            base.RenderUpdate();
         }
 
         protected override void OnMouseButtonStateChange(PopWindowMouseEventArgs e)
@@ -413,6 +446,48 @@ namespace SideKicker.Panels.Timers
                 IconId = ContextWindowRenderer.TimerAddButton,
                 Boundaries = new Rectangle(359, 178, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Continue)),
+
+                SelectablePacket = selectPacket,
+                HoldPacket = holdPacket
+            };
+        }
+
+        private void InitializeStopwatchUI()
+        {
+            SelectablePacket selectPacket = new SelectablePacket();
+            HoldablePacket holdPacket = new HoldablePacket();
+            _stopwatchButtons[TimerButtonType.Add] = new IconedButton
+            {
+                IconId = ContextWindowRenderer.TimerAddButton,
+                Boundaries = new Rectangle(338, 260, 32, 32),
+                ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: true, isPaused: false)),
+
+                SelectablePacket = selectPacket,
+                HoldPacket = holdPacket
+            };
+            _stopwatchButtons[TimerButtonType.Discard] = new IconedButton
+            {
+                IconId = ContextWindowRenderer.TimerDiscardButton,
+                Boundaries = new Rectangle(317, 260, 32, 32),
+                ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: false, isPaused: true)),
+
+                SelectablePacket = selectPacket,
+                HoldPacket = holdPacket
+            };
+            _stopwatchButtons[TimerButtonType.Stop] = new IconedButton
+            {
+                IconId = ContextWindowRenderer.TimerStopButton,
+                Boundaries = new Rectangle(359, 260, 32, 32),
+                ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: true, isPaused: true)),
+
+                SelectablePacket = selectPacket,
+                HoldPacket = holdPacket
+            };
+            _stopwatchButtons[TimerButtonType.Continue] = new IconedButton
+            {
+                IconId = ContextWindowRenderer.TimerAddButton,
+                Boundaries = new Rectangle(359, 260, 32, 32),
+                ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: true, isPaused: false)),
 
                 SelectablePacket = selectPacket,
                 HoldPacket = holdPacket
