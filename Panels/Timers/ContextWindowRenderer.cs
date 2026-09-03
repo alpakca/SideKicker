@@ -18,6 +18,7 @@ namespace SideKicker.Panels.Timers
         public const string TimerAddButton = "TimerAddButton";
         public const string TimerDiscardButton = "TimerDiscardButton";
         public const string TimerStopButton = "TimerStopButton";
+        public const string TimerSaveButton = "TimerSaveButton";
 
         private const int TimesListTextSize = 12;
         private const int TimersNumberTextSize = 16;
@@ -63,6 +64,12 @@ namespace SideKicker.Panels.Timers
             {
                 Id = TimerStopButton,
                 DefaultPath = @"panels\TimerStopButton.png"
+            });
+
+            IconRegistry.Register(new IconDefinition
+            {
+                Id = TimerSaveButton,
+                DefaultPath = @"panels\TimerSaveButton.png"
             });
         }
 

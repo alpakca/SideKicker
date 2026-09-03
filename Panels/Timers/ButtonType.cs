@@ -17,6 +17,7 @@ namespace SideKicker.Panels.Timers
         Add,
         Discard,
         Stop,
-        Continue
+        Continue,
+        Save
     }
 }
