@@ -29,6 +29,11 @@ namespace SideKicker.PanelSystem
             PopWindowManager.ActiveWindows.Add(_panelWindow);
         }
 
+        public void Update()
+        {
+            foreach (var panel in _allPanels) panel.Update();
+        }
+
         public void OnExiting()
         {
             foreach (var panel in _allPanels) panel.OnExiting();

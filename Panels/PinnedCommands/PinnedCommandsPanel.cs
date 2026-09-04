@@ -1,16 +1,25 @@
 ﻿using PopUpUI.Surface;
+using PopUpUI.Toolkit;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 
+using CommandSerializer = SideKicker.Panels.PanelContentSerializer<SideKicker.Panels.PinnedCommands.SavedCommand>;
+
 namespace SideKicker.Panels.PinnedCommands
 {
     internal class PinnedCommandsPanel : ContextPanel
     {
-        private const int SavingBufferTime = 5000; // in milliseconds
+        static PinnedCommandsPanel()
+        {
+            CommandSerializer.SaveFileName = "pinnedcommands.json";
+        }
+
+        private const int SavedCommandsListDirtyCheckTime = 5000; // in milliseconds
 
         private bool _commandListDirty;
+        private float _elapsedSinceLastDirtyCheck;
         private SavedCommand _editorShownCommand;
 
         private readonly ContextWindow _contextWindow;
@@ -31,10 +40,24 @@ namespace SideKicker.Panels.PinnedCommands
             _contextWindow.CommandListButtonBodyPressed += Window_CommandListButtonBodyPressed;
             _contextWindow.CommandListButtonEditPressed += Window_CommandListButtonEditPressed;
             _contextWindow.CommandListButtonsSwaped += Window_CommandListButtonsSwaped;
-            _contextWindow.SaveTimerElapsed += Window_SaveTimerElapsed;
 
             _editorShownCommand = null;
             _contextWindow.ShowCommand(null);
+        }
+
+        public override void Update()
+        {
+            _elapsedSinceLastDirtyCheck += Time.DeltaTime;
+            if (_elapsedSinceLastDirtyCheck >= SavedCommandsListDirtyCheckTime)
+            {
+                _elapsedSinceLastDirtyCheck = 0;
+
+                if (_commandListDirty)
+                {
+                    _commandListDirty = false;
+                    _ = CommandSerializer.SaveAsync(_savedCommands);
+                }
+            }
         }
 
         public override void OnExiting()
@@ -74,7 +97,7 @@ namespace SideKicker.Panels.PinnedCommands
         private void Window_CommandListButtonsSwaped(int firstButtonIndex, int secondButtonIndex)
         {
             (_savedCommands[firstButtonIndex], _savedCommands[secondButtonIndex]) = (_savedCommands[secondButtonIndex], _savedCommands[firstButtonIndex]);
-            CommandListUpdated();
+            _commandListDirty = true;
         }
 
         private void Window_EditorButtonPressed(EditorButton buttonType)
@@ -117,28 +140,13 @@ namespace SideKicker.Panels.PinnedCommands
             }
 
             _contextWindow.SetSavedCommandCount(_savedCommands.Count);
-            CommandListUpdated();
+            _commandListDirty = true;
         }
 
         private void SetEditorShowCommand(SavedCommand command)
         {
             _editorShownCommand = command;
             _contextWindow.ShowCommand(command);
-        }
-
-        private void CommandListUpdated()
-        {
-            _commandListDirty = true;
-            _contextWindow.SetSaveTimer(SavingBufferTime);
-        }
-
-        private void Window_SaveTimerElapsed()
-        {
-            if (_commandListDirty)
-            {
-                _commandListDirty = false;
-                _ = CommandSerializer.SaveAsync(_savedCommands);
-            }
         }
     }
 }

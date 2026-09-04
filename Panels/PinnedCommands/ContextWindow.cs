@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using PopUpUI.Input;
-using PopUpUI.Toolkit;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
 
@@ -16,7 +15,6 @@ namespace SideKicker.Panels.PinnedCommands
     {
         public const int PanelTextSize = 12;
 
-        private float _remainingSaveTime;
         private readonly IReadOnlyList<SavedCommand> _savedCommands;
         private readonly ContextWindowRenderer _renderer;
 
@@ -34,7 +32,6 @@ namespace SideKicker.Panels.PinnedCommands
         public event Action<int> CommandListButtonBodyPressed;
         public event Action<int> CommandListButtonEditPressed;
         public event Action<int, int> CommandListButtonsSwaped;
-        public event Action SaveTimerElapsed;
 
         public ContextWindow(IReadOnlyList<SavedCommand> savedCommands)
         {
@@ -157,11 +154,6 @@ namespace SideKicker.Panels.PinnedCommands
             _renderer.RefreshIcons(_savedCommands);
         }
 
-        public void SetSaveTimer(float milliseconds)
-        {
-            _remainingSaveTime = milliseconds;
-        }
-
         private void InitializeCommandEditor(out TextPlaque[] commandEditorTexts, out TextedButton[] addingCommandButtons, 
                                              out TextedButton[] editingCommandButtons)
         {
@@ -239,20 +231,6 @@ namespace SideKicker.Panels.PinnedCommands
                     HoldPacket = new HoldablePacket()
                 }
             };
-        }
-
-        protected override void Update()
-        {
-            if (_remainingSaveTime > 0)
-            {
-                _remainingSaveTime -= Time.DeltaTime;
-                if (_remainingSaveTime <= 0)
-                {
-                    SaveTimerElapsed?.Invoke();
-                }
-            }
-
-            base.Update();
         }
 
         protected override void RenderUpdate()
