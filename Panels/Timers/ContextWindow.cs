@@ -25,7 +25,7 @@ namespace SideKicker.Panels.Timers
         private readonly IconedButton[] _alarmMonthChangeButtons;
 
         // timer UI elements
-        private TimeInfo? _inspectingTimer;
+        private TimerInfo? _inspectingTimer;
         private readonly MultiLineTextBox _timerLabelTextbox;
         private readonly OrderedDictionary<NumberSelectorType, ScrollableNumberSelector> _timerNumberSelectors;
         private readonly Dictionary<TimerButtonType, IconedButton> _timerButtons;
@@ -38,13 +38,13 @@ namespace SideKicker.Panels.Timers
         private readonly ScrollableButtonList _timesList;
 
         private readonly ContextWindowRenderer _renderer;
-        private readonly IReadOnlyList<TimeInfo> _registedTimes;
+        private readonly IReadOnlyList<ITimeInfo> _registedTimes;
 
         public event Action<AlarmButtonType>? AlarmButtonPressed;
         public event Action<TimerButtonType>? TimerButtonPressed;
         public event Action<int>? TimesListButtonEditPressed;
 
-        public ContextWindow(IReadOnlyList<TimeInfo> registeredTimes)
+        public ContextWindow(IReadOnlyList<ITimeInfo> registeredTimes)
         {
             _registedTimes = registeredTimes;
 
@@ -108,7 +108,7 @@ namespace SideKicker.Panels.Timers
             _isInspectingAlarm = false;
         }
 
-        public void InspectAlarm(TimeInfo info)
+        public void InspectAlarm(AlarmInfo info)
         {
             _alarmLabelTextbox.SetText(info.LabelText);
 
@@ -124,16 +124,23 @@ namespace SideKicker.Panels.Timers
             _isInspectingAlarm = true;
         }
 
-        public TimeInfo GetAlarm()
+        public void UpdateAlarmWithUI(AlarmInfo info)
         {
-            return new TimeInfo(new DateTime(_alarmCalendar.SelectedYear, _alarmCalendar.SelectedMonth, _alarmCalendar.SelectedDay,
-                                              _alarmNumberSelectors[NumberSelectorType.Hour].CurrentNumber,
-                                              _alarmNumberSelectors[NumberSelectorType.Minute].CurrentNumber,
-                                              second: 0))
-            {
-                IsAlarm = true,
-                LabelText = _alarmLabelTextbox.Text
-            };
+            info.LabelText = _alarmLabelTextbox.Text;
+            info.DueTime = GetAlarmUIDateTime();
+        }
+
+        public bool IsSelectedAlarmAlreadyPassed()
+        {
+            return DateTime.Now >= GetAlarmUIDateTime();
+        }
+
+        private DateTime GetAlarmUIDateTime()
+        {
+            return new DateTime(_alarmCalendar.SelectedYear, _alarmCalendar.SelectedMonth, _alarmCalendar.SelectedDay,
+                                _alarmNumberSelectors[NumberSelectorType.Hour].CurrentNumber,
+                                _alarmNumberSelectors[NumberSelectorType.Minute].CurrentNumber,
+                                second: 0);
         }
 
         public void ResetTimer()
@@ -151,7 +158,7 @@ namespace SideKicker.Panels.Timers
             _inspectingTimer = null;
         }
 
-        public void InspectTimer(TimeInfo info)
+        public void InspectTimer(TimerInfo info)
         {
             _timerLabelTextbox.SetText(info.LabelText);
 
@@ -161,8 +168,8 @@ namespace SideKicker.Panels.Timers
             _timerNumberSelectors[NumberSelectorType.Seconds].SetNumber(remaining.Seconds);
 
             _timerButtons[TimerButtonType.Discard].Enabled = true;
-            _timerButtons[TimerButtonType.Stop].Enabled = info.IsRunning;
-            _timerButtons[TimerButtonType.Continue].Enabled = !info.IsRunning;
+            _timerButtons[TimerButtonType.Stop].Enabled = !info.IsPaused;
+            _timerButtons[TimerButtonType.Continue].Enabled = info.IsPaused;
             _timerButtons[TimerButtonType.Add].Enabled = false;
 
             _inspectingTimer = info;
@@ -173,15 +180,12 @@ namespace SideKicker.Panels.Timers
         /// </summary>
         /// <param name="dateTime">A DateTime object to add to values of number selectors in UI, to offset them.</param>
         /// <returns>Created TimeInfo object.</returns>
-        public TimeInfo GetTimer(DateTime dateTime)
+        public void UpdateTimerWithUI(TimerInfo info)
         {
-            return new TimeInfo(dateTime.Add(new TimeSpan(_timerNumberSelectors[NumberSelectorType.Hour].CurrentNumber,
-                                                          _timerNumberSelectors[NumberSelectorType.Minute].CurrentNumber,
-                                                          _timerNumberSelectors[NumberSelectorType.Seconds].CurrentNumber)))
-            {
-                IsAlarm = false,
-                LabelText = _timerLabelTextbox.Text
-            };
+            info.LabelText = _timerLabelTextbox.Text;
+            info.SetDuration(new TimeSpan(_timerNumberSelectors[NumberSelectorType.Hour].CurrentNumber,
+                                           _timerNumberSelectors[NumberSelectorType.Minute].CurrentNumber,
+                                           _timerNumberSelectors[NumberSelectorType.Seconds].CurrentNumber));
         }
 
         public bool IsTimerSelectedTimeZero()
@@ -215,7 +219,7 @@ namespace SideKicker.Panels.Timers
 
         protected override void Update()
         {
-            if (_inspectingTimer != null && _inspectingTimer.IsRunning)
+            if (_inspectingTimer != null && !_inspectingTimer.IsPaused)
             {
                 // update the selectors to left time of inspecting timer
                 TimeSpan remaining = _inspectingTimer.GetRemainingTime(DateTime.Now);
@@ -247,7 +251,7 @@ namespace SideKicker.Panels.Timers
             if (_inspectingTimer != null)
             {
                 _renderer.RenderIconedButtons(_timerButtons[TimerButtonType.Discard], _timerButtons[TimerButtonType.Save], 
-                                              _timerButtons[_inspectingTimer.IsRunning ? TimerButtonType.Stop : TimerButtonType.Continue]);
+                                              _timerButtons[_inspectingTimer.IsPaused ? TimerButtonType.Continue : TimerButtonType.Stop]);
             }
             else
             {
@@ -277,28 +281,8 @@ namespace SideKicker.Panels.Timers
             DateTime now = DateTime.Now;
             for (int i = 0; i < _registedTimes.Count; i++)
             {
-                TimeInfo timeInfo = _registedTimes[i];
-                if (timeInfo.IsAlarm)
-                {
-                    DateTime due = timeInfo.DueTime;
-                    _renderer.RenderTimesListText(_timesList, i, $"{due.Day} {CalendarShowcase.MonthNames[due.Month - 1]}, {due.Year}");
-                }
-                else
-                {
-                    TimeSpan remaining = timeInfo.GetRemainingTime(now);
-                    if (remaining.Hours != 0)
-                    {
-                        _renderer.RenderTimesListText(_timesList, i, $"Timer ends in: {remaining.Hours}h, {remaining.Minutes}min, {remaining.Seconds}s");
-                    }
-                    else if (remaining.Minutes != 0)
-                    {
-                        _renderer.RenderTimesListText(_timesList, i, $"Timer ends in: {remaining.Minutes}min, {remaining.Seconds}s");
-                    }
-                    else
-                    {
-                        _renderer.RenderTimesListText(_timesList, i, $"Timer ends in: {remaining.Seconds}s");
-                    }
-                }
+                ITimeInfo timeInfo = _registedTimes[i];
+                _renderer.RenderTimesListText(_timesList, i, timeInfo.DisplayString(now));
             }
             _renderer.RenderTimesListBackgrounds(_timesList);
         }

@@ -3,7 +3,7 @@ using PopUpUI.Toolkit;
 using System;
 using System.Collections.Generic;
 
-using TimeInfoSerializer = SideKicker.Panels.PanelContentSerializer<SideKicker.Panels.Timers.TimeInfo>;
+using TimeInfoSerializer = SideKicker.Panels.PanelContentSerializer<SideKicker.Panels.Timers.ITimeInfo>;
 
 namespace SideKicker.Panels.Timers
 {
@@ -11,20 +11,20 @@ namespace SideKicker.Panels.Timers
     {
         static TimersPanel()
         {
-            TimeInfoSerializer.SaveFileName = "timers.json";
+            TimeInfoSerializer.SaveFileName = "timeinfos.json";
         }
 
         private const int TimersListDirtyCheckTime = 5000; // milliseconds
 
         private readonly ContextWindow _contextWindow;
-        private readonly List<TimeInfo> _registeredTimers;
-        private readonly Comparison<TimeInfo> _timerComparison;
+        private readonly List<ITimeInfo> _registeredTimers;
+        private readonly IComparer<ITimeInfo> _timeInfoComparer;
 
         private bool _timersListDirty;
         private float _elapsedSinceLastDirtyCheck;
 
-        private TimeInfo _shownAlarm;
-        private TimeInfo _shownTimer;
+        private AlarmInfo _shownAlarm;
+        private TimerInfo _shownTimer;
 
         public override string IconId { get; } = "Timers";
         public override string IconPath { get; } = @"panels\TimersPanelIcon.png";
@@ -33,8 +33,8 @@ namespace SideKicker.Panels.Timers
 
         public TimersPanel()
         {
-            _registeredTimers = new List<TimeInfo>(TimeInfoSerializer.Load());
-            _timerComparison = (f, s) => f.DueTime.CompareTo(s.DueTime);
+            _registeredTimers = new List<ITimeInfo>(TimeInfoSerializer.Load());
+            _timeInfoComparer = new TimeInfoComparer();
 
             _contextWindow = new ContextWindow(_registeredTimers);
             _contextWindow.SetTimesListCount(_registeredTimers.Count);
@@ -77,7 +77,7 @@ namespace SideKicker.Panels.Timers
         {
             if (_registeredTimers.Count == 0) return;
 
-            TimeInfo first = _registeredTimers.Count > 0 ? _registeredTimers[0] : null;
+            ITimeInfo first = _registeredTimers.Count > 0 ? _registeredTimers[0] : null;
             if (first != null && first.HasElapsed)
             {
                 RemoveTimeInfo(first);
@@ -91,7 +91,7 @@ namespace SideKicker.Panels.Timers
             }
         }
 
-        private void TriggerTimeInfo(TimeInfo info)
+        private void TriggerTimeInfo(ITimeInfo info)
         {
             // trigger window to show the notification
             // show the label of the info
@@ -99,14 +99,14 @@ namespace SideKicker.Panels.Timers
 
         private void Window_TimesListButtonEditPressed(int buttonIndex)
         {
-            TimeInfo info = _registeredTimers[buttonIndex];
-            if (info.IsAlarm)
+            ITimeInfo info = _registeredTimers[buttonIndex];
+            if (info is AlarmInfo alarm)
             {
-                ShowAlarm(info);
+                ShowAlarm(alarm);
             }
-            else
+            else if (info is TimerInfo timer)
             {
-                ShowTimer(info);
+                ShowTimer(timer);
             }
         }
 
@@ -121,7 +121,8 @@ namespace SideKicker.Panels.Timers
                         return;
                     }
 
-                    TimeInfo info = _contextWindow.GetTimer(DateTime.Now);
+                    TimerInfo info = new TimerInfo(TimeSpan.Zero);
+                    _contextWindow.UpdateTimerWithUI(info);
                     AddTimeInfo(info);
 
                     ShowTimer(null);
@@ -131,11 +132,9 @@ namespace SideKicker.Panels.Timers
 
                 case TimerButtonType.Discard:
 
-                    if (!RemoveTimeInfo(_shownTimer))
-                    {
-                        return;
-                    }
+                    if (_shownTimer == null) return;
 
+                    RemoveTimeInfo(_shownTimer);
                     ShowTimer(null);
                     _contextWindow.SetTimesListCount(_registeredTimers.Count);
 
@@ -166,16 +165,10 @@ namespace SideKicker.Panels.Timers
                     if (_shownTimer == null) return;
 
                     // replace old timer with new one, quit inspecting
-                    RemoveTimeInfo(_shownTimer);
-                    TimeInfo saved = _contextWindow.GetTimer(DateTime.Now);
+                    _contextWindow.UpdateTimerWithUI(_shownTimer);
+                    _registeredTimers.Sort(_timeInfoComparer);
+                    _timersListDirty = true;
 
-                    // TimeInfo's are running by default
-                    if (!_shownTimer.IsRunning)
-                    {
-                        saved.Pause();
-                    }
-
-                    AddTimeInfo(saved);
                     ShowTimer(null);
 
                     break;
@@ -188,29 +181,33 @@ namespace SideKicker.Panels.Timers
             {
                 case AlarmButtonType.Add:
 
-                    TimeInfo info = _contextWindow.GetAlarm();
+                    if (_contextWindow.IsSelectedAlarmAlreadyPassed())
+                    {
+                        return;
+                    }
+
+                    AlarmInfo info = new AlarmInfo();
+                    _contextWindow.UpdateAlarmWithUI(info);
+
                     AddTimeInfo(info);
 
                     break;
 
                 case AlarmButtonType.Delete:
 
-                    if (!RemoveTimeInfo(_shownAlarm))
-                    {
-                        return;
-                    }
+                    if (_shownAlarm == null) return;
+
+                    RemoveTimeInfo(_shownAlarm);
 
                     break;
 
                 case AlarmButtonType.Save:
 
-                    if (!RemoveTimeInfo(_shownAlarm))
-                    {
-                        return;
-                    }
+                    if (_shownAlarm == null) return;
 
-                    TimeInfo newAlarm = _contextWindow.GetAlarm();
-                    AddTimeInfo(newAlarm);
+                    _contextWindow.UpdateAlarmWithUI(_shownAlarm);
+                    _registeredTimers.Sort(_timeInfoComparer);
+                    _timersListDirty = true;
 
                     break;
             }
@@ -219,7 +216,7 @@ namespace SideKicker.Panels.Timers
             _contextWindow.SetTimesListCount(_registeredTimers.Count);
         }
 
-        private void ShowAlarm(TimeInfo info)
+        private void ShowAlarm(AlarmInfo info)
         {
             _shownAlarm = info;
 
@@ -229,7 +226,7 @@ namespace SideKicker.Panels.Timers
                 _contextWindow.InspectAlarm(info);
         }
 
-        private void ShowTimer(TimeInfo info)
+        private void ShowTimer(TimerInfo info)
         {
             _shownTimer = info;
 
@@ -239,18 +236,17 @@ namespace SideKicker.Panels.Timers
                 _contextWindow.InspectTimer(info);
         }
 
-        private void AddTimeInfo(TimeInfo info)
+        private void AddTimeInfo(ITimeInfo info)
         {
             _registeredTimers.Add(info);
-            _registeredTimers.Sort(_timerComparison);
+            _registeredTimers.Sort(_timeInfoComparer);
             _timersListDirty = true;
         }
 
-        private bool RemoveTimeInfo(TimeInfo info)
+        private bool RemoveTimeInfo(ITimeInfo info)
         {
             if (_registeredTimers.Remove(info))
             {
-                _registeredTimers.Sort(_timerComparison);
                 _timersListDirty = true;
                 return true;
             }
