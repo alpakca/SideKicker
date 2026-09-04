@@ -76,6 +76,7 @@ namespace SideKicker
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            panelController.Update();
             PopUpUIManager.Update(gameTime);
             GlobalDoubleTabWatcher.Update();
 

@@ -5,6 +5,7 @@ using SideKicker.Panels;
 using SideKicker.Panels.PinnedCommands;
 using SideKicker.Theming;
 using System;
+using System.Diagnostics;
 
 namespace SideKicker.PanelSystem
 {
@@ -12,24 +13,38 @@ namespace SideKicker.PanelSystem
     {
         private readonly ContextPanel[] _allPanels;
         private readonly PanelWindow _panelWindow;
+        private readonly PanelOpenCloseAnimator _openCloseAnimator;
 
         private ContextPanel _openPanel;
 
         private Point _origin;
-        private bool _isOpen;
+        private bool _isOpen = false;
 
         public ContextPanelController()
         {
+            _openCloseAnimator = new PanelOpenCloseAnimator();
+            _openCloseAnimator.AnimationDone += OpenCloseAnimator_AnimationDone;
+
             _allPanels = [new PinnedCommandsPanel()];
             _panelWindow = new PanelWindow(this, _allPanels);
             _panelWindow.ContextPanelToggled += OpenPanelAt;
+            PopWindowManager.ActiveWindows.Add(_panelWindow);
 
             InitializeTheme();
 
             _origin = new Point(1920, 920); // replace with a preference setting reading
             OpenPanelAt(0); // replace with a preference setting reading
 
-            PopWindowManager.ActiveWindows.Add(_panelWindow);
+            GlobalHitRegionManager.SetArea(new Rectangle()); // make controller is closed by default
+        }
+
+        public void Update()
+        {
+            if (_openCloseAnimator.IsRunning)
+            {
+                _openCloseAnimator.Update();
+                UpdateWindowsLocations();
+            }
         }
 
         public void OnExiting()
@@ -40,14 +55,25 @@ namespace SideKicker.PanelSystem
         public void TogglePanel()
         {
             _isOpen = !_isOpen;
+
             if (_isOpen)
             {
-                UpdateWindowLocations();
+                int totalPanelsMaxWidth = _openPanel.Window.Boundaries.Width + _panelWindow.Boundaries.Width;
+                int totalPanelsMaxHeight = Math.Max(_openPanel.Window.Boundaries.Height, _panelWindow.Boundaries.Height);
+                Point maxSize = new Point(totalPanelsMaxWidth, totalPanelsMaxHeight);
+
+                // before starting to open, set RGN to maximum space to reserve the area for drawing while animating
+                GlobalHitRegionManager.SetArea(new Rectangle(_origin - maxSize, maxSize));
+                _openCloseAnimator.StartOffseting(_origin.X, _origin.X - maxSize.X);
             }
             else
             {
-                GlobalHitRegionManager.SetArea(new Rectangle());
+                // before starting to close, set RGN to maximum space to there won't be holes that are not drawn while animating
+                GlobalHitRegionManager.SetArea(Rectangle.Union(_openPanel.Window.Boundaries, _panelWindow.Boundaries));
+                _openCloseAnimator.StartOffseting(_openPanel.Window.Boundaries.X, _origin.X);
             }
+
+            UpdateWindowsLocations();
         }
 
         private void OpenPanelAt(int index)
@@ -59,20 +85,45 @@ namespace SideKicker.PanelSystem
 
             PopWindowManager.ActiveWindows.Add(_openPanel.Window);
 
-            UpdateWindowLocations();
+            OriginUpdated();
         }
 
-        private void UpdateWindowLocations()
+        /// <summary>Sets the RGN areas of the Window.</summary>
+        private void OpenCloseAnimator_AnimationDone()
         {
-            Point minimumWindowSize = new Point(_openPanel.Window.Boundaries.Width + _panelWindow.Boundaries.Width,
-                                                Math.Max(_panelWindow.Boundaries.Height, _openPanel.Window.Boundaries.Height));
+            // animation ended - call it to correctly update locations to last positions
+            UpdateWindowsLocations();
 
-            Point openPanelPosition = _origin - minimumWindowSize;
+            if (_isOpen)
+            {
+                GlobalHitRegionManager.SetAreas(_openPanel.Window.Boundaries, _panelWindow.Boundaries);
+            }
+            else
+            {
+                GlobalHitRegionManager.SetArea(new Rectangle());
+            }
+        }
 
-            _openPanel.Window.Boundaries = new Rectangle(openPanelPosition, _openPanel.Window.Boundaries.Size);
-            _panelWindow.Boundaries = new Rectangle(openPanelPosition + minimumWindowSize - _panelWindow.Boundaries.Size, _panelWindow.Boundaries.Size);
+        private void UpdateWindowsLocations()
+        {
+            Rectangle openPanelBounds = _openPanel.Window.Boundaries;
+            _openPanel.Window.Boundaries = new Rectangle(_openCloseAnimator.CurrentOffset, openPanelBounds.Y,
+                                                         openPanelBounds.Width, openPanelBounds.Height);
 
-            GlobalHitRegionManager.SetAreas(_openPanel.Window.Boundaries, _panelWindow.Boundaries);
+            Rectangle controllerPanelBounds = _panelWindow.Boundaries;
+            _panelWindow.Boundaries = new Rectangle(openPanelBounds.Right, controllerPanelBounds.Y,
+                                                    controllerPanelBounds.Width, controllerPanelBounds.Height);
+        }
+
+        private void OriginUpdated()
+        {
+            Rectangle openPanelBounds = _openPanel.Window.Boundaries;
+            _openPanel.Window.Boundaries = new Rectangle(_origin.X - openPanelBounds.Width - _panelWindow.Boundaries.Width, _origin.Y - openPanelBounds.Height,
+                                                         openPanelBounds.Width, openPanelBounds.Height);
+
+            Rectangle controllerPanelBounds = _panelWindow.Boundaries;
+            _panelWindow.Boundaries = new Rectangle(_origin.X - controllerPanelBounds.Width, _origin.Y - controllerPanelBounds.Height,
+                                                    controllerPanelBounds.Width, controllerPanelBounds.Height);
         }
 
         private void InitializeTheme()
