@@ -5,6 +5,7 @@ using PopUpUI.Toolkit;
 using SideKicker.Panels;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace SideKicker.PanelSystem
 {
@@ -13,6 +14,8 @@ namespace SideKicker.PanelSystem
         private readonly ContextPanelController _controller;
         private readonly PanelToggle[] _panelToggles;
         private readonly ControllerRenderer _renderer;
+
+        public event Action<int> ContextPanelToggled;
 
         public PanelWindow(ContextPanelController controller, ContextPanel[] panels) 
             : base(new BatchDrawOptions { BlendState = BlendState.AlphaBlend })
@@ -34,7 +37,7 @@ namespace SideKicker.PanelSystem
 
             ActionCommander<ToggleButton> toggleCommand = new ActionCommander<ToggleButton>(button =>
             {
-                _controller.OpenPanelAt(((PanelToggle)button).PanelIndex);
+                ContextPanelToggled?.Invoke(((PanelToggle)button).PanelIndex);
             });
 
             for (int i = 0; i < panels.Length; i++)

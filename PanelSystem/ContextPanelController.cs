@@ -1,12 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Surface;
 using PopUpUI.Toolkit;
+using SideKicker.Native;
 using SideKicker.Panels;
 using SideKicker.Panels.PinnedCommands;
 using SideKicker.Theming;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SideKicker.PanelSystem
 {
@@ -16,12 +14,15 @@ namespace SideKicker.PanelSystem
         private readonly PanelWindow _panelWindow;
 
         private ContextPanel _openPanel;
+
         private Point _origin;
+        private bool _isOpen;
 
         public ContextPanelController()
         {
             _allPanels = [new PinnedCommandsPanel()];
             _panelWindow = new PanelWindow(this, _allPanels);
+            _panelWindow.ContextPanelToggled += OpenPanelAt;
 
             InitializeTheme();
 
@@ -36,7 +37,20 @@ namespace SideKicker.PanelSystem
             foreach (var panel in _allPanels) panel.OnExiting();
         }
 
-        public void OpenPanelAt(int index)
+        public void TogglePanel()
+        {
+            _isOpen = !_isOpen;
+            if (_isOpen)
+            {
+                UpdateWindowLocations();
+            }
+            else
+            {
+                GlobalHitRegionManager.SetArea(new Rectangle());
+            }
+        }
+
+        private void OpenPanelAt(int index)
         {
             PopWindowManager.ActiveWindows.Remove(_openPanel?.Window);
 
@@ -48,7 +62,7 @@ namespace SideKicker.PanelSystem
             UpdateWindowLocations();
         }
 
-        public void UpdateWindowLocations()
+        private void UpdateWindowLocations()
         {
             Point minimumWindowSize = new Point(_openPanel.Window.Boundaries.Width + _panelWindow.Boundaries.Width,
                                                 Math.Max(_panelWindow.Boundaries.Height, _openPanel.Window.Boundaries.Height));
@@ -58,7 +72,7 @@ namespace SideKicker.PanelSystem
             _openPanel.Window.Boundaries = new Rectangle(openPanelPosition, _openPanel.Window.Boundaries.Size);
             _panelWindow.Boundaries = new Rectangle(openPanelPosition + minimumWindowSize - _panelWindow.Boundaries.Size, _panelWindow.Boundaries.Size);
 
-            OverlayManager.SetAreas(_openPanel.Window.Boundaries, _panelWindow.Boundaries);
+            GlobalHitRegionManager.SetAreas(_openPanel.Window.Boundaries, _panelWindow.Boundaries);
         }
 
         private void InitializeTheme()

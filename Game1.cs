@@ -2,8 +2,8 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PopUpUI.Toolkit;
+using SideKicker.Native;
 using SideKicker.PanelSystem;
-using SideKicker.Theming;
 using System.IO;
 using System.Linq;
 
@@ -36,21 +36,16 @@ namespace SideKicker
             _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
             _graphics.ApplyChanges();
 
-            OverlayManager.Initialize(Window.Handle);
-            OverlayManager.SetOpenCloseHotKey(0x0001 | 0x0002 | 0x4000, 0x4B); // install the VM_Keys and MOD_modifiers here
-            // OverlayManager.HotKeyTriggered +=
+            GlobalHitRegionManager.Initialize(Window.Handle);
+            GlobalDoubleTabWatcher.Initialize();
+            GlobalDoubleTabWatcher.DoubleTapDetected += GlobalDoubleTabWatcher_DoubleTapDetected;
 
             base.Initialize();
         }
 
-        protected override void Dispose(bool disposing)
+        private void GlobalDoubleTabWatcher_DoubleTapDetected()
         {
-            if (disposing)
-            {
-                OverlayManager.Dispose();
-            }
-
-            base.Dispose(disposing);
+            panelController.TogglePanel();
         }
 
         protected override void LoadContent()
@@ -82,6 +77,7 @@ namespace SideKicker
                 Exit();
 
             PopUpUIManager.Update(gameTime);
+            GlobalDoubleTabWatcher.Update();
 
             base.Update(gameTime);
         }
@@ -105,6 +101,7 @@ namespace SideKicker
         protected override void OnExiting(object sender, ExitingEventArgs args)
         {
             panelController.OnExiting();
+            GlobalDoubleTabWatcher.Dispose();
             base.OnExiting(sender, args);
         }
     }
