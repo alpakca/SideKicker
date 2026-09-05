@@ -15,19 +15,27 @@ namespace SideKicker.PanelSystem
         private readonly ContextPanel[] _allPanels;
         private readonly PanelWindow _panelWindow;
         private readonly PanelOpenCloseAnimator _openCloseAnimator;
+        private readonly HoverWindowOpener _hoverWindowOpener;
 
         private ContextPanel _openPanel;
 
         private Point _origin;
         private bool _isOpen = false;
+        private bool _openedByHover = false;
+
+        public bool IsOpen => _isOpen;
+        public bool IsOpenByHover => _openedByHover;
+        public Rectangle PanelsUnionArea => Rectangle.Union(_panelWindow.Boundaries, _openPanel.Window.Boundaries);
 
         public ContextPanelController()
         {
             _allPanels = [new PinnedCommandsPanel()];
-            _panelWindow = new PanelWindow(this, _allPanels);
-            _panelWindow.ContextPanelToggled += OpenPanelAt;
+            _panelWindow = new PanelWindow(_allPanels);
+            _hoverWindowOpener = new HoverWindowOpener(this);
+
             PopWindowManager.ActiveWindows.Add(_panelWindow);
 
+            _panelWindow.ContextPanelToggled += OpenPanelAt;
             InputManager.MouseButtonStateChange += InputManager_MouseButtonStateChange;
 
             InitializeTheme();
@@ -43,15 +51,17 @@ namespace SideKicker.PanelSystem
         private void InputManager_MouseButtonStateChange(PopUpUI.Input.PopWindowMouseEventArgs e)
         {
             // close the controller if did not hit any of open panel bounds
-            if (e.FirstTimeButtons.HasLeft && _isOpen &&
+            if (e.FirstTimeButtons.HasLeft &&
                 !_openPanel.Window.Boundaries.Contains(e.MousePosition) && !_panelWindow.Boundaries.Contains(e.MousePosition))
             {
-                TogglePanel();
+                SetWindowState(isOpen: false);
             }
         }
 
         public void Update()
         {
+            _hoverWindowOpener.Update();
+
             if (_openCloseAnimator.IsRunning)
             {
                 _openCloseAnimator.Update();
@@ -64,11 +74,19 @@ namespace SideKicker.PanelSystem
             foreach (var panel in _allPanels) panel.OnExiting();
         }
 
-        public void TogglePanel()
+        public void ToggleWindow()
         {
-            _isOpen = !_isOpen;
+            SetWindowState(!_isOpen);
+        }
 
-            if (_isOpen)
+        public void SetWindowState(bool isOpen, bool openedByHover = false)
+        {
+            if (_isOpen == isOpen) return;
+
+            _isOpen = isOpen;
+            _openedByHover = openedByHover;
+
+            if (isOpen)
             {
                 int totalPanelsMaxWidth = _openPanel.Window.Boundaries.Width + _panelWindow.Boundaries.Width;
                 int totalPanelsMaxHeight = Math.Max(_openPanel.Window.Boundaries.Height, _panelWindow.Boundaries.Height);
@@ -80,6 +98,8 @@ namespace SideKicker.PanelSystem
             }
             else
             {
+                _hoverWindowOpener.WindowClosed();
+
                 // before starting to close, set RGN to maximum space to there won't be holes that are not drawn while animating
                 GlobalHitRegionManager.SetArea(Rectangle.Union(_openPanel.Window.Boundaries, _panelWindow.Boundaries));
                 _openCloseAnimator.AnimateTo(_origin.X);
@@ -136,6 +156,8 @@ namespace SideKicker.PanelSystem
             Rectangle controllerPanelBounds = _panelWindow.Boundaries;
             _panelWindow.Boundaries = new Rectangle(_origin.X - controllerPanelBounds.Width, _origin.Y - controllerPanelBounds.Height,
                                                     controllerPanelBounds.Width, controllerPanelBounds.Height);
+
+            _hoverWindowOpener.OriginUpdated(_origin);
         }
         #endregion
 

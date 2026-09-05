@@ -45,7 +45,7 @@ namespace SideKicker
 
         private void GlobalDoubleTabWatcher_DoubleTapDetected()
         {
-            panelController.TogglePanel();
+            panelController.ToggleWindow();
         }
 
         protected override void LoadContent()

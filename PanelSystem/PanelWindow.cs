@@ -4,23 +4,19 @@ using PopUpUI.Surface;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 
 namespace SideKicker.PanelSystem
 {
     internal class PanelWindow : PopWindow
     {
-        private readonly ContextPanelController _controller;
         private readonly PanelToggle[] _panelToggles;
         private readonly ControllerRenderer _renderer;
 
         public event Action<int> ContextPanelToggled;
 
-        public PanelWindow(ContextPanelController controller, ContextPanel[] panels) 
-            : base(new BatchDrawOptions { BlendState = BlendState.AlphaBlend })
+        public PanelWindow(ContextPanel[] panels)
         {
-            _controller = controller;
             Boundaries = new Rectangle(default, ControllerLayoutCalculator.GetSidePanelSize(panels.Length));
 
             _panelToggles = new PanelToggle[panels.Length];
@@ -58,7 +54,7 @@ namespace SideKicker.PanelSystem
 
         protected override void RenderUpdate()
         {
-            DrawHelper.SetBeginBatch(WindowTexture, DrawOptions);
+            DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaBlendDrawOptions);
 
             _renderer.Render();
 
