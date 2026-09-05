@@ -78,6 +78,11 @@ namespace SideKicker.Native
             exStyle &= ~WS_EX_APPWINDOW;
             SetWindowLongPtr64(_windowHandle, GWL_EXSTYLE, exStyle);
 
+            RestoreTopMost();
+        }
+
+        public static void RestoreTopMost()
+        {
             SetWindowPos(_windowHandle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
         }
 

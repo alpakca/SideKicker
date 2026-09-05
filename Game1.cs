@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using PopUpUI.Toolkit;
 using SideKicker.Native;
 using SideKicker.PanelSystem;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 

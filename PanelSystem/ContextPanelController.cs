@@ -51,8 +51,9 @@ namespace SideKicker.PanelSystem
         private void InputManager_MouseButtonStateChange(PopUpUI.Input.PopWindowMouseEventArgs e)
         {
             // close the controller if did not hit any of open panel bounds
-            if (e.FirstTimeButtons.HasLeft &&
-                !_openPanel.Window.Boundaries.Contains(e.MousePosition) && !_panelWindow.Boundaries.Contains(e.MousePosition))
+            // we check union here since we don't want window to be closed-opened continuesly
+            // when mouse click happens in space boundary between Union area & actual window bounds
+            if (e.FirstTimeButtons.HasLeft && !PanelsUnionArea.Contains(e.MousePosition))
             {
                 SetWindowState(isOpen: false);
             }
@@ -91,6 +92,9 @@ namespace SideKicker.PanelSystem
                 int totalPanelsMaxWidth = _openPanel.Window.Boundaries.Width + _panelWindow.Boundaries.Width;
                 int totalPanelsMaxHeight = Math.Max(_openPanel.Window.Boundaries.Height, _panelWindow.Boundaries.Height);
                 Point maxSize = new Point(totalPanelsMaxWidth, totalPanelsMaxHeight);
+
+                // restore being top-most incase it lost
+                GlobalHitRegionManager.RestoreTopMost();
 
                 // before starting to open, set RGN to maximum space to reserve the area for drawing while animating
                 GlobalHitRegionManager.SetArea(new Rectangle(_origin - maxSize, maxSize));
