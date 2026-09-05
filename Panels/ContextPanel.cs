@@ -13,6 +13,7 @@ namespace SideKicker.Panels
 
         public abstract PopWindow Window { get; }
 
+        public abstract void Update();
         public abstract void OnExiting();
     }
 }

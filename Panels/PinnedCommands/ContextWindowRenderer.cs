@@ -38,12 +38,6 @@ namespace SideKicker.Panels.PinnedCommands
                 Id = ReorderButtonId,
                 DefaultPath = @"panels\ReorderButton.png"
             });
-
-            IconRegistry.Register(new IconDefinition
-            {
-                Id = EditButtonId,
-                DefaultPath = @"panels\EditButton.png"
-            });
         }
 
         private static Texture2D GetIconTexture(MemoryStream stream, Icon icon)
@@ -217,7 +211,7 @@ namespace SideKicker.Panels.PinnedCommands
                     DrawHelper.Batch.Draw(icon, CommandListLayoutCalculator.ButtonFileIconBounds(buttonScreenBounds), Color.White);
                 }
 
-                DrawHelper.Batch.Draw(theme.GetIcon(EditButtonId), CommandListLayoutCalculator.EditButtonBounds(buttonScreenBounds), Color.White);
+                DrawHelper.Batch.Draw(theme.GetIcon(IconRegistry.EditButtonId), CommandListLayoutCalculator.EditButtonBounds(buttonScreenBounds), Color.White);
 
                 if (i == commandsList.HoveredButtonIndex)
                 {

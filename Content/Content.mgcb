@@ -10,27 +10,39 @@
 
 #-------------------------------- References --------------------------------#
 
+/reference:..\..\..\DefringedFontProcessor\DefringedFontProcessor\bin\Debug\net8.0\DefringedFontProcessor.dll
 
 #---------------------------------- Content ---------------------------------#
 
 #begin ../assets/fonts/Consolas_12.spritefont
 /importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
+/processor:DefringedFontProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
+/processorParam:TextureFormat=Color
+/processorParam:Version=1.0.0.0
 /build:../assets/fonts/Consolas_12.spritefont;Consolas_12.spritefont
 
 #begin ../assets/fonts/Consolas_16.spritefont
 /importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
+/processor:DefringedFontProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
+/processorParam:TextureFormat=Color
+/processorParam:Version=1.0.0.0
 /build:../assets/fonts/Consolas_16.spritefont;Consolas_16.spritefont
 
 #begin ../assets/fonts/Consolas_24.spritefont
 /importer:FontDescriptionImporter
+/processor:DefringedFontProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Color
+/processorParam:Version=1.0.0.0
+/build:../assets/fonts/Consolas_24.spritefont;Consolas_24.spritefont
+
+#begin ../assets/fonts/SegoeUI_20.spritefont
+/importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Compressed
-/build:../assets/fonts/Consolas_24.spritefont;Consolas_24.spritefont
+/processorParam:Version=3.8.5.1
+/build:../assets/fonts/SegoeUI_20.spritefont;SegoeUI_20.spritefont
 

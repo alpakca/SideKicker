@@ -32,6 +32,8 @@ namespace SideKicker
 
             using var game = new Game1();
             game.Run();
+
+            mutex?.Dispose();
         }
     }
 }

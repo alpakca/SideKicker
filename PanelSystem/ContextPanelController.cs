@@ -3,6 +3,7 @@ using PopUpUI.Toolkit;
 using SideKicker.Native;
 using SideKicker.Panels;
 using SideKicker.Panels.PinnedCommands;
+using SideKicker.Panels.Timers;
 using SideKicker.Theming;
 using System;
 
@@ -29,7 +30,7 @@ namespace SideKicker.PanelSystem
 
         public ContextPanelController()
         {
-            _allPanels = [new PinnedCommandsPanel()];
+            _allPanels = [new PinnedCommandsPanel(), new TimersPanel()];
             _panelWindow = new PanelWindow(_allPanels);
             _hoverWindowOpener = new HoverWindowOpener(this);
 
@@ -61,6 +62,7 @@ namespace SideKicker.PanelSystem
 
         public void Update()
         {
+            foreach (var panel in _allPanels) panel.Update();
             _hoverWindowOpener.Update();
 
             if (_openCloseAnimator.IsRunning)
@@ -122,6 +124,7 @@ namespace SideKicker.PanelSystem
             PopWindowManager.ActiveWindows.Add(_openPanel.Window);
 
             OriginUpdated();
+            UpdateRGNArea();
         }
 
         #region Animator Positions
@@ -129,7 +132,11 @@ namespace SideKicker.PanelSystem
         {
             // animation ended - call it to correctly update locations to last positions
             UpdateWindowsLocations();
+            UpdateRGNArea();
+        }
 
+        private void UpdateRGNArea()
+        {
             if (_isOpen)
             {
                 GlobalHitRegionManager.SetAreas(_openPanel.Window.Boundaries, _panelWindow.Boundaries);
