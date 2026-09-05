@@ -5,12 +5,13 @@ using SideKicker.Panels;
 using SideKicker.Panels.PinnedCommands;
 using SideKicker.Theming;
 using System;
-using System.Diagnostics;
 
 namespace SideKicker.PanelSystem
 {
     internal class ContextPanelController
     {
+        private static readonly int ScreenWidth = WindowOptions.Width;
+
         private readonly ContextPanel[] _allPanels;
         private readonly PanelWindow _panelWindow;
         private readonly PanelOpenCloseAnimator _openCloseAnimator;
@@ -22,9 +23,6 @@ namespace SideKicker.PanelSystem
 
         public ContextPanelController()
         {
-            _openCloseAnimator = new PanelOpenCloseAnimator();
-            _openCloseAnimator.AnimationDone += OpenCloseAnimator_AnimationDone;
-
             _allPanels = [new PinnedCommandsPanel()];
             _panelWindow = new PanelWindow(this, _allPanels);
             _panelWindow.ContextPanelToggled += OpenPanelAt;
@@ -34,7 +32,9 @@ namespace SideKicker.PanelSystem
 
             InitializeTheme();
 
-            _origin = new Point(1920, 920); // replace with a preference setting reading
+            _openCloseAnimator = new PanelOpenCloseAnimator(ScreenWidth);
+            _openCloseAnimator.AnimationDone += OpenCloseAnimator_AnimationDone;
+            _origin = new Point(ScreenWidth, 920); // replace with a preference setting reading
             OpenPanelAt(0); // replace with a preference setting reading
 
             GlobalHitRegionManager.SetArea(new Rectangle()); // make controller is closed by default
@@ -76,13 +76,13 @@ namespace SideKicker.PanelSystem
 
                 // before starting to open, set RGN to maximum space to reserve the area for drawing while animating
                 GlobalHitRegionManager.SetArea(new Rectangle(_origin - maxSize, maxSize));
-                _openCloseAnimator.StartOffseting(_origin.X, _origin.X - maxSize.X);
+                _openCloseAnimator.AnimateTo(_origin.X - maxSize.X);
             }
             else
             {
                 // before starting to close, set RGN to maximum space to there won't be holes that are not drawn while animating
                 GlobalHitRegionManager.SetArea(Rectangle.Union(_openPanel.Window.Boundaries, _panelWindow.Boundaries));
-                _openCloseAnimator.StartOffseting(_openPanel.Window.Boundaries.X, _origin.X);
+                _openCloseAnimator.AnimateTo(_origin.X);
             }
 
             UpdateWindowsLocations();
@@ -100,7 +100,7 @@ namespace SideKicker.PanelSystem
             OriginUpdated();
         }
 
-        /// <summary>Sets the RGN areas of the Window.</summary>
+        #region Animator Positions
         private void OpenCloseAnimator_AnimationDone()
         {
             // animation ended - call it to correctly update locations to last positions
@@ -119,7 +119,7 @@ namespace SideKicker.PanelSystem
         private void UpdateWindowsLocations()
         {
             Rectangle openPanelBounds = _openPanel.Window.Boundaries;
-            _openPanel.Window.Boundaries = new Rectangle(_openCloseAnimator.CurrentOffset, openPanelBounds.Y,
+            _openPanel.Window.Boundaries = new Rectangle(_openCloseAnimator.CurrentX, openPanelBounds.Y,
                                                          openPanelBounds.Width, openPanelBounds.Height);
 
             Rectangle controllerPanelBounds = _panelWindow.Boundaries;
@@ -137,6 +137,7 @@ namespace SideKicker.PanelSystem
             _panelWindow.Boundaries = new Rectangle(_origin.X - controllerPanelBounds.Width, _origin.Y - controllerPanelBounds.Height,
                                                     controllerPanelBounds.Width, controllerPanelBounds.Height);
         }
+        #endregion
 
         private void InitializeTheme()
         {

@@ -1,65 +1,59 @@
-﻿using Microsoft.Xna.Framework;
-using PopUpUI.Toolkit;
+﻿using PopUpUI.Toolkit;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SideKicker.PanelSystem
 {
     internal class PanelOpenCloseAnimator
     {
-        private const int Duration = 500;
+        public const float DefaultDuration = 250f;
 
-        private bool _isRunning;
+        private float _fromValue;
+        private float _toValue;
+        private float _currentValue;
         private float _elapsed;
 
-        private int _startPosition;
-        private int _endPosition;
+        public bool IsRunning { get; private set; }
 
-        public bool IsRunning => _isRunning;
-
-        public int CurrentOffset
-        {
-            get
-            {
-                float timePercentage = _elapsed / Duration;
-                float easedPosition = SmoothStep(timePercentage);
-
-                return (int)(_startPosition + (_endPosition - _startPosition) * easedPosition);
-            }
-        }
+        public int CurrentX => (int)Math.Round(_currentValue, MidpointRounding.AwayFromZero);
+        public int TargetX => (int)Math.Round(_toValue, MidpointRounding.AwayFromZero);
 
         public event Action AnimationDone;
 
-        public void StartOffseting(int leftSideStart, int leftSideStop)
+        public PanelOpenCloseAnimator(int fromValue)
         {
-            if (!_isRunning)
-            {
-                _startPosition = leftSideStart;
-            }
+            _fromValue = fromValue;
+            _currentValue = fromValue;
+        }
 
-            _endPosition = leftSideStop;
-            _elapsed = 0;
-            _isRunning = true;
+        public void AnimateTo(int target)
+        {
+            if (IsRunning && TargetX == target) return;
+            if (!IsRunning && CurrentX == target) return;
+
+            _fromValue = _currentValue; // always continue from the real current position
+            _toValue = target;
+            _elapsed = 0f;
+            IsRunning = true;
         }
 
         public void Update()
         {
-            if (!_isRunning) return;
+            if (!IsRunning) return;
 
             _elapsed += Time.DeltaTime;
-            if (_elapsed >= Duration)
+            float t = DefaultDuration <= 0f ? 1f : Math.Clamp(_elapsed / DefaultDuration, 0f, 1f);
+
+            _currentValue = Lerp(_fromValue, _toValue, SmoothStep(t));
+
+            if (t >= 1f)
             {
-                _elapsed = Duration;
-                _isRunning = false;
+                _currentValue = _toValue; // snap exactly — guarantees the final resting position, no float drift
+                IsRunning = false;
                 AnimationDone?.Invoke();
             }
         }
 
-        private static float SmoothStep(float timePercentage)
-        {
-            timePercentage = Math.Clamp(timePercentage, 0f, 1f);
-            return timePercentage * timePercentage * (3f - 2f * timePercentage);
-        }
+        private static float Lerp(float a, float b, float t) => a + (b - a) * t;
+        private static float SmoothStep(float t) => t * t * (3f - 2f * t);
     }
 }
