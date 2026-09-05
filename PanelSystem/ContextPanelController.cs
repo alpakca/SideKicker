@@ -30,12 +30,24 @@ namespace SideKicker.PanelSystem
             _panelWindow.ContextPanelToggled += OpenPanelAt;
             PopWindowManager.ActiveWindows.Add(_panelWindow);
 
+            InputManager.MouseButtonStateChange += InputManager_MouseButtonStateChange;
+
             InitializeTheme();
 
             _origin = new Point(1920, 920); // replace with a preference setting reading
             OpenPanelAt(0); // replace with a preference setting reading
 
             GlobalHitRegionManager.SetArea(new Rectangle()); // make controller is closed by default
+        }
+
+        private void InputManager_MouseButtonStateChange(PopUpUI.Input.PopWindowMouseEventArgs e)
+        {
+            // close the controller if did not hit any of open panel bounds
+            if (e.FirstTimeButtons.HasLeft && _isOpen &&
+                !_openPanel.Window.Boundaries.Contains(e.MousePosition) && !_panelWindow.Boundaries.Contains(e.MousePosition))
+            {
+                TogglePanel();
+            }
         }
 
         public void Update()

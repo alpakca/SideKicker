@@ -9,7 +9,6 @@ namespace SideKicker.Native
         private const int RGN_OR = 2;
 
         private const int GWL_EXSTYLE = -20;
-        private const int GWL_WNDPROC = -4;
 
         private const int WS_EX_TOOLWINDOW = 0x00000080;
         private const int WS_EX_APPWINDOW = 0x00040000;
@@ -19,11 +18,7 @@ namespace SideKicker.Native
         private const uint SWP_NOSIZE = 0x0001;
         private const uint SWP_NOACTIVATE = 0x0010;
 
-        private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-
         private static IntPtr _windowHandle;
-
-        public static event Action HotKeyTriggered;
 
         [DllImport("gdi32.dll")]
         private static extern IntPtr CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
