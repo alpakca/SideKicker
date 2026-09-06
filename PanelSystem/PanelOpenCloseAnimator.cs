@@ -19,7 +19,7 @@ namespace SideKicker.PanelSystem
 
         public event Action AnimationDone;
 
-        public PanelOpenCloseAnimator(int fromValue)
+        public void SetFromValue(int fromValue)
         {
             _fromValue = fromValue;
             _currentValue = fromValue;

@@ -12,15 +12,15 @@ namespace SideKicker.PanelSystem
         private const int HoveredAreaWidth = 50;
         private const int HoveredAreaHeight = 250;
 
-        private readonly ContextPanelController _controller;
+        private readonly IControllerState _controllerState;
 
         private float _hoverOpenElapsed;
         private float _hoverCloseElapsed;
         private Rectangle _hoverOpenArea;
 
-        public HoverWindowOpener(ContextPanelController controller)
+        public HoverWindowOpener(IControllerState state)
         {
-            _controller = controller;
+            _controllerState = state;
         }
 
         public void WindowClosed()
@@ -39,14 +39,14 @@ namespace SideKicker.PanelSystem
             float deltaTime = Time.DeltaTime;
             Point mousePosition = Mouse.GetState().Position;
 
-            if (!_controller.IsOpen)
+            if (!_controllerState.IsOpen)
             {
                 if (_hoverOpenArea.Contains(mousePosition))
                 {
                     _hoverOpenElapsed += deltaTime;
                     if (_hoverOpenElapsed >= HoverOpenDelay)
                     {
-                        _controller.SetWindowState(isOpen: true, openedByHover: true);
+                        _controllerState.SetWindowState(isOpen: true, openedByHover: true);
                         _hoverOpenElapsed = 0f;
                     }
                 }
@@ -61,14 +61,14 @@ namespace SideKicker.PanelSystem
             }
 
             // hover to close, only possible if window was opened by hover (not by hotkey)
-            if (_controller.IsOpen && _controller.IsOpenByHover)
+            if (_controllerState.IsOpen && _controllerState.IsOpenByHover)
             {
-                if (!_controller.PanelsUnionArea.Contains(mousePosition))
+                if (!_controllerState.MinBoundaryBox.Contains(mousePosition))
                 {
                     _hoverCloseElapsed += deltaTime;
                     if (_hoverCloseElapsed >= HoverCloseDelay)
                     {
-                        _controller.SetWindowState(isOpen: false);
+                        _controllerState.SetWindowState(isOpen: false);
                         _hoverCloseElapsed = 0f;
                     }
                 }

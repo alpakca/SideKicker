@@ -93,7 +93,8 @@ namespace SideKicker.Panels.Timers
 
         private void TriggerTimeInfo(ITimeInfo info)
         {
-            // trigger window to show the notification
+            RequestTriggeredWindow();
+
             // show the label of the info
         }
 
