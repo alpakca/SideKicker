@@ -11,6 +11,8 @@ namespace SideKicker.PanelSystem
 {
     internal class ContextPanelController
     {
+        private const int TriggeredWindowOffset = 50;
+        private static readonly int TriggeredWindowMinPosition = WindowOptions.Width - TriggeredWindowOffset;
         private static readonly int ScreenWidth = WindowOptions.Width;
 
         private readonly ContextPanel[] _allPanels;
@@ -23,6 +25,7 @@ namespace SideKicker.PanelSystem
         private Point _origin;
         private bool _isOpen = false;
         private bool _openedByHover = false;
+        private bool _isTriggered = false;
 
         public bool IsOpen => _isOpen;
         public bool IsOpenByHover => _openedByHover;
@@ -31,12 +34,14 @@ namespace SideKicker.PanelSystem
         public ContextPanelController()
         {
             _allPanels = [new PinnedCommandsPanel(), new TimersPanel()];
+            foreach (var panel in _allPanels) panel.TriggeredWindowRequested += TriggerWindowShowcase;
+
             _panelWindow = new PanelWindow(_allPanels);
             _hoverWindowOpener = new HoverWindowOpener(this);
 
             PopWindowManager.ActiveWindows.Add(_panelWindow);
 
-            _panelWindow.ContextPanelToggled += OpenPanelAt;
+            _panelWindow.ContextPanelToggled += OpenPanel;
             InputManager.MouseButtonStateChange += InputManager_MouseButtonStateChange;
 
             InitializeTheme();
@@ -44,7 +49,7 @@ namespace SideKicker.PanelSystem
             _openCloseAnimator = new PanelOpenCloseAnimator(ScreenWidth);
             _openCloseAnimator.AnimationDone += OpenCloseAnimator_AnimationDone;
             _origin = new Point(ScreenWidth, 920); // replace with a preference setting reading
-            OpenPanelAt(0); // replace with a preference setting reading
+            OpenPanel(_allPanels[0]); // replace with a preference setting reading, as index?
 
             GlobalHitRegionManager.SetArea(new Rectangle()); // make controller is closed by default
         }
@@ -64,6 +69,12 @@ namespace SideKicker.PanelSystem
         {
             foreach (var panel in _allPanels) panel.Update();
             _hoverWindowOpener.Update();
+
+            // re-run the trigger animation until trigger removed
+            if (_isTriggered && !_openCloseAnimator.IsRunning)
+            {
+                _openCloseAnimator.AnimateTo(_openCloseAnimator.CurrentX == TriggeredWindowMinPosition ? ScreenWidth : TriggeredWindowMinPosition);
+            }
 
             if (_openCloseAnimator.IsRunning)
             {
@@ -91,6 +102,8 @@ namespace SideKicker.PanelSystem
 
             if (isOpen)
             {
+                _isTriggered = false;
+
                 int totalPanelsMaxWidth = _openPanel.Window.Boundaries.Width + _panelWindow.Boundaries.Width;
                 int totalPanelsMaxHeight = Math.Max(_openPanel.Window.Boundaries.Height, _panelWindow.Boundaries.Height);
                 Point maxSize = new Point(totalPanelsMaxWidth, totalPanelsMaxHeight);
@@ -114,12 +127,24 @@ namespace SideKicker.PanelSystem
             UpdateWindowsLocations();
         }
 
-        private void OpenPanelAt(int index)
+        /// <summary>Creates a visual trigger effect until window is opened.</summary>
+        private void TriggerWindowShowcase(ContextPanel panel)
+        {
+            if (_isOpen) return;
+
+            _isTriggered = true;
+            OpenPanel(panel);
+
+            UpdateRGNArea();
+            _openCloseAnimator.AnimateTo(TriggeredWindowMinPosition);
+        }
+
+        private void OpenPanel(ContextPanel panel)
         {
             PopWindowManager.ActiveWindows.Remove(_openPanel?.Window);
 
-            _openPanel = _allPanels[index];
-            _panelWindow.OpenPanelUpdated(index);
+            _openPanel = panel;
+            _panelWindow.OpenPanelUpdated(panel);
 
             PopWindowManager.ActiveWindows.Add(_openPanel.Window);
 
@@ -140,6 +165,12 @@ namespace SideKicker.PanelSystem
             if (_isOpen)
             {
                 GlobalHitRegionManager.SetAreas(_openPanel.Window.Boundaries, _panelWindow.Boundaries);
+            }
+            else if (_isTriggered) // window only may be triggered if window is closed
+            {
+                int openPanelHeight = _openPanel.Window.Boundaries.Height;
+                GlobalHitRegionManager.SetArea(new Rectangle(_origin.X - TriggeredWindowOffset, _origin.Y - openPanelHeight,
+                                               TriggeredWindowOffset, openPanelHeight));
             }
             else
             {

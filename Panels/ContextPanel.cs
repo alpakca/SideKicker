@@ -1,8 +1,5 @@
-﻿using Microsoft.Xna.Framework;
-using PopUpUI.Surface;
+﻿using PopUpUI.Surface;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SideKicker.Panels
 {
@@ -13,7 +10,14 @@ namespace SideKicker.Panels
 
         public abstract PopWindow Window { get; }
 
+        public event Action<ContextPanel> TriggeredWindowRequested;
+
         public abstract void Update();
         public abstract void OnExiting();
+
+        protected void RequestTriggeredWindow()
+        {
+            TriggeredWindowRequested?.Invoke(this);
+        }
     }
 }

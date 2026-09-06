@@ -8,7 +8,6 @@ namespace SideKicker.PanelSystem
 {
     internal class PanelToggle : ToggleButton
     {
-        public int PanelIndex { get; init; }
         public ContextPanel Panel { get; init; }
     }
 }

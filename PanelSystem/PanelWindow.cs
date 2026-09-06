@@ -13,7 +13,7 @@ namespace SideKicker.PanelSystem
         private readonly PanelToggle[] _panelToggles;
         private readonly ControllerRenderer _renderer;
 
-        public event Action<int> ContextPanelToggled;
+        public event Action<ContextPanel> ContextPanelToggled;
 
         public PanelWindow(ContextPanel[] panels)
         {
@@ -33,7 +33,7 @@ namespace SideKicker.PanelSystem
 
             ActionCommander<ToggleButton> toggleCommand = new ActionCommander<ToggleButton>(button =>
             {
-                ContextPanelToggled?.Invoke(((PanelToggle)button).PanelIndex);
+                ContextPanelToggled?.Invoke(((PanelToggle)button).Panel);
             });
 
             for (int i = 0; i < panels.Length; i++)
@@ -41,7 +41,6 @@ namespace SideKicker.PanelSystem
                 _panelToggles[i] = new PanelToggle
                 {
                     Panel = panels[i],
-                    PanelIndex = i,
 
                     Boundaries = ControllerLayoutCalculator.GetContextPanelIconBounds(i),
                     ToggleCommand = toggleCommand,
@@ -61,12 +60,12 @@ namespace SideKicker.PanelSystem
             DrawHelper.EndBatch();
         }
 
-        public void OpenPanelUpdated(int newOpenindex)
+        public void OpenPanelUpdated(ContextPanel openedPanel)
         {
-            PanelToggle newOpen = _panelToggles[newOpenindex];
-
-            foreach (var toggle in _panelToggles) toggle.SetStatusWithoutCommander(false);
-            newOpen.SetStatusWithoutCommander(true);
+            foreach (var toggle in _panelToggles)
+            {
+                toggle.SetStatusWithoutCommander(setToChecked: toggle.Panel == openedPanel);
+            }
         }
     }
 }
