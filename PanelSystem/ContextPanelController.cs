@@ -32,16 +32,16 @@ namespace SideKicker.PanelSystem
             foreach (var panel in _allPanels) panel.TriggeredWindowRequested += TriggerWindowShowcase;
 
             _panelWindow = new PanelWindow(_allPanels);
-            _panelWindow.ContextPanelToggled += OpenPanel;
+            _panelWindow.ContextPanelToggled += ShowPanel;
 
-            PopWindowManager.ActiveWindows.Add(_panelWindow);
+            PopWindowManager.ActiveWindows.Add(_panelWindow, PopWindowZIndex.ControllerPanel);
             InputManager.MouseButtonStateChange += InputManager_MouseButtonStateChange;
 
             _windowMovement = new WindowMovementManager(this);
             _windowMovement.SidePanelSizeChanged(_panelWindow.Boundaries.Size);
 
             SetOrigin(new Point(1920, 920)); // replace with a preference setting reading
-            OpenPanel(_allPanels[0]); // replace with a preference setting reading, as index?
+            ShowPanel(_allPanels[0]); // replace with a preference setting reading, as index?
             InitializeTheme();
         }
 
@@ -93,22 +93,22 @@ namespace SideKicker.PanelSystem
         /// <summary>Creates a visual trigger effect until window is opened.</summary>
         private void TriggerWindowShowcase(ContextPanel panel)
         {
+            ShowPanel(panel);
+
             if (_isOpen) return;
 
             _isTriggered = true;
-            OpenPanel(panel);
-
             _windowMovement.StartTriggerAnimation();
         }
 
-        private void OpenPanel(ContextPanel panel)
+        private void ShowPanel(ContextPanel panel)
         {
             PopWindowManager.ActiveWindows.Remove(_openPanel?.Window);
 
             _openPanel = panel;
             _panelWindow.OpenPanelUpdated(panel);
 
-            PopWindowManager.ActiveWindows.Add(_openPanel.Window);
+            PopWindowManager.ActiveWindows.Add(_openPanel.Window, PopWindowZIndex.ContextPanel);
 
             _windowMovement.ShowedPanelSizeChanged(_openPanel.Window.Boundaries.Size);
         }

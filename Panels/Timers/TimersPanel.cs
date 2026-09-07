@@ -1,5 +1,6 @@
 ﻿using PopUpUI.Surface;
 using PopUpUI.Toolkit;
+using SideKicker.PanelSystem.Message;
 using System;
 using System.Collections.Generic;
 
@@ -94,8 +95,7 @@ namespace SideKicker.Panels.Timers
         private void TriggerTimeInfo(ITimeInfo info)
         {
             RequestTriggeredWindow();
-
-            // show the label of the info
+            MessageWindow.Show($"Timer goes off.\n\n{info.LabelText}", MessageWindowButton.Ok);
         }
 
         private void Window_TimesListButtonEditPressed(int buttonIndex)

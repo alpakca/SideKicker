@@ -10,6 +10,7 @@ namespace SideKicker.Theming
         public static IEnumerable<string> RegisteredIds => _definitions.Keys;
 
         public const string EditButtonId = "base.editbutton";
+        public const string CloseButtonId = "base.closebutton";
 
         [ModuleInitializer]
         public static void Initialize()
@@ -18,6 +19,12 @@ namespace SideKicker.Theming
             {
                 Id = EditButtonId,
                 DefaultPath = @"panels\EditButton.png"
+            });
+
+            Register(new IconDefinition
+            {
+                Id = CloseButtonId,
+                DefaultPath = @"panels\CloseButton.png"
             });
         }
 
