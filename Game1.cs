@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using PopUpUI.Toolkit;
 using SideKicker.Native;
 using SideKicker.PanelSystem;
-using System.Diagnostics;
+using System;
 using System.IO;
 using System.Linq;
 
@@ -12,6 +12,9 @@ namespace SideKicker
 {
     public class Game1 : Game
     {
+        private static readonly TimeSpan OpenTickRate = TimeSpan.FromSeconds(1 / 60d);
+        private static readonly TimeSpan ClosedTickRate = TimeSpan.FromSeconds(1 / 20d);
+        
         private readonly GraphicsDeviceManager _graphics;
 
         private ContextPanelController panelController;
@@ -22,6 +25,8 @@ namespace SideKicker
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+
+            TargetElapsedTime = ClosedTickRate;
         }
 
         protected override void Initialize()
@@ -30,7 +35,6 @@ namespace SideKicker
 
             Window.IsBorderless = true;
             Window.Title = "";
-            this.IsFixedTimeStep = false;
 
             Window.Position = Point.Zero;
             _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
@@ -38,8 +42,13 @@ namespace SideKicker
             _graphics.ApplyChanges();
 
             GlobalHitRegionManager.Initialize(Window.Handle);
+
             GlobalDoubleTabWatcher.Initialize();
             GlobalDoubleTabWatcher.DoubleTapDetected += GlobalDoubleTabWatcher_DoubleTapDetected;
+
+            HoverWindowOpener.OriginUpdated(new Point(1920, 920)); // replace when preference is open
+            HoverWindowOpener.OpenControllerWindow += () => panelController.SetWindowState(isOpen: true, openedByHover: true);
+            HoverWindowOpener.CloseControllerWindow += () => panelController.SetWindowState(isOpen: false);
 
             base.Initialize();
         }
@@ -74,18 +83,35 @@ namespace SideKicker
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            panelController.Update();
-            PopUpUIManager.Update(gameTime);
+            HoverWindowOpener.Update(gameTime.ElapsedGameTime.Milliseconds, panelController);
             GlobalDoubleTabWatcher.Update();
 
+            if (panelController.IsOpen || panelController.IsMoving)
+            {
+                TargetElapsedTime = OpenTickRate;
+                PopUpUIManager.Update(gameTime);
+            }
+            else
+            {
+                TargetElapsedTime = ClosedTickRate;
+                SuppressDraw();
+            }
+
+            panelController.Update();
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
+            // suppressed already - just check in case
+            if (!panelController.IsOpen && !panelController.IsMoving)
+            {
+                return;
+            }
+
             PopUpUIManager.RenderUpdate(gameTime);
 
             GraphicsDevice.SetRenderTarget(null);

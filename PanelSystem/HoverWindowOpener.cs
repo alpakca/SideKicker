@@ -1,10 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using PopUpUI.Toolkit;
+using System;
+using System.Diagnostics;
 
 namespace SideKicker.PanelSystem
 {
-    internal class HoverWindowOpener
+    internal static class HoverWindowOpener
     {
         private const int HoverOpenDelay = 250;
         private const int HoverCloseDelay = 400;
@@ -12,41 +13,36 @@ namespace SideKicker.PanelSystem
         private const int HoveredAreaWidth = 50;
         private const int HoveredAreaHeight = 250;
 
-        private readonly IControllerState _controllerState;
+        private static float _hoverOpenElapsed;
+        private static float _hoverCloseElapsed;
+        private static Rectangle _hoverOpenArea;
 
-        private float _hoverOpenElapsed;
-        private float _hoverCloseElapsed;
-        private Rectangle _hoverOpenArea;
+        public static event Action OpenControllerWindow;
+        public static event Action CloseControllerWindow;
 
-        public HoverWindowOpener(IControllerState state)
-        {
-            _controllerState = state;
-        }
-
-        public void WindowClosed()
+        public static void WindowClosed()
         {
             _hoverOpenElapsed = 0;
             _hoverCloseElapsed = 0;
         }
 
-        public void OriginUpdated(Point value)
+        public static void OriginUpdated(Point value)
         {
             _hoverOpenArea = new Rectangle(value.X - HoveredAreaWidth, value.Y - HoveredAreaHeight, HoveredAreaWidth, HoveredAreaHeight);
         }
 
-        public void Update()
+        public static void Update(float deltaTime, IControllerState state)
         {
-            float deltaTime = Time.DeltaTime;
             Point mousePosition = Mouse.GetState().Position;
 
-            if (!_controllerState.IsOpen)
+            if (!state.IsOpen)
             {
                 if (_hoverOpenArea.Contains(mousePosition))
                 {
                     _hoverOpenElapsed += deltaTime;
                     if (_hoverOpenElapsed >= HoverOpenDelay)
                     {
-                        _controllerState.SetWindowState(isOpen: true, openedByHover: true);
+                        OpenControllerWindow?.Invoke();
                         _hoverOpenElapsed = 0f;
                     }
                 }
@@ -61,14 +57,14 @@ namespace SideKicker.PanelSystem
             }
 
             // hover to close, only possible if window was opened by hover (not by hotkey)
-            if (_controllerState.IsOpen && _controllerState.IsOpenByHover)
+            if (state.IsOpen && state.IsOpenByHover)
             {
-                if (!_controllerState.MinBoundaryBox.Contains(mousePosition))
+                if (!state.MinBoundaryBox.Contains(mousePosition))
                 {
                     _hoverCloseElapsed += deltaTime;
                     if (_hoverCloseElapsed >= HoverCloseDelay)
                     {
-                        _controllerState.SetWindowState(isOpen: false);
+                        CloseControllerWindow?.Invoke();
                         _hoverCloseElapsed = 0f;
                     }
                 }

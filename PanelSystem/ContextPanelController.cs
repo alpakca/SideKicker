@@ -12,7 +12,6 @@ namespace SideKicker.PanelSystem
         private readonly ContextPanel[] _allPanels;
         private readonly PanelWindow _panelWindow;
         private readonly WindowMovementManager _windowMovement;
-        private readonly HoverWindowOpener _hoverWindowOpener;
 
         private ContextPanel _openPanel;
 
@@ -25,6 +24,8 @@ namespace SideKicker.PanelSystem
         public bool IsTriggered => _isTriggered;
         public Rectangle MinBoundaryBox => _windowMovement.MinBoundaryBox;
 
+        public bool IsMoving => _windowMovement.LocationUpdating;
+
         public ContextPanelController()
         {
             _allPanels = [new PinnedCommandsPanel(), new TimersPanel()];
@@ -35,8 +36,6 @@ namespace SideKicker.PanelSystem
 
             PopWindowManager.ActiveWindows.Add(_panelWindow);
             InputManager.MouseButtonStateChange += InputManager_MouseButtonStateChange;
-
-            _hoverWindowOpener = new HoverWindowOpener(this);
 
             _windowMovement = new WindowMovementManager(this);
             _windowMovement.SidePanelSizeChanged(_panelWindow.Boundaries.Size);
@@ -60,7 +59,6 @@ namespace SideKicker.PanelSystem
         public void Update()
         {
             foreach (var panel in _allPanels) panel.Update();
-            _hoverWindowOpener.Update();
             _windowMovement.Update();
         }
 
@@ -88,7 +86,6 @@ namespace SideKicker.PanelSystem
             }
             else
             {
-                _hoverWindowOpener.WindowClosed();
                 _windowMovement.RunCloseAnimation();
             }
         }
@@ -129,7 +126,6 @@ namespace SideKicker.PanelSystem
 
         private void SetOrigin(Point value)
         {
-            _hoverWindowOpener.OriginUpdated(value);
             _windowMovement.SetOrigin(value);
         }
 
