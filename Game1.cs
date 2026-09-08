@@ -43,8 +43,8 @@ namespace SideKicker
 
             GlobalHitRegionManager.Initialize(Window.Handle);
 
-            GlobalDoubleTabWatcher.Initialize();
-            GlobalDoubleTabWatcher.DoubleTapDetected += GlobalDoubleTabWatcher_DoubleTapDetected;
+            GlobalKeyboardWatcher.Initialize();
+            GlobalKeyboardWatcher.ALTGR_Plus_LessThan_Detected += GlobalKeyboardWatcher_ALTGR_Plus_LessThan_Detected;
 
             HoverWindowOpener.OriginUpdated(new Point(1920, 920)); // replace when preference is open
             HoverWindowOpener.OpenControllerWindow += () => panelController.SetWindowState(isOpen: true, openedByHover: true);
@@ -53,7 +53,7 @@ namespace SideKicker
             base.Initialize();
         }
 
-        private void GlobalDoubleTabWatcher_DoubleTapDetected()
+        private void GlobalKeyboardWatcher_ALTGR_Plus_LessThan_Detected()
         {
             panelController.ToggleWindow();
         }
@@ -87,7 +87,7 @@ namespace SideKicker
                 Exit();
 
             HoverWindowOpener.Update(gameTime.ElapsedGameTime.Milliseconds, panelController);
-            GlobalDoubleTabWatcher.Update();
+            GlobalKeyboardWatcher.Update();
 
             if (panelController.IsOpen || panelController.IsMoving)
             {
@@ -129,7 +129,7 @@ namespace SideKicker
         protected override void OnExiting(object sender, ExitingEventArgs args)
         {
             panelController.OnExiting();
-            GlobalDoubleTabWatcher.Dispose();
+            GlobalKeyboardWatcher.Dispose();
             base.OnExiting(sender, args);
         }
     }

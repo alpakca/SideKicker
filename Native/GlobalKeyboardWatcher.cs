@@ -8,15 +8,19 @@ using System.Threading;
 namespace SideKicker.Native
 {
     [SupportedOSPlatform("windows")]
-    public static class GlobalDoubleTabWatcher
+    public static class GlobalKeyboardWatcher
     {
-        public static event Action? DoubleTapDetected;
+        public static event Action? CtrlCDetected;
+        public static event Action? ALTGR_Plus_LessThan_Detected;
 
         public static int DoubleTapThresholdMs { get; set; } = GetDoubleClickTime();
 
         public static bool IsRunning => _hookThreadId != 0;
 
-        private const int VK_TAB = 0x09; // virtual key for Tab
+        private const int VK_CKEY = 0x43; // virtual key for C key
+        private const int VK_CTRL = 0xA2; // CTRL key
+        private const int VK_ALTGR = 0xA5; // ALTGR key
+        private const int VK_LESSTHAN = 0xE2; // '<' key
 
         public static void Initialize()
         {
@@ -27,7 +31,7 @@ namespace SideKicker.Native
             _thread = new Thread(HookThreadProc)
             {
                 IsBackground = true,
-                Name = nameof(GlobalDoubleTabWatcher)
+                Name = nameof(GlobalKeyboardWatcher)
             };
             _thread.Start();
 
@@ -56,9 +60,13 @@ namespace SideKicker.Native
 
         public static void Update()
         {
-            int count = Interlocked.Exchange(ref _pendingDoubleTaps, 0);
-            for (int i = 0; i < count; i++)
-                DoubleTapDetected?.Invoke();
+            int ctrlCCount = Interlocked.Exchange(ref _pendingCtrlCTaps, 0);
+            for (int i = 0; i < ctrlCCount; i++)
+                CtrlCDetected?.Invoke();
+
+            int altgr_Plus_LessThan_Count = Interlocked.Exchange(ref _pendingALTGR_Plus_LESSTHAN_Taps, 0);
+            for (int i = 0; i < altgr_Plus_LessThan_Count; i++)
+                ALTGR_Plus_LessThan_Detected?.Invoke();
         }
 
         // ---------------------------------------------------------------
@@ -68,10 +76,7 @@ namespace SideKicker.Native
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;
         private const int WM_SYSKEYDOWN = 0x0104;
-        private const int WM_KEYUP = 0x0101;
-        private const int WM_SYSKEYUP = 0x0105;
         private const int WM_QUIT = 0x0012;
-        private const uint LLKHF_ALTDOWN = 0x20;
 
         [StructLayout(LayoutKind.Sequential)]
         private struct KBDLLHOOKSTRUCT
@@ -144,9 +149,16 @@ namespace SideKicker.Native
         private static IntPtr _hookHandle = IntPtr.Zero;
         private static int _lastError;
 
-        private static bool _tabCurrentlyDown;
-        private static uint _lastTapTime;
-        private static int _pendingDoubleTaps; // written on hook thread, drained by Update()
+        private static bool _controlCurrentlyDown;
+        private static bool _cKeyCurrentlyDown;
+        private static bool _altgrKeyCurrentlyDown;
+        private static bool _lessThanKeyCurrentlyDown;
+
+        private static int _pendingCtrlCTaps;
+        private static bool _isCtrlCApplied;
+
+        private static int _pendingALTGR_Plus_LESSTHAN_Taps;
+        private static bool _isALTGR_Plus_LESSTHAN_Applied;
 
         private static void HookThreadProc()
         {
@@ -184,37 +196,44 @@ namespace SideKicker.Native
             if (nCode >= 0)
             {
                 var data = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
-                if (data.vkCode == VK_TAB)
+                int msg = wParam.ToInt32();
+                bool isDown = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
+                // bool isUp = msg == WM_KEYUP || msg == WM_SYSKEYUP; // should equal to !isDown in all cases
+
+                if (data.vkCode == VK_CKEY)
                 {
-                    int msg = wParam.ToInt32();
-                    bool isDown = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
-                    bool isUp = msg == WM_KEYUP || msg == WM_SYSKEYUP;
+                    _cKeyCurrentlyDown = isDown;
 
-                    if (isDown && !_tabCurrentlyDown)
-                    {
-                        _tabCurrentlyDown = true;
-                        bool altHeld = (data.flags & LLKHF_ALTDOWN) != 0;
+                    if (!isDown) _isCtrlCApplied = false;
+                }
+                else if (data.vkCode == VK_CTRL)
+                {
+                    _controlCurrentlyDown = isDown;
 
-                        if (!altHeld)
-                        {
-                            uint now = data.time;
-                            // unchecked subtraction correctly handles the ~49.7-day
-                            // wraparound of the tick-count clock used here.
-                            if (_lastTapTime != 0 && unchecked(now - _lastTapTime) <= (uint)DoubleTapThresholdMs)
-                            {
-                                _lastTapTime = 0; // reset so 3 rapid taps = one event, not two
-                                Interlocked.Increment(ref _pendingDoubleTaps);
-                            }
-                            else
-                            {
-                                _lastTapTime = now;
-                            }
-                        }
-                    }
-                    else if (isUp)
-                    {
-                        _tabCurrentlyDown = false;
-                    }
+                    if (!isDown) _isCtrlCApplied = false;
+                }
+                else if (data.vkCode == VK_ALTGR)
+                {
+                    _altgrKeyCurrentlyDown = isDown;
+
+                    if (!isDown) _isALTGR_Plus_LESSTHAN_Applied = false;
+                }
+                else if (data.vkCode == VK_LESSTHAN)
+                {
+                    _lessThanKeyCurrentlyDown = isDown;
+
+                    if (!isDown) _isALTGR_Plus_LESSTHAN_Applied = false;
+                }
+
+                if (!_isCtrlCApplied && _cKeyCurrentlyDown && _controlCurrentlyDown)
+                {
+                    _isCtrlCApplied = true;
+                    Interlocked.Increment(ref _pendingCtrlCTaps);
+                }
+                else if (!_isALTGR_Plus_LESSTHAN_Applied && _altgrKeyCurrentlyDown && _lessThanKeyCurrentlyDown)
+                {
+                    _isALTGR_Plus_LESSTHAN_Applied = true;
+                    Interlocked.Increment(ref _pendingALTGR_Plus_LESSTHAN_Taps);
                 }
             }
 
