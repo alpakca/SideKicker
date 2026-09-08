@@ -2,6 +2,7 @@
 using PopUpUI.Elements;
 using PopUpUI.Input;
 using PopUpUI.Surface;
+using SideKicker.PanelSystem.Message;
 using SideKicker.Theming;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Collections.Generic;
 
 namespace SideKicker.Panels.Timers
 {
-    internal class ContextWindow : PopWindow
+    internal class ContextWindow : MessageSupporterWindow
     {
         private const int TextBoxTextSize = 12;
         private const int NumberSelectorTextSize = 16;
@@ -232,7 +233,7 @@ namespace SideKicker.Panels.Timers
             base.Update();
         }
 
-        protected override void RenderUpdate()
+        protected override void RenderUpdateWithoutMessages()
         {
             _renderer.StartMainBatch();
 
@@ -287,17 +288,15 @@ namespace SideKicker.Panels.Timers
             _renderer.RenderTimesListBackgrounds(_timesList);
         }
 
-        protected override void OnMouseButtonStateChange(PopWindowMouseEventArgs e)
+        protected override void OnMouseButtonStateChangeWithoutMessages(PopWindowMouseEventArgs e)
         {
             _alarmCalendar.MouseStateChangeUpdate(e);
             _timesList.MouseStateChangeUpdate(e);
-            base.OnMouseButtonStateChange(e);
         }
 
-        protected override void OnMousePositionChange(PopWindowMouseEventArgs e)
+        protected override void OnMousePositionChangeWithoutMessages(PopWindowMouseEventArgs e)
         {
             _timesList.MousePositionChanged(e);
-            base.OnMousePositionChange(e);
         }
 
         protected override void OnMouseVerticalScrollChange(PopWindowMouseEventArgs e, int change)

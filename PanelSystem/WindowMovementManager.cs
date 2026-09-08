@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using SideKicker.Native;
-using SideKicker.PanelSystem.Message;
 using System;
 
 namespace SideKicker.PanelSystem
@@ -45,8 +44,6 @@ namespace SideKicker.PanelSystem
             _controllerState = state;
             _animator = new PanelOpenCloseAnimator();
             _animator.AnimationDone += Animator_AnimationDone;
-
-            MessageWindow.WindowAdded += UpdateLocations;
         }
 
         public void Update()
@@ -147,13 +144,6 @@ namespace SideKicker.PanelSystem
 
             _controllerState.SetSidePanelBounds(_sidePanelBounds);
             _controllerState.SetShownPanelBounds(_shownPanelBounds);
-
-            // update message window's location relative to shown panel's boundaries, if active
-            foreach (var messageWindow in MessageWindow.ActiveWindows)
-            {
-                Point newLocation = _shownPanelBounds.Location + (_shownPanelBounds.Size - messageWindow.WindowSize) / 2;
-                messageWindow.SetLocation(newLocation);
-            }
         }
 
         private void Animator_AnimationDone()

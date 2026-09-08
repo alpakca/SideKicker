@@ -1,15 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using PopUpUI.Input;
-using PopUpUI.Surface;
 using PopUpUI.Toolkit;
-using SideKicker.Panels;
 using SideKicker.Theming;
 using System;
 using System.Collections.Generic;
 
 namespace SideKicker.PanelSystem.Message
 {
-    internal class MessageWindow : PopWindow
+    internal class MessageWindow
     {
         private const int TopCancelButtonHeight = 35;
         private const int TopCancelButtonWidth = 60;
@@ -25,10 +23,6 @@ namespace SideKicker.PanelSystem.Message
         private const string OkButtonText = "Ok";
         private const string CancelButtonText = "Cancel";
 
-        private static readonly Queue<MessageWindow> _pooledWindows = new Queue<MessageWindow>();
-        private static readonly Stack<MessageWindow> _activeWindows = new Stack<MessageWindow>();
-
-        private bool _isActive;
         private Point _rightMostButtonPosition;
         private Point _textStartPosition;
         private Action<MessageWindowResult> _returnAction;
@@ -37,16 +31,17 @@ namespace SideKicker.PanelSystem.Message
         private MessageWindowResult _hoveredButtonResult;
         private bool _isHoveredButtonHeld;
 
-        private Rectangle TopCloseButtonBounds => new Rectangle(Boundaries.Width - TopCancelButtonWidth, 0, TopCancelButtonWidth, TopCancelButtonHeight);
+        private Rectangle TopCloseButtonBounds => new Rectangle(Location.X + WindowSize.X - TopCancelButtonWidth, Location.Y, 
+                                                                TopCancelButtonWidth, TopCancelButtonHeight);
 
         private readonly List<string> _lines;
         private readonly List<(string Text, MessageWindowResult Result)> _buttonTexts;
 
-        public bool IsActive => _isActive;
-        public Point WindowSize => this.Boundaries.Size;
+        public bool IsActive { get; private set; }
+        public Point WindowSize { get; private set; }
+        public Point Location { get; set; }
 
-        public static IEnumerable<MessageWindow> ActiveWindows => _activeWindows;
-        public static event Action WindowAdded;
+        public event Action<MessageWindow> WindowReturned;
 
         public MessageWindow()
         {
@@ -54,31 +49,13 @@ namespace SideKicker.PanelSystem.Message
             _buttonTexts = new List<(string, MessageWindowResult)>();
         }
 
-        public void SetLocation(Point value)
+        public static MessageWindow Create(string text, MessageWindowButton buttons, Action<MessageWindowResult> returnAction = null)
         {
-            if (IsActive)
-            {
-                this.Boundaries = new Rectangle(value, this.Boundaries.Size);
-            }
-        }
+            MessageWindow window = new MessageWindow();
+            window.ShowWindow(text, buttons);
+            window._returnAction = returnAction;
 
-        public static void Show(string text, MessageWindowButton buttons, Action<MessageWindowResult> returnAction = null)
-        {
-            if (!_pooledWindows.TryDequeue(out MessageWindow messageWindow))
-            {
-                messageWindow = new MessageWindow();
-            }
-
-            _activeWindows.Push(messageWindow);
-
-            messageWindow._returnAction = returnAction;
-            messageWindow._isActive = true;
-            messageWindow.ShowWindow(text, buttons);
-
-            foreach (var window in PopWindowManager.ActiveWindows) window.Frozen = true;
-            PopWindowManager.ActiveWindows.Add(messageWindow);
-
-            WindowAdded?.Invoke();
+            return window;
         }
 
         private void ShowWindow(string text, MessageWindowButton buttons)
@@ -142,23 +119,19 @@ namespace SideKicker.PanelSystem.Message
             _rightMostButtonPosition = new Point(_textStartPosition.X + textSize.X - BottomButtonWidth, 
                                                  _textStartPosition.Y + textSize.Y + BottomButtonMargin);
 
-            Point windowSize = new Point(FrameMargin * 2 + textSize.X, FrameMargin + textSize.Y + BottomButtonMargin * 2 + BottomButtonHeight);
-            this.Boundaries = new Rectangle(new Point(1420, 470), windowSize);
+            WindowSize = new Point(FrameMargin * 2 + textSize.X, FrameMargin + textSize.Y + BottomButtonMargin * 2 + BottomButtonHeight);
         }
 
-        protected override void RenderUpdate()
+        public void Render()
         {
             ResolvedTheme theme = ThemeService.CurrentTheme;
-            Point windowSize = this.Boundaries.Size;
 
-            DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaBlendDrawOptions);
-
-            DrawHelper.DrawBorderedBackground(new Rectangle(Point.Zero, windowSize), theme.GetColor(ColorRegistry.BorderId),
+            DrawHelper.DrawBorderedBackground(new Rectangle(Location, WindowSize), theme.GetColor(ColorRegistry.BorderId),
                                               theme.GetColor(ColorRegistry.SurfaceId), 1);
 
             DrawHelper.DrawTextureCenteralized(TopCloseButtonBounds, theme.GetIcon(IconRegistry.CloseButtonId));
 
-            Vector2 currentTextPosition = _textStartPosition.ToVector2();
+            Vector2 currentTextPosition = (Location + _textStartPosition).ToVector2();
             Color textColor = theme.GetColor(ColorRegistry.TextColorId);
             for (int i = 0; i < _lines.Count; i++)
             {
@@ -166,7 +139,7 @@ namespace SideKicker.PanelSystem.Message
                 currentTextPosition.Y += FontService.Regular.GetLineSpacing(TextSize);
             }
 
-            Point currentButtonPosition = _rightMostButtonPosition;
+            Point currentButtonPosition = Location + _rightMostButtonPosition;
             Color buttonColor = theme.GetColor(ColorRegistry.BackgroundId);
             for (int i = _buttonTexts.Count - 1; i >= 0; i--)
             {
@@ -180,11 +153,9 @@ namespace SideKicker.PanelSystem.Message
 
             DrawHelper.DrawBackground(_hoveredButtonBounds, _isHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
                                                                                  : theme.GetColor(ColorRegistry.HoverOverlayId));
-
-            DrawHelper.EndBatch();
         }
 
-        protected override void OnMousePositionChange(PopWindowMouseEventArgs e)
+        public void OnMousePositionChange(PopWindowMouseEventArgs e)
         {
             Point mousePosition = e.MousePosition;
 
@@ -197,7 +168,7 @@ namespace SideKicker.PanelSystem.Message
             }
             else
             {
-                Point currentButtonPosition = _rightMostButtonPosition;
+                Point currentButtonPosition = Location + _rightMostButtonPosition;
                 for (int i = 0; i < _buttonTexts.Count; i++)
                 {
                     Rectangle buttonBounds = new Rectangle(currentButtonPosition.X, currentButtonPosition.Y, BottomButtonWidth, BottomButtonHeight);
@@ -216,7 +187,7 @@ namespace SideKicker.PanelSystem.Message
             _hoveredButtonResult = MessageWindowResult.None;
         }
 
-        protected override void OnMouseButtonStateChange(PopWindowMouseEventArgs e)
+        public void OnMouseButtonStateChange(PopWindowMouseEventArgs e)
         {
             if (e.FirstTimeButtons.HasLeft && !_hoveredButtonBounds.IsEmpty)
             {
@@ -226,19 +197,10 @@ namespace SideKicker.PanelSystem.Message
             {
                 if (_isHoveredButtonHeld && !_hoveredButtonBounds.IsEmpty)
                 {
-                    PopWindowManager.ActiveWindows.Remove(this);
-                    foreach (var window in PopWindowManager.ActiveWindows.GetReverseEnumerable())
-                    {
-                        window.Frozen = false;
-
-                        if (window is MessageWindow) break;
-                    }
-
-                    _isActive = false;
-                    _activeWindows.Pop();
-
-                    _pooledWindows.Enqueue(this);
+                    IsActive = false;
                     _returnAction?.Invoke(_hoveredButtonResult);
+
+                    WindowReturned?.Invoke(this);
                 }
 
                 _isHoveredButtonHeld = false;

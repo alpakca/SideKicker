@@ -1,17 +1,17 @@
 ﻿using PopUpUI.Elements;
-using PopUpUI.Surface;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using PopUpUI.Input;
 using Microsoft.Xna.Framework.Input;
 using System.Linq;
+using SideKicker.PanelSystem.Message;
 
 using Clipboard = System.Windows.Forms.Clipboard;
 
 namespace SideKicker.Panels.PinnedCommands
 {
-    internal class ContextWindow : PopWindow
+    internal class ContextWindow : MessageSupporterWindow
     {
         public const int PanelTextSize = 12;
 
@@ -233,7 +233,7 @@ namespace SideKicker.Panels.PinnedCommands
             };
         }
 
-        protected override void RenderUpdate()
+        protected override void RenderUpdateWithoutMessages()
         {
             _renderer.RenderMainElements(_commandEditorTexts, _inEditingMode ? _editingCommandButtons : _addingCommandButtons);
 
@@ -248,11 +248,9 @@ namespace SideKicker.Panels.PinnedCommands
             }
 
             _renderer.RenderCommandListBackgrounds(_commandsList, _savedCommands);
-
-            base.RenderUpdate();
         }
 
-        protected override void OnMouseButtonStateChange(PopWindowMouseEventArgs e)
+        protected override void OnMouseButtonStateChangeWithoutMessages(PopWindowMouseEventArgs e)
         {
             if (e.ReleasedButtons.HasLeft)
             {
@@ -260,10 +258,9 @@ namespace SideKicker.Panels.PinnedCommands
             }
 
             _commandsList.MouseStateChangeUpdate(e);
-            base.OnMouseButtonStateChange(e);
         }
 
-        protected override void OnMousePositionChange(PopWindowMouseEventArgs e)
+        protected override void OnMousePositionChangeWithoutMessages(PopWindowMouseEventArgs e)
         {
             if (_inReorderMode)
             {
@@ -276,7 +273,6 @@ namespace SideKicker.Panels.PinnedCommands
             }
 
             _commandsList.MousePositionChanged(e);
-            base.OnMousePositionChange(e);
         }
 
         protected override void OnMouseVerticalScrollChange(PopWindowMouseEventArgs e, int change)

@@ -15,7 +15,8 @@ namespace SideKicker.Panels.Timers
             TimeInfoSerializer.SaveFileName = "timeinfos.json";
         }
 
-        private const int TimersListDirtyCheckTime = 5000; // milliseconds
+        private const int TimersListDirtyCheckTime = 1_200_000; // milliseconds, equals 20 minutes
+        private const string TimerGoingOffMessage = "Timer goes off.";
 
         private readonly ContextWindow _contextWindow;
         private readonly List<ITimeInfo> _registeredTimers;
@@ -30,7 +31,7 @@ namespace SideKicker.Panels.Timers
         public override string IconId { get; } = "Timers";
         public override string IconPath { get; } = @"panels\TimersPanelIcon.png";
 
-        public override PopWindow Window => _contextWindow;
+        public override MessageSupporterWindow Window => _contextWindow;
 
         public TimersPanel()
         {
@@ -95,7 +96,12 @@ namespace SideKicker.Panels.Timers
         private void TriggerTimeInfo(ITimeInfo info)
         {
             RequestTriggeredWindow();
-            MessageWindow.Show($"Timer goes off.\n\n{info.LabelText}", MessageWindowButton.Ok);
+
+            if (info.LabelText.Length != 0)
+                _contextWindow.ShowMessageWindow(MessageWindow.Create(TimerGoingOffMessage + $"\n\n{info.LabelText}", MessageWindowButton.Ok));
+
+            else
+                _contextWindow.ShowMessageWindow(MessageWindow.Create(TimerGoingOffMessage, MessageWindowButton.Ok));
         }
 
         private void Window_TimesListButtonEditPressed(int buttonIndex)

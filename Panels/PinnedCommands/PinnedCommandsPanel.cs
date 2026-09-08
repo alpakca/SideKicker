@@ -1,5 +1,5 @@
-﻿using PopUpUI.Surface;
-using PopUpUI.Toolkit;
+﻿using PopUpUI.Toolkit;
+using SideKicker.PanelSystem.Message;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -16,7 +16,7 @@ namespace SideKicker.Panels.PinnedCommands
             CommandSerializer.SaveFileName = "pinnedcommands.json";
         }
 
-        private const int SavedCommandsListDirtyCheckTime = 5000; // in milliseconds
+        private const int SavedCommandsListDirtyCheckTime = 1_200_000; // in milliseconds, equals 20 minutes
 
         private bool _commandListDirty;
         private float _elapsedSinceLastDirtyCheck;
@@ -28,7 +28,7 @@ namespace SideKicker.Panels.PinnedCommands
         public override string IconId { get; } = "PinnedActions";
         public override string IconPath { get; } = @"panels\PinnedActionsPanelIcon.png";
 
-        public override PopWindow Window => _contextWindow;
+        public override MessageSupporterWindow Window => _contextWindow;
 
         public PinnedCommandsPanel()
         {
