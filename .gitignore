@@ -5,6 +5,7 @@ obj/
 .vs/
 
 saves/
+preferences.json
 assets/panels
 assets/themes
 

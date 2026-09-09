@@ -3,12 +3,15 @@ using PopUpUI.Toolkit;
 using SideKicker.Panels;
 using SideKicker.Panels.PinnedCommands;
 using SideKicker.Panels.Timers;
+using SideKicker.PanelSystem.Settings;
 using SideKicker.Theming;
+using System;
 
 namespace SideKicker.PanelSystem
 {
     internal class ContextPanelController : IControllerState
     {
+        private readonly SettingsService _settings;
         private readonly ContextPanel[] _allPanels;
         private readonly PanelWindow _panelWindow;
         private readonly WindowMovementManager _windowMovement;
@@ -25,9 +28,13 @@ namespace SideKicker.PanelSystem
         public Rectangle MinBoundaryBox => _windowMovement.MinBoundaryBox;
 
         public bool IsMoving => _windowMovement.LocationUpdating;
+        public SettingsService Settings => _settings;
 
         public ContextPanelController()
         {
+            _settings = new SettingsService();
+            _settings.OriginUpdated += Settings_PreferenceValueUpdated;
+
             _allPanels = [new PinnedCommandsPanel(), new TimersPanel()];
             foreach (var panel in _allPanels) panel.TriggeredWindowRequested += TriggerWindowShowcase;
 
@@ -40,9 +47,14 @@ namespace SideKicker.PanelSystem
             _windowMovement = new WindowMovementManager(this);
             _windowMovement.SidePanelSizeChanged(_panelWindow.Boundaries.Size);
 
-            SetOrigin(new Point(1920, 920)); // replace with a preference setting reading
-            ShowPanel(_allPanels[0]); // replace with a preference setting reading, as index?
+            SetOrigin(new Point(_settings.Preferences.OriginX, _settings.Preferences.OriginY));
+            ShowPanel(_allPanels[_settings.Preferences.ShownPanelIndex]);
             InitializeTheme();
+        }
+
+        private void Settings_PreferenceValueUpdated()
+        {
+            SetOrigin(_settings.Preferences.Origin);
         }
 
         private void InputManager_MouseButtonStateChange(PopUpUI.Input.PopWindowMouseEventArgs e)
@@ -65,6 +77,9 @@ namespace SideKicker.PanelSystem
         public void OnExiting()
         {
             foreach (var panel in _allPanels) panel.OnExiting();
+
+            _settings.Preferences.ShownPanelIndex = Array.IndexOf<ContextPanel>(_allPanels, _openPanel);
+            _settings.Save();
         }
 
         public void ToggleWindow()
@@ -121,7 +136,7 @@ namespace SideKicker.PanelSystem
             }
 
             ThemeService.Refresh();
-            ThemeService.SetTheme("dark"); // replace with a preference setting reading
+            ThemeService.SetTheme(_settings.Preferences.ThemeId);
         }
 
         private void SetOrigin(Point value)

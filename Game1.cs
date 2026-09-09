@@ -46,7 +46,6 @@ namespace SideKicker
             GlobalKeyboardWatcher.Initialize();
             GlobalKeyboardWatcher.ALTGR_Plus_LessThan_Detected += GlobalKeyboardWatcher_ALTGR_Plus_LessThan_Detected;
 
-            HoverWindowOpener.OriginUpdated(new Point(1920, 920)); // replace when preference is open
             HoverWindowOpener.OpenControllerWindow += () => panelController.SetWindowState(isOpen: true, openedByHover: true);
             HoverWindowOpener.CloseControllerWindow += () => panelController.SetWindowState(isOpen: false);
 
@@ -79,6 +78,14 @@ namespace SideKicker
             );
 
             panelController = new ContextPanelController();
+
+            HoverWindowOpener.OriginUpdated(panelController.Settings.Preferences.Origin);
+            panelController.Settings.OriginUpdated += Settings_OriginUpdated;
+        }
+
+        private void Settings_OriginUpdated()
+        {
+            HoverWindowOpener.OriginUpdated(panelController.Settings.Preferences.Origin);
         }
 
         protected override void Update(GameTime gameTime)
