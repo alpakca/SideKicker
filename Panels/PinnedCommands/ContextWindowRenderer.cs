@@ -3,10 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
 using SideKicker.Theming;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.CompilerServices;
-
-using Icon = System.Drawing.Icon;
 
 namespace SideKicker.Panels.PinnedCommands
 {
@@ -14,22 +11,16 @@ namespace SideKicker.Panels.PinnedCommands
     {
         private const int PanelTextSize = ContextWindow.PanelTextSize;
         private const string ReorderButtonId = "pinnedcommands.reorderbutton";
-        private const string EditButtonId = "pinnedcommands.editbutton";
 
         private readonly RenderTarget2D _windowTexture;
         private readonly Point _windowSize;
-        private readonly Dictionary<string, Texture2D> _fileIcons;
-        private readonly Dictionary<string, Texture2D> _fileTypeIcons;
 
         public ContextWindowRenderer(RenderTarget2D windowTexture)
         {
             _windowTexture = windowTexture;
             _windowSize = new Point(windowTexture.Width, windowTexture.Height);
-            _fileIcons = new Dictionary<string, Texture2D>();
-            _fileTypeIcons = new Dictionary<string, Texture2D>();
         }
 
-        #region Icons
         [ModuleInitializer]
         public static void InitializeIcons()
         {
@@ -39,70 +30,6 @@ namespace SideKicker.Panels.PinnedCommands
                 DefaultPath = @"panels\ReorderButton.png"
             });
         }
-
-        private static Texture2D GetIconTexture(MemoryStream stream, Icon icon)
-        {
-            stream.SetLength(0);
-
-            icon.ToBitmap().Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-            stream.Seek(0, SeekOrigin.Begin);
-
-            return Texture2D.FromStream(DrawHelper.Device, stream);
-        }
-
-        public void RefreshIcons(IReadOnlyList<SavedCommand> savedCommands)
-        {
-            using MemoryStream stream = new MemoryStream();
-
-            foreach (var command in savedCommands)
-            {
-                string fileExtension = Path.GetExtension(command.FileName);
-
-                // if an icon was already set for this file
-                if (_fileIcons.ContainsKey(command.FileName))
-                {
-                    continue;
-                }
-
-                // if no icon was set for this file, but was set for same extension.
-                // ".exe" can't exist here as they are only added to _fileIcons dictionary
-                if (_fileTypeIcons.TryGetValue(fileExtension, out Texture2D value))
-                {
-                    _fileIcons.Add(command.FileName, value);
-                    continue;
-                }
-
-                string absolutePath = Path.IsPathRooted(command.FileName) ? command.FileName : Path.Combine(command.PathToRunCommand, command.FileName);
-
-                // special case for directories: use explorer icon
-                if (Directory.Exists(absolutePath))
-                {
-                    Icon explorerIcon = Icon.ExtractAssociatedIcon(@"C:\Windows\explorer.exe");
-                    if (explorerIcon == null) continue;
-
-                    Texture2D explorerIconTexture = GetIconTexture(stream, explorerIcon);
-
-                    _fileIcons.Add(command.FileName, explorerIconTexture);
-                }
-                else
-                {
-                    Icon icon = Icon.ExtractAssociatedIcon(absolutePath);
-                    if (icon == null) continue;
-
-                    Texture2D iconTexture = GetIconTexture(stream, icon);
-
-                    // special case for executables: they have different icons with same .exe extension,
-                    // so don't save them for type icons
-                    if (fileExtension != ".exe")
-                    {
-                        _fileTypeIcons[fileExtension] = iconTexture;
-                    }
-
-                    _fileIcons.Add(command.FileName, iconTexture);
-                }
-            }
-        }
-        #endregion
 
         public void RenderMainElements(TextPlaque[] editorTextPlaques, TextedButton[] editorButtons)
         {
@@ -206,7 +133,7 @@ namespace SideKicker.Panels.PinnedCommands
 
                 DrawHelper.Batch.Draw(theme.GetIcon(ReorderButtonId), CommandListLayoutCalculator.ReorderButtonBounds(buttonScreenBounds), Color.White);
 
-                if (_fileIcons.TryGetValue(savedCommands[i].FileName, out Texture2D icon))
+                if (FileIconCache.TryGetIcon(savedCommands[i].FileName, out Texture2D icon))
                 {
                     DrawHelper.Batch.Draw(icon, CommandListLayoutCalculator.ButtonFileIconBounds(buttonScreenBounds), Color.White);
                 }
