@@ -1,9 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Elements;
 using PopUpUI.Input;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace SideKicker.Panels
 {
@@ -17,7 +14,7 @@ namespace SideKicker.Panels
         public Rectangle Boundaries { get; set; }
         public int ButtonCount { get; set; }
 
-        public int HoveredButtonIndex { get; private set; }
+        public int HoveredButtonIndex { get; private set; } = -1;
         public bool IsHoveredButtonHeld { get; private set; }
         public Point RelativeMouseToHovered { get; private set; }
 

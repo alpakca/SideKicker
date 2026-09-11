@@ -14,11 +14,14 @@ namespace SideKicker.Panels.DesktopSearcher
 
         public int Count => _count;
 
-        public LastSearcherResultList()
+        public LastSearcherResultList(SearcherResult[] results)
         {
             _items = new SearcherResult[MaxResultCount];
             _comparer = EqualityComparer<SearcherResult>.Create((f, s) => f.FileAbsolutePath == s.FileAbsolutePath,
                                                                 item => item.FileAbsolutePath.GetHashCode());
+
+            Array.Copy(results, _items, results.Length);
+            _count = results.Length;
         }
 
         public SearcherResult this[int index]
