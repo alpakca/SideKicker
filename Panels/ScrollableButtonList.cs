@@ -65,13 +65,19 @@ namespace SideKicker.Panels
 
         public void MouseStateChangeUpdate(PopWindowMouseEventArgs e)
         {
-            HandleHolding(e);
+            if (this.Boundaries.Contains(e.MousePosition))
+            {
+                HandleHolding(e);
+            }
         }
 
         public void MousePositionChanged(PopWindowMouseEventArgs e)
         {
-            HandleHovering(e);
-            HandleHolding(e);
+            if (this.Boundaries.Contains(e.MousePosition))
+            {
+                HandleHovering(e);
+                HandleHolding(e);
+            }
         }
 
         private void HandleHolding(PopWindowMouseEventArgs e)

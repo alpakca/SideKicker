@@ -1,12 +1,13 @@
 ﻿using SideKicker.PanelSystem.Message;
-using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 
 namespace SideKicker.Panels.DesktopSearcher
 {
     internal class DesktopSearcherPanel : ContextPanel
     {
         private readonly ContextWindow _window;
-        private readonly List<SearcherResult> _lastUsedResults;
+        private readonly LastSearcherResultList _lastUsedResults;
         private readonly SearchResultsSupplier _searchResultSupplier;
 
         public override string IconId { get; } = "DesktopSearcher";
@@ -16,17 +17,17 @@ namespace SideKicker.Panels.DesktopSearcher
 
         public DesktopSearcherPanel()
         {
-            _lastUsedResults = new List<SearcherResult>();
+            _lastUsedResults = new LastSearcherResultList();
             _searchResultSupplier = new SearchResultsSupplier();
 
             _window = new ContextWindow();
-            _window.SearchForResult += Window_SearchForResult;
+            _window.SearchForResult += ShowSearcherResult;
             _window.ResultSelected += Window_ResultSelected;
 
-            _window.SetSearcherResults(_lastUsedResults);
+            ShowSearcherResult(string.Empty);
         }
 
-        private void Window_SearchForResult(string pattern)
+        private void ShowSearcherResult(string pattern)
         {
             if (pattern == string.Empty)
             {
@@ -49,6 +50,9 @@ namespace SideKicker.Panels.DesktopSearcher
 
         private void Window_ResultSelected(SearcherResult result)
         {
+            _lastUsedResults.Enqueue(result);
+
+            using Process proc = Process.Start("explorer.exe", $"\"{Path.GetDirectoryName(result.FileAbsolutePath)}\"");
         }
     }
 }
