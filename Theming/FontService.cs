@@ -9,9 +9,9 @@ namespace SideKicker.Theming
     {
         public static FontProvider Regular { get; } = new FontProvider(new Dictionary<int, SpriteFont>
         {
-            { 12, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_12") },
-            { 16, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_16") },
-            { 24, ContentAssistant.FromLoaded<SpriteFont>("Font_Consolas_24") },
+            { 12, ContentAssistant.FromLoaded<SpriteFont>("Font_SegoeUI_12") },
+            { 16, ContentAssistant.FromLoaded<SpriteFont>("Font_SegoeUI_16") },
+            { 24, ContentAssistant.FromLoaded<SpriteFont>("Font_SegoeUI_24") },
             { 20, ContentAssistant.FromLoaded<SpriteFont>("Font_SegoeUI_20") }
         });
 

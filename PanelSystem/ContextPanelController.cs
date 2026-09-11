@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
+using SideKicker.Panels.DesktopSearcher;
 using SideKicker.Panels.PinnedCommands;
 using SideKicker.Panels.Timers;
 using SideKicker.PanelSystem.Settings;
@@ -35,7 +36,7 @@ namespace SideKicker.PanelSystem
             _settings = new SettingsService();
             _settings.OriginUpdated += Settings_PreferenceValueUpdated;
 
-            _allPanels = [new PinnedCommandsPanel(), new TimersPanel()];
+            _allPanels = [new PinnedCommandsPanel(), new TimersPanel(), new DesktopSearcherPanel()];
             foreach (var panel in _allPanels) panel.TriggeredWindowRequested += TriggerWindowShowcase;
 
             _panelWindow = new PanelWindow(_allPanels);

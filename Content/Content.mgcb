@@ -14,35 +14,35 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin ../assets/fonts/Consolas_12.spritefont
+#begin ../assets/fonts/SegoeUI_12.spritefont
 /importer:FontDescriptionImporter
 /processor:DefringedFontProcessor
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Color
 /processorParam:Version=1.0.0.0
-/build:../assets/fonts/Consolas_12.spritefont;Consolas_12.spritefont
+/build:../assets/fonts/SegoeUI_12.spritefont;SegoeUI_12.spritefont
 
-#begin ../assets/fonts/Consolas_16.spritefont
+#begin ../assets/fonts/SegoeUI_16.spritefont
 /importer:FontDescriptionImporter
 /processor:DefringedFontProcessor
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Color
 /processorParam:Version=1.0.0.0
-/build:../assets/fonts/Consolas_16.spritefont;Consolas_16.spritefont
-
-#begin ../assets/fonts/Consolas_24.spritefont
-/importer:FontDescriptionImporter
-/processor:DefringedFontProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Color
-/processorParam:Version=1.0.0.0
-/build:../assets/fonts/Consolas_24.spritefont;Consolas_24.spritefont
+/build:../assets/fonts/SegoeUI_16.spritefont;SegoeUI_16.spritefont
 
 #begin ../assets/fonts/SegoeUI_20.spritefont
 /importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
+/processor:DefringedFontProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/processorParam:Version=3.8.5.1
+/processorParam:TextureFormat=Color
+/processorParam:Version=1.0.0.0
 /build:../assets/fonts/SegoeUI_20.spritefont;SegoeUI_20.spritefont
+
+#begin ../assets/fonts/SegoeUI_24.spritefont
+/importer:FontDescriptionImporter
+/processor:DefringedFontProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Color
+/processorParam:Version=1.0.0.0
+/build:../assets/fonts/SegoeUI_24.spritefont;SegoeUI_24.spritefont
 

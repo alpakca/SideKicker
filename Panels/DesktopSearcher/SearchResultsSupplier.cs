@@ -20,10 +20,10 @@ namespace SideKicker.Panels.DesktopSearcher
             _lastSearchResults = new List<SearcherResult>();
             _searchOptions = new EnumerationOptions
             {
-                AttributesToSkip = FileAttributes.None,
+                RecurseSubdirectories = true,
                 IgnoreInaccessible = true,
-                MatchCasing = MatchCasing.PlatformDefault,
-                RecurseSubdirectories = true
+                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System,
+                ReturnSpecialDirectories = false
             };
         }
 
@@ -42,7 +42,8 @@ namespace SideKicker.Panels.DesktopSearcher
                 {
                     _lastSearchResults.Add(new SearcherResult
                     {
-                        FilePath = entry,
+                        FileAbsolutePath = entry,
+                        FileRelativePath = Path.GetRelativePath(DesktopPath, entry),
                         FileName = Path.GetFileName(entry)
                     });
 

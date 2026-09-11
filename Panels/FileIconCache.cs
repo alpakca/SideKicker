@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
+using SideKicker.Panels.DesktopSearcher;
 using SideKicker.Panels.PinnedCommands;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,14 @@ namespace SideKicker.Panels
                 ReadOnlySpan<char> absolutePath = Path.IsPathRooted(command.FileName) ? command.FileName
                                                                                       : Path.Combine(command.PathToRunCommand, command.FileName);
                 TryAddIcon(absolutePath, command.FileName);
+            }
+        }
+
+        public static void AddIcons(IEnumerable<SearcherResult> searcherResults)
+        {
+            foreach (var result in searcherResults)
+            {
+                TryAddIcon(result.FileAbsolutePath, result.FileName);
             }
         }
 

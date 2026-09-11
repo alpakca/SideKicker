@@ -1,6 +1,9 @@
-﻿using PopUpUI.Toolkit;
+﻿using Microsoft.Xna.Framework;
+using PopUpUI.Input;
+using PopUpUI.Toolkit;
 using SideKicker.PanelSystem.Message;
 using System;
+using System.Collections.Generic;
 
 namespace SideKicker.Panels.DesktopSearcher
 {
@@ -10,7 +13,8 @@ namespace SideKicker.Panels.DesktopSearcher
         private const int HeaderTextSize = 20;
         private const int EnumerateFilesThreshold = 400;
 
-        private readonly ISearcherResultCollection _searcherResultCollection;
+        private IReadOnlyList<SearcherResult> _searcherResults;
+        private readonly ContextWindowRenderer _renderer;
 
         private readonly LinearTextBox _searchBox;
         private readonly ScrollableButtonList _resultsList;
@@ -18,46 +22,61 @@ namespace SideKicker.Panels.DesktopSearcher
         private readonly TextPlaque _emptySearchBoxPlaque;
         private readonly TextPlaque _nonEmptySearchBoxPlaque;
 
-        private bool _isSearchBoxEmpty;
         private float _remainingTextWaitingTime;
-
-        public bool IsSearchBoxEmpty => _isSearchBoxEmpty;
 
         public event Action<string> SearchForResult;
         public event Action<SearcherResult> ResultSelected;
 
-        public ContextWindow(ISearcherResultCollection searchResults)
+        public ContextWindow()
         {
-            _searcherResultCollection = searchResults;
-
             _emptySearchBoxPlaque = new TextPlaque
             {
                 Text = "Last",
-                TextSize = HeaderTextSize
+                TextSize = HeaderTextSize,
+                Position = new Vector2(20, 10)
             };
 
             _nonEmptySearchBoxPlaque = new TextPlaque
             {
                 Text = "Results",
-                TextSize = HeaderTextSize
+                TextSize = HeaderTextSize,
+                Position = new Vector2(20, 10)
             };
 
             _searchBox = new LinearTextBox
             {
-                TextSize = SearchBoxTextSize
+                TextSize = SearchBoxTextSize,
+                SelectableMargin = 4,
+                Boundaries = new Rectangle(20, 356, 360, 30)
             };
             _searchBox.TextValueChanged += SearchBox_TextValueChanged;
 
             _resultsList = new ScrollableButtonList
             {
-
+                Boundaries = new Rectangle(20, 50, 368, 300),
+                ButtonHeight = ResultsListLayoutCalculator.ButtonHeight,
+                ButtonMargin = 4
             };
             _resultsList.ButtonPressed += ResultsList_ButtonPressed;
+
+            this.Elements.Add(_searchBox);
+
+            this.Boundaries = new Rectangle(Point.Zero, new Point(400, 400));
+            _renderer = new ContextWindowRenderer(WindowTexture);
+        }
+
+        public void SetSearcherResults(IReadOnlyList<SearcherResult> searcherResults)
+        {
+            _searcherResults = searcherResults;
+            _resultsList.ButtonCount = searcherResults.Count;
+            _resultsList.UpdateScrolledLength();
+
+            FileIconCache.AddIcons(_searcherResults);
         }
 
         private void ResultsList_ButtonPressed(int buttonIndex)
         {
-            ResultSelected?.Invoke(_searcherResultCollection.Results[buttonIndex]);
+            ResultSelected?.Invoke(_searcherResults[buttonIndex]);
         }
 
         private void SearchBox_TextValueChanged()
@@ -77,16 +96,46 @@ namespace SideKicker.Panels.DesktopSearcher
                 _remainingTextWaitingTime -= Time.DeltaTime;
                 if (_remainingTextWaitingTime <= 0)
                 {
-                    _isSearchBoxEmpty = _searchBox.Text == string.Empty;
-
-                    if (!_isSearchBoxEmpty)
-                    {
-                        SearchForResult?.Invoke(_searchBox.Text);
-                    }
+                    SearchForResult?.Invoke(_searchBox.Text);
                 }
             }
 
             base.Update();
+        }
+
+        protected override void RenderUpdateWithoutMessages()
+        {
+            _renderer.RenderMainElements(_searchBox.Text.Length == 0 ? _emptySearchBoxPlaque : _nonEmptySearchBoxPlaque);
+
+            _renderer.RenderSearchBox(_searchBox);
+
+            for (int i = 0; i < _searcherResults.Count; i++)
+            {
+                _renderer.RenderResultsListText(_resultsList, _searcherResults[i], i);
+            }
+            _renderer.RenderResultsListBackgrounds(_resultsList, _searcherResults);
+        }
+
+        protected override void OnMouseButtonStateChangeWithoutMessages(PopWindowMouseEventArgs e)
+        {
+            _resultsList.MouseStateChangeUpdate(e);
+            base.OnMouseButtonStateChangeWithoutMessages(e);
+        }
+
+        protected override void OnMousePositionChangeWithoutMessages(PopWindowMouseEventArgs e)
+        {
+            _resultsList.MousePositionChanged(e);
+            base.OnMousePositionChangeWithoutMessages(e);
+        }
+
+        protected override void OnMouseVerticalScrollChange(PopWindowMouseEventArgs e, int change)
+        {
+            if (_resultsList.Boundaries.Contains(e.MousePosition))
+            {
+                _resultsList.Scroll(e, -change / 6);
+            }
+
+            base.OnMouseVerticalScrollChange(e, change);
         }
     }
 }
