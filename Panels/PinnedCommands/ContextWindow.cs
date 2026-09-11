@@ -151,7 +151,7 @@ namespace SideKicker.Panels.PinnedCommands
             _commandsList.ButtonCount = count;
             _commandsList.UpdateScrolledLength();
 
-            _renderer.RefreshIcons(_savedCommands);
+            FileIconCache.AddIcons(_savedCommands);
         }
 
         private void InitializeCommandEditor(out TextPlaque[] commandEditorTexts, out TextedButton[] addingCommandButtons, 

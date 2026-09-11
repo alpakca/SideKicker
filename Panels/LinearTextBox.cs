@@ -42,10 +42,14 @@ namespace SideKicker.Panels
         /// <summary>X position of caret, TextOffset not included.</summary>
         public int CaretX => _caretX;
 
+        public event Action TextValueChanged;
+
         public void InsertText(string str)
         {
             _text = _text.Insert(_caretPosition, str);
             UpdateCaret(_caretPosition + str.Length);
+
+            TextValueChanged?.Invoke();
         }
 
         public void Backspace()
@@ -57,6 +61,8 @@ namespace SideKicker.Panels
 
             _text = _text[..(_caretPosition - 1)] + _text[_caretPosition..];
             UpdateCaret(_caretPosition - 1);
+
+            TextValueChanged?.Invoke();
         }
 
         public void KeyInput(Keys key)
