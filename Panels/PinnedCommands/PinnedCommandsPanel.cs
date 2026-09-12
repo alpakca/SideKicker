@@ -25,9 +25,9 @@ namespace SideKicker.Panels.PinnedCommands
         private readonly ContextWindow _contextWindow;
         private readonly List<SavedCommand> _savedCommands;
 
-        public override string IconId { get; } = "PinnedActions";
-        public override string IconPath { get; } = @"panels\PinnedActionsPanelIcon.png";
-
+        public override string IconId => PanelIconValues.PinnedCommands_IconId;
+        public override string IconPath => PanelIconValues.PinnedCommands_IconPath;
+        public override ContextPanelType Type => ContextPanelType.PinnedCommands;
         public override MessageSupporterWindow Window => _contextWindow;
 
         public PinnedCommandsPanel()

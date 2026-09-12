@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
 using SideKicker.Theming;
@@ -10,23 +11,27 @@ namespace SideKicker.PanelSystem
 {
     internal class ControllerRenderer
     {
-        private readonly PanelToggle[] _toggles;
+        private readonly Point _windowSize;
+        private readonly RenderTarget2D _windowTexture;
 
-        public ControllerRenderer(PanelToggle[] toggles)
+        public ControllerRenderer(RenderTarget2D windowTexture)
         {
-            _toggles = toggles;
+            _windowTexture = windowTexture;
+            _windowSize = new Point(windowTexture.Width, windowTexture.Height);
         }
 
-        public void Render()
+        public void Render(PanelToggle[] toggles)
         {
             ResolvedTheme theme = ThemeService.CurrentTheme;
 
-            DrawHelper.DrawBorderedBackground(new Rectangle(default, ControllerLayoutCalculator.GetSidePanelSize(_toggles.Length)), 
+            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaBlendDrawOptions);
+
+            DrawHelper.DrawBorderedBackground(new Rectangle(Point.Zero, _windowSize), 
                                               theme.GetColor(ColorRegistry.BorderId), theme.GetColor(ColorRegistry.SurfaceId), 1);
 
-            for (int i = 0; i < _toggles.Length; i++)
+            for (int i = 0; i < toggles.Length; i++)
             {
-                PanelToggle toggle = _toggles[i];
+                PanelToggle toggle = toggles[i];
                 Rectangle iconBounds = ControllerLayoutCalculator.GetContextPanelIconBounds(i);
 
                 DrawHelper.DrawTextureCenteralized(iconBounds, theme.GetIcon(toggle.Panel.IconId));
@@ -37,6 +42,8 @@ namespace SideKicker.PanelSystem
                     DrawHelper.DrawBackground(ControllerLayoutCalculator.GetOpenPanelBarBounds(i), theme.GetColor(ColorRegistry.VerticalBarColorId));
                 }
             }
+
+            DrawHelper.EndBatch();
         }
     }
 }

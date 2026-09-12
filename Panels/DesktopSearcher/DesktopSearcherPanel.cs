@@ -23,9 +23,9 @@ namespace SideKicker.Panels.DesktopSearcher
         private bool _lastUsedResultsDirty;
         private float _elapsedSinceLastDirtyCheck;
 
-        public override string IconId { get; } = "DesktopSearcher";
-        public override string IconPath { get; } = @"panels\TimersPanelIcon.png";
-
+        public override string IconId => PanelIconValues.DesktopSearcher_IconId;
+        public override string IconPath => PanelIconValues.DesktopSearcher_IconPath;
+        public override ContextPanelType Type => ContextPanelType.DesktopSearcher;
         public override MessageSupporterWindow Window => _window;
 
         public DesktopSearcherPanel()
