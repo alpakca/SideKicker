@@ -69,7 +69,7 @@ namespace SideKicker.Panels.DesktopSearcher
             DrawHelper.EndBatch();
         }
 
-        public void RenderResultsListBackgrounds(ScrollableButtonList resultsList, IReadOnlyList<SearcherResult> searcherResults)
+        public void RenderResultsListBackgrounds(ScrollableButtonList resultsList, IReadOnlyList<SearcherResult> searcherResults, bool showClosingOption)
         {
             ResolvedTheme theme = ThemeService.CurrentTheme;
 
@@ -88,8 +88,21 @@ namespace SideKicker.Panels.DesktopSearcher
 
                 if (i == resultsList.HoveredButtonIndex)
                 {
-                    DrawHelper.DrawBackground(buttonScreenBounds, resultsList.IsHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
-                                                                                                  : theme.GetColor(ColorRegistry.HoverOverlayId));
+                    Rectangle overlayBounds = buttonScreenBounds;
+
+                    if (showClosingOption)
+                    {
+                        Rectangle closeButtonBounds = ResultsListLayoutCalculator.ButtonCloseBounds(buttonScreenBounds);
+                        DrawHelper.Batch.Draw(theme.GetIcon(IconRegistry.CloseButtonId), closeButtonBounds, Color.White);
+
+                        if (ResultsListLayoutCalculator.HitCloseBounds(buttonScreenBounds.Size, resultsList.RelativeMouseToHovered))
+                        {
+                            overlayBounds = closeButtonBounds;
+                        }
+                    }
+
+                    DrawHelper.DrawBackground(overlayBounds, resultsList.IsHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
+                                                                                             : theme.GetColor(ColorRegistry.HoverOverlayId));
                 }
             }
 

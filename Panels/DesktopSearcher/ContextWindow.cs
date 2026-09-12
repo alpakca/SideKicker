@@ -22,10 +22,12 @@ namespace SideKicker.Panels.DesktopSearcher
         private readonly TextPlaque _emptySearchBoxPlaque;
         private readonly TextPlaque _nonEmptySearchBoxPlaque;
 
+        private bool _showClosingOption;
         private float _remainingTextWaitingTime;
 
         public event Action<string> SearchForResult;
         public event Action<SearcherResult> ResultSelected;
+        public event Action<SearcherResult> ResultCloseSelected;
 
         public ContextWindow()
         {
@@ -65,8 +67,9 @@ namespace SideKicker.Panels.DesktopSearcher
             _renderer = new ContextWindowRenderer(WindowTexture);
         }
 
-        public void SetSearcherResults(IReadOnlyList<SearcherResult> searcherResults)
+        public void SetSearcherResults(IReadOnlyList<SearcherResult> searcherResults, bool showClosingOption)
         {
+            _showClosingOption = showClosingOption;
             _searcherResults = searcherResults;
             _resultsList.ButtonCount = searcherResults.Count;
             _resultsList.UpdateScrolledLength();
@@ -76,7 +79,14 @@ namespace SideKicker.Panels.DesktopSearcher
 
         private void ResultsList_ButtonPressed(int buttonIndex)
         {
-            ResultSelected?.Invoke(_searcherResults[buttonIndex]);
+            if (_showClosingOption && ResultsListLayoutCalculator.HitCloseBounds(_resultsList.GetButtonBounds(buttonIndex).Size, _resultsList.RelativeMouseToHovered))
+            {
+                ResultCloseSelected?.Invoke(_searcherResults[buttonIndex]);
+            }
+            else
+            {
+                ResultSelected?.Invoke(_searcherResults[buttonIndex]);
+            }
         }
 
         private void SearchBox_TextValueChanged()
@@ -113,7 +123,7 @@ namespace SideKicker.Panels.DesktopSearcher
             {
                 _renderer.RenderResultsListText(_resultsList, _searcherResults[i], i);
             }
-            _renderer.RenderResultsListBackgrounds(_resultsList, _searcherResults);
+            _renderer.RenderResultsListBackgrounds(_resultsList, _searcherResults, _showClosingOption);
         }
 
         protected override void OnMouseButtonStateChangeWithoutMessages(PopWindowMouseEventArgs e)

@@ -36,6 +36,7 @@ namespace SideKicker.Panels.DesktopSearcher
             _window = new ContextWindow();
             _window.SearchForResult += ShowSearcherResult;
             _window.ResultSelected += Window_ResultSelected;
+            _window.ResultCloseSelected += Window_ResultCloseSelected;
 
             ShowSearcherResult(string.Empty);
         }
@@ -44,12 +45,12 @@ namespace SideKicker.Panels.DesktopSearcher
         {
             if (pattern == string.Empty)
             {
-                _window.SetSearcherResults(_lastUsedResults);
+                _window.SetSearcherResults(_lastUsedResults, showClosingOption: true);
             }
             else
             {
                 _searchResultSupplier.UpdateSearchResults(pattern);
-                _window.SetSearcherResults(_searchResultSupplier.LastSearchResults);
+                _window.SetSearcherResults(_searchResultSupplier.LastSearchResults, showClosingOption: false);
             }
         }
 
@@ -83,6 +84,14 @@ namespace SideKicker.Panels.DesktopSearcher
             _lastUsedResultsDirty = true;
 
             using Process proc = Process.Start("explorer.exe", $"\"{Path.GetDirectoryName(result.FileAbsolutePath)}\"");
+        }
+
+        private void Window_ResultCloseSelected(SearcherResult result)
+        {
+            _lastUsedResults.Remove(result);
+            _lastUsedResultsDirty = true;
+
+            _window.SetSearcherResults(_lastUsedResults, showClosingOption: true);
         }
     }
 }

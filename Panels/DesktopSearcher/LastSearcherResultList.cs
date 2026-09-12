@@ -64,6 +64,21 @@ namespace SideKicker.Panels.DesktopSearcher
             _items[0] = item;
         }
 
+        public void Remove(SearcherResult item)
+        {
+            int index = _items.AsSpan().Slice(0, _count).IndexOf(item, _comparer);
+            if (index == -1) return;
+
+            if (index == _count - 1)
+            {
+                _count--;
+                return;
+            }
+
+            Array.Copy(_items, index + 1, _items, index, _count - index - 1);
+            _count--;
+        }
+
         public IEnumerator<SearcherResult> GetEnumerator()
         {
             for (int i = 0; i < _count; i++)

@@ -10,6 +10,8 @@ namespace SideKicker.Panels.DesktopSearcher
         private const int NameTextMargin = 4;
         private const int IconMargin = 8;
 
+        private const int ButtonContentCenterizingMargin = (ButtonHeight - ButtonIconHeight) / 2;
+
         private const int SlidingTextPauseStart = 1; // seconds
         private const int SlidingTextPauseEnd = 1; // seconds
         private const int SlidingTextSpeed = 40; // pixels/second
@@ -22,10 +24,26 @@ namespace SideKicker.Panels.DesktopSearcher
 
         public static Rectangle ButtonIconBounds(Rectangle buttonScreenBounds)
         {
-            return new Rectangle(buttonScreenBounds.X + IconMargin, buttonScreenBounds.Y + (ButtonHeight - ButtonIconHeight) / 2,
+            return new Rectangle(buttonScreenBounds.X + IconMargin, buttonScreenBounds.Y + ButtonContentCenterizingMargin,
                                  ButtonIconHeight, ButtonIconHeight);
         }
 
+        public static Rectangle ButtonCloseBounds(Rectangle buttonScreenBounds)
+        {
+            return new Rectangle(buttonScreenBounds.Right - ButtonContentCenterizingMargin - ButtonIconHeight,
+                                 buttonScreenBounds.Y + ButtonContentCenterizingMargin,
+                                 ButtonIconHeight, ButtonIconHeight);
+        }
+
+        public static bool HitCloseBounds(Point buttonSize, Point relativeMousePosition)
+        {
+            return buttonSize.X - ButtonContentCenterizingMargin - ButtonHeight <= relativeMousePosition.X && 
+                   relativeMousePosition.X < buttonSize.X - ButtonContentCenterizingMargin &&
+
+                   ButtonContentCenterizingMargin <= relativeMousePosition.Y && 
+                   relativeMousePosition.Y <= buttonSize.Y - ButtonContentCenterizingMargin;
+        }
+        
         private static int ButtonMaxNameWidth(int buttonWidth)
         {
             return buttonWidth - NameTextMargin - ButtonIconHeight - 2 * IconMargin;
