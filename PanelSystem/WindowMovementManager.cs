@@ -36,6 +36,7 @@ namespace SideKicker.PanelSystem
         private Rectangle _sidePanelBounds;
         private Rectangle _shownPanelBounds;
 
+        public Point Origin => _origin;
         public bool LocationUpdating => _animator.IsRunning;
         public Rectangle MinBoundaryBox => Rectangle.Union(_sidePanelBounds, _shownPanelBounds);
 

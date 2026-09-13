@@ -8,6 +8,7 @@ namespace SideKicker.Panels
         public abstract string IconId { get; }
         public abstract string IconPath { get; }
 
+        public abstract ContextPanelType Type { get; }
         public abstract MessageSupporterWindow Window { get; }
 
         public event Action<ContextPanel> TriggeredWindowRequested;

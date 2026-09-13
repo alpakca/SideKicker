@@ -1,7 +1,6 @@
 ﻿using PopUpUI.Elements;
 using PopUpUI.Input;
 using PopUpUI.Surface;
-using PopUpUI.Toolkit;
 using SideKicker.Panels;
 using Microsoft.Xna.Framework;
 using System;
@@ -17,13 +16,13 @@ namespace SideKicker.PanelSystem
 
         public PanelWindow(ContextPanel[] panels)
         {
-            Boundaries = new Rectangle(default, ControllerLayoutCalculator.GetSidePanelSize(panels.Length));
-
             _panelToggles = new PanelToggle[panels.Length];
             InitializeToggles(panels);
-            _renderer = new ControllerRenderer(_panelToggles);
 
             Elements.AddRange(_panelToggles);
+
+            Boundaries = new Rectangle(default, ControllerLayoutCalculator.GetSidePanelSize(panels.Length));
+            _renderer = new ControllerRenderer(WindowTexture);
         }
 
         private void InitializeToggles(ContextPanel[] panels)
@@ -53,11 +52,7 @@ namespace SideKicker.PanelSystem
 
         protected override void RenderUpdate()
         {
-            DrawHelper.SetBeginBatch(WindowTexture, DrawHelper.AlphaBlendDrawOptions);
-
-            _renderer.Render();
-
-            DrawHelper.EndBatch();
+            _renderer.Render(_panelToggles);
         }
 
         public void OpenPanelUpdated(ContextPanel openedPanel)
@@ -66,6 +61,16 @@ namespace SideKicker.PanelSystem
             {
                 toggle.SetStatusWithoutCommander(setToChecked: toggle.Panel == openedPanel);
             }
+        }
+
+        public void PanelOrderSwapped(int firstPanelIndex, int secondPanelIndex)
+        {
+            // swap toggle's order
+            (_panelToggles[firstPanelIndex], _panelToggles[secondPanelIndex]) = (_panelToggles[secondPanelIndex], _panelToggles[firstPanelIndex]);
+
+            // adjust boundaries of swapped toggles
+            _panelToggles[firstPanelIndex].Boundaries = ControllerLayoutCalculator.GetContextPanelIconBounds(firstPanelIndex);
+            _panelToggles[secondPanelIndex].Boundaries = ControllerLayoutCalculator.GetContextPanelIconBounds(secondPanelIndex);
         }
     }
 }

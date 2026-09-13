@@ -3,16 +3,18 @@ using PopUpUI.Toolkit;
 using SideKicker.Panels;
 using SideKicker.Panels.DesktopSearcher;
 using SideKicker.Panels.PinnedCommands;
+using SideKicker.Panels.Settings;
 using SideKicker.Panels.Timers;
 using SideKicker.PanelSystem.Settings;
 using SideKicker.Theming;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SideKicker.PanelSystem
 {
     internal class ContextPanelController : IControllerState
     {
-        private readonly SettingsService _settings;
         private readonly ContextPanel[] _allPanels;
         private readonly PanelWindow _panelWindow;
         private readonly WindowMovementManager _windowMovement;
@@ -29,15 +31,24 @@ namespace SideKicker.PanelSystem
         public Rectangle MinBoundaryBox => _windowMovement.MinBoundaryBox;
 
         public bool IsMoving => _windowMovement.LocationUpdating;
-        public SettingsService Settings => _settings;
+        public Preferences Preferences { get; }
+
+        public event Action ExitApp;
 
         public ContextPanelController()
         {
-            _settings = new SettingsService();
-            _settings.OriginUpdated += Settings_PreferenceValueUpdated;
+            Preferences = PreferenceSerializer.Load();
+            Preferences.OriginUpdated += SetOrigin;
+            Preferences.PanelsReordered += SwapPanelOrder;
 
-            _allPanels = [new PinnedCommandsPanel(), new TimersPanel(), new DesktopSearcherPanel()];
+            SettingsPanel settingsPanel = new SettingsPanel(Preferences);
+            settingsPanel.AppCloseRequested += () => ExitApp?.Invoke();
+
+            _allPanels = [new PinnedCommandsPanel(), new TimersPanel(), new DesktopSearcherPanel(), settingsPanel];
             foreach (var panel in _allPanels) panel.TriggeredWindowRequested += TriggerWindowShowcase;
+
+            // adjust order of panels using order from preference
+            Array.Sort(_allPanels, (a, b) => Preferences.PanelOrder.IndexOf(a.Type).CompareTo(Preferences.PanelOrder.IndexOf(b.Type)));
 
             _panelWindow = new PanelWindow(_allPanels);
             _panelWindow.ContextPanelToggled += ShowPanel;
@@ -48,14 +59,11 @@ namespace SideKicker.PanelSystem
             _windowMovement = new WindowMovementManager(this);
             _windowMovement.SidePanelSizeChanged(_panelWindow.Boundaries.Size);
 
-            SetOrigin(new Point(_settings.Preferences.OriginX, _settings.Preferences.OriginY));
-            ShowPanel(_allPanels[_settings.Preferences.ShownPanelIndex]);
-            InitializeTheme();
-        }
+            SetOrigin(Preferences.Origin);
+            ShowPanel(_allPanels[Preferences.ShownPanelIndex]);
 
-        private void Settings_PreferenceValueUpdated()
-        {
-            SetOrigin(_settings.Preferences.Origin);
+            ThemeService.Refresh();
+            ThemeService.SetTheme(Preferences.ThemeId);
         }
 
         private void InputManager_MouseButtonStateChange(PopUpUI.Input.PopWindowMouseEventArgs e)
@@ -79,8 +87,7 @@ namespace SideKicker.PanelSystem
         {
             foreach (var panel in _allPanels) panel.OnExiting();
 
-            _settings.Preferences.ShownPanelIndex = Array.IndexOf<ContextPanel>(_allPanels, _openPanel);
-            _settings.Save();
+            PreferenceSerializer.Save(Preferences);
         }
 
         public void ToggleWindow()
@@ -91,6 +98,8 @@ namespace SideKicker.PanelSystem
         public void SetWindowState(bool isOpen, bool openedByHover = false)
         {
             if (_isOpen == isOpen) return;
+
+            if (openedByHover && !Preferences.EnableHoverOpenClose) return;
 
             _isOpen = isOpen;
             _openedByHover = openedByHover;
@@ -129,22 +138,6 @@ namespace SideKicker.PanelSystem
             _windowMovement.ShowedPanelSizeChanged(_openPanel.Window.Boundaries.Size);
         }
 
-        private void InitializeTheme()
-        {
-            foreach (var panel in _allPanels)
-            {
-                IconRegistry.Register(new IconDefinition { Id = panel.IconId, DefaultPath = panel.IconPath });
-            }
-
-            ThemeService.Refresh();
-            ThemeService.SetTheme(_settings.Preferences.ThemeId);
-        }
-
-        private void SetOrigin(Point value)
-        {
-            _windowMovement.SetOrigin(value);
-        }
-
         public void SetSidePanelBounds(Rectangle value)
         {
             _panelWindow?.Boundaries = value;
@@ -153,6 +146,18 @@ namespace SideKicker.PanelSystem
         public void SetShownPanelBounds(Rectangle value)
         {
             _openPanel?.Window.Boundaries = value;
+        }
+
+        private void SetOrigin(Point value)
+        {
+            _windowMovement.SetOrigin(value);
+        }
+
+        private void SwapPanelOrder(int firstPanelIndex, int secondPanelIndex)
+        {
+            (_allPanels[firstPanelIndex], _allPanels[secondPanelIndex]) = (_allPanels[secondPanelIndex], _allPanels[firstPanelIndex]);
+
+            _panelWindow.PanelOrderSwapped(firstPanelIndex, secondPanelIndex);
         }
     }
 }

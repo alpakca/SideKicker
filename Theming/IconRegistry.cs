@@ -11,6 +11,7 @@ namespace SideKicker.Theming
 
         public const string EditButtonId = "base.editbutton";
         public const string CloseButtonId = "base.closebutton";
+        public const string CheckedToggleButtonIcon = "base.checkedtoggle";
 
         [ModuleInitializer]
         public static void Initialize()
@@ -25,6 +26,12 @@ namespace SideKicker.Theming
             {
                 Id = CloseButtonId,
                 DefaultPath = @"panels\CloseButton.png"
+            });
+
+            Register(new IconDefinition
+            {
+                Id = CheckedToggleButtonIcon,
+                DefaultPath = @"panels\CheckedToggleButton.png"
             });
         }
 

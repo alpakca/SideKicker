@@ -78,21 +78,14 @@ namespace SideKicker
             );
 
             panelController = new ContextPanelController();
+            panelController.ExitApp += Exit;
+            panelController.Preferences.OriginUpdated += HoverWindowOpener.OriginUpdated;
 
-            HoverWindowOpener.OriginUpdated(panelController.Settings.Preferences.Origin);
-            panelController.Settings.OriginUpdated += Settings_OriginUpdated;
-        }
-
-        private void Settings_OriginUpdated()
-        {
-            HoverWindowOpener.OriginUpdated(panelController.Settings.Preferences.Origin);
+            HoverWindowOpener.OriginUpdated(panelController.Preferences.Origin);
         }
 
         protected override void Update(GameTime gameTime)
         {
-            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-
             HoverWindowOpener.Update(gameTime.ElapsedGameTime.Milliseconds, panelController);
             GlobalKeyboardWatcher.Update();
 
