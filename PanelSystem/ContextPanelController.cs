@@ -33,13 +33,18 @@ namespace SideKicker.PanelSystem
         public bool IsMoving => _windowMovement.LocationUpdating;
         public Preferences Preferences { get; }
 
+        public event Action ExitApp;
+
         public ContextPanelController()
         {
             Preferences = PreferenceSerializer.Load();
             Preferences.OriginUpdated += SetOrigin;
             Preferences.PanelsReordered += SwapPanelOrder;
 
-            _allPanels = [new PinnedCommandsPanel(), new TimersPanel(), new DesktopSearcherPanel(), new SettingsPanel(Preferences)];
+            SettingsPanel settingsPanel = new SettingsPanel(Preferences);
+            settingsPanel.AppCloseRequested += () => ExitApp?.Invoke();
+
+            _allPanels = [new PinnedCommandsPanel(), new TimersPanel(), new DesktopSearcherPanel(), settingsPanel];
             foreach (var panel in _allPanels) panel.TriggeredWindowRequested += TriggerWindowShowcase;
 
             // adjust order of panels using order from preference
@@ -93,6 +98,8 @@ namespace SideKicker.PanelSystem
         public void SetWindowState(bool isOpen, bool openedByHover = false)
         {
             if (_isOpen == isOpen) return;
+
+            if (openedByHover && !Preferences.EnableHoverOpenClose) return;
 
             _isOpen = isOpen;
             _openedByHover = openedByHover;

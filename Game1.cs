@@ -78,6 +78,7 @@ namespace SideKicker
             );
 
             panelController = new ContextPanelController();
+            panelController.ExitApp += Exit;
             panelController.Preferences.OriginUpdated += HoverWindowOpener.OriginUpdated;
 
             HoverWindowOpener.OriginUpdated(panelController.Preferences.Origin);

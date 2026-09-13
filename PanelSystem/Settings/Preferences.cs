@@ -13,7 +13,8 @@ namespace SideKicker.PanelSystem.Settings
             OriginY = 920,
             ShownPanelIndex = 0,
             PanelOrder = Enum.GetValues<ContextPanelType>(),
-            ThemeId = "dark"
+            ThemeId = "dark",
+            EnableHoverOpenClose = true
         };
 
         public int ShownPanelIndex { get; set; }
@@ -21,6 +22,7 @@ namespace SideKicker.PanelSystem.Settings
         public int OriginY { get; set; }
         public ContextPanelType[] PanelOrder { get; set; }
         public string ThemeId { get; set; }
+        public bool EnableHoverOpenClose { get; set; }
 
         [JsonIgnore]
         public Point Origin => new Point(OriginX, OriginY);
