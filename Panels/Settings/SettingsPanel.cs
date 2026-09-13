@@ -1,6 +1,6 @@
-﻿using SideKicker.PanelSystem.Message;
+﻿using Microsoft.Xna.Framework;
+using SideKicker.PanelSystem.Message;
 using SideKicker.PanelSystem.Settings;
-using Microsoft.Xna.Framework;
 using System;
 
 namespace SideKicker.Panels.Settings
@@ -21,27 +21,38 @@ namespace SideKicker.Panels.Settings
         {
             _preferences = preferences;
 
-            _window = new ContextWindow();
-            _window.MoveOriginY += Window_MoveOriginY;
-            _window.SwapPanels += Window_SwapPanels;
+            _window = new ContextWindow(preferences.PanelOrder);
             _window.CloseApp += Window_CloseApp;
+            _window.PanelSwaped += Window_PanelSwaped;
+            _window.OriginYOffseted += Window_OriginYOffseted;
+            _window.ToggleStatusChanged += Window_ToggleStatusChanged;
 
-            _window.HoverOpenCloseEnableUpdated += isEnabled => _preferences.EnableHoverOpenClose = isEnabled;
+            _window.SetUIValues(preferences);
+        }
+
+        private void Window_ToggleStatusChanged(SettingToggleType type, bool isEnabled)
+        {
+            switch (type)
+            {
+                case SettingToggleType.EnableHoverOpenClose:
+                    _preferences.EnableHoverOpenClose = isEnabled;
+                    break;
+            }
+        }
+
+        private void Window_OriginYOffseted(int yDifference)
+        {
+            _preferences.ChangeOrigin(new Point(_preferences.OriginX, _preferences.OriginY + yDifference));
+        }
+
+        private void Window_PanelSwaped(int firstPanelIndex, int secondPanelIndex)
+        {
+            _preferences.ReorderPanels(firstPanelIndex, secondPanelIndex);
         }
 
         private void Window_CloseApp()
         {
             AppCloseRequested?.Invoke();
-        }
-
-        private void Window_SwapPanels(int firstPanelIndex, int secondPanelIndex)
-        {
-            _preferences.ReorderPanels(firstPanelIndex, secondPanelIndex);
-        }
-
-        private void Window_MoveOriginY(int differenceY)
-        {
-            _preferences.ChangeOrigin(new Point(_preferences.OriginX, _preferences.OriginY + differenceY));
         }
 
         public override void Update()

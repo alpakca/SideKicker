@@ -23,7 +23,8 @@ namespace SideKicker.Panels.Settings
                 MouseVerticalDifferenceUpdated?.Invoke(difference.Y);
             }
 
-            _holdStartPosition = e.MousePosition;
+            // do NOT update _holdStartPosition
+            // hold position is relative to window and does not change when the window's position is changed
         }
 
         public void OnHoldStateChange(PopWindowMouseEventArgs e, bool startedHolding)

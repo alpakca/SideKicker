@@ -8,5 +8,6 @@ namespace SideKicker.Panels.Settings
     internal class SettingsToggle : ToggleButton
     {
         public string OptionText { get; set; }
+        public int OptionTextSize { get; set; }
     }
 }

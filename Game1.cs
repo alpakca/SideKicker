@@ -86,9 +86,6 @@ namespace SideKicker
 
         protected override void Update(GameTime gameTime)
         {
-            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-
             HoverWindowOpener.Update(gameTime.ElapsedGameTime.Milliseconds, panelController);
             GlobalKeyboardWatcher.Update();
 

@@ -1,20 +1,18 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Elements;
 using PopUpUI.Input;
 using System;
 
 namespace SideKicker.Panels.Settings
 {
-    internal class SectionSwaper : PopElement, IHoldable
+    internal class SectionSwaper
     {
-        public bool IsHeld { get; private set; }
-
-        HoldablePacket IHoldable.HoldPacket { get; } = new HoldablePacket();
+        private bool _isHeld;
 
         public int SectionCount { get; set; }
         public int SectionLength { get; set; }
         public int SectionMargin { get; set; }
         public int HoldingSectionIndex { get; private set; }
+        public Point Location { get; set; }
 
         public event Action<int, int> SectionsSwapped;
 
@@ -23,27 +21,38 @@ namespace SideKicker.Panels.Settings
             return new Rectangle(0, index * (SectionLength + SectionMargin), SectionLength, SectionLength);
         }
 
-        public void OnHolding(PopWindowMouseEventArgs e)
+        public Rectangle GetBoundaries()
         {
+            return new Rectangle(Location, new Point(SectionLength, SectionCount * (SectionLength + SectionMargin) - SectionMargin));
         }
 
-        public void OnHoldStateChange(PopWindowMouseEventArgs e, bool startedHolding)
+        public void OnMouseStateChanged(PopWindowMouseEventArgs e)
         {
-            IsHeld = startedHolding;
+            if (e.FirstTimeButtons.HasLeft && GetBoundaries().Contains(e.MousePosition))
+            {
+                _isHeld = true;
 
-            if (startedHolding)
-            {
-                HoldingSectionIndex = GetSectionIndex(e.MousePosition - this.Boundaries.Location);
+                HoldingSectionIndex = GetSectionIndex(e.MousePosition - Location);
             }
-            else
+            else if (e.ReleasedButtons.HasLeft)
             {
-                int newIndex = GetSectionIndex(e.MousePosition - this.Boundaries.Location);
-                if (newIndex != HoldingSectionIndex)
-                {
-                    SectionsSwapped?.Invoke(HoldingSectionIndex, newIndex);
-                }
+                _isHeld = false;
 
                 HoldingSectionIndex = -1;
+            }
+        }
+
+        public void OnMousePositionChanged(PopWindowMouseEventArgs e)
+        {
+            if (_isHeld)
+            {
+                int newIndex = GetSectionIndex(e.MousePosition - Location);
+                if (newIndex != - 1 && newIndex != HoldingSectionIndex)
+                {
+                    SectionsSwapped?.Invoke(HoldingSectionIndex, newIndex);
+
+                    HoldingSectionIndex = newIndex;
+                }
             }
         }
 
@@ -65,7 +74,7 @@ namespace SideKicker.Panels.Settings
 
         public bool CanBeHeld(Point point)
         {
-            return GetSectionIndex(point - this.Boundaries.Location) != -1;
+            return GetSectionIndex(point - Location) != -1;
         }
     }
 }

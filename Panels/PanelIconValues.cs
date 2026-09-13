@@ -1,4 +1,5 @@
 ﻿using SideKicker.Theming;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace SideKicker.Panels
@@ -43,6 +44,19 @@ namespace SideKicker.Panels
                 Id = Settings_IconId,
                 DefaultPath = Settings_IconPath
             });
+        }
+
+        public static string GetIconId(ContextPanelType type)
+        {
+            return type switch
+            {
+                ContextPanelType.PinnedCommands => PinnedCommands_IconId,
+                ContextPanelType.Timers => Timers_IconId,
+                ContextPanelType.DesktopSearcher => DesktopSearcher_IconId,
+                ContextPanelType.Settings => Settings_IconId,
+
+                _ => throw new ArgumentException()
+            };
         }
     }
 }
