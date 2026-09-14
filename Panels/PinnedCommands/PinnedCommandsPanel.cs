@@ -83,9 +83,11 @@ namespace SideKicker.Panels.PinnedCommands
             }
             catch (Win32Exception)
             {
+                _contextWindow.ShowMessageWindow(MessageWindow.Create("Couldn't start the file at given path.", MessageWindowButton.Ok));
             }
             catch (InvalidOperationException)
-            { 
+            {
+                _contextWindow.ShowMessageWindow(MessageWindow.Create("Couldn't start the file at given path.", MessageWindowButton.Ok));
             }
         }
 
@@ -111,6 +113,7 @@ namespace SideKicker.Panels.PinnedCommands
                     {
                         // do not allow empty names
                         // do not allow empty file names as they throw InvalidOperationException in process creation
+                        _contextWindow.ShowMessageWindow(MessageWindow.Create("File path and visible name can't be empty.", MessageWindowButton.Ok));
                         return;
                     }
 
