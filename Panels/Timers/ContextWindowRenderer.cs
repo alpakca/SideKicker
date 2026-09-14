@@ -83,7 +83,7 @@ namespace SideKicker.Panels.Timers
             DrawHelper.EndBatch();
         }
 
-        public void RenderMainElements(TextPlaque[] textPlaques, CalendarShowcase calendar)
+        public void RenderMainElements(TextPlaque[] textPlaques, CalendarShowcase calendar, ToggleButton[] weekdaysButtons, bool anyWeekdaysSelected)
         {
             ResolvedTheme theme = ThemeService.CurrentTheme;
             Color textColor = theme.GetColor(ColorRegistry.TextColorId);
@@ -100,10 +100,15 @@ namespace SideKicker.Panels.Timers
             FontService.Regular.DrawText(12, calendar.ShownDateText, new Vector2(20, 45), textColor);
 
             int dayIndex = 0;
-            foreach (var dayName in CalendarShowcase.WeekDayNames)
+            for (int i = 0; i < weekdaysButtons.Length; i++)
             {
-                Rectangle weekDayBounds = TimesListLayoutCalculator.CalendarWeekDayBounds(dayIndex);
-                FontService.Regular.DrawCenteredText(12, dayName, new Rectangle(new Point(20, 70) + weekDayBounds.Location, weekDayBounds.Size), textColor);
+                FontService.Regular.DrawCenteredText(12, CalendarShowcase.WeekDayNames[i], weekdaysButtons[i].Boundaries, textColor);
+
+                if (anyWeekdaysSelected && weekdaysButtons[i].IsChecked)
+                {
+                    DrawHelper.DrawBackground(weekdaysButtons[i].Boundaries, theme.GetColor(ColorRegistry.HeldOverlayId));
+                }
+
                 dayIndex++;
             }
 
@@ -115,7 +120,7 @@ namespace SideKicker.Panels.Timers
 
                 FontService.Regular.DrawCenteredText(16, i.ToString(), buttonScreenBounds, textColor);
 
-                if (i == calendar.SelectedDay)
+                if (!anyWeekdaysSelected && i == calendar.SelectedDay)
                 {
                     DrawHelper.DrawBackground(buttonScreenBounds, theme.GetColor(ColorRegistry.HoverOverlayId));
                 }

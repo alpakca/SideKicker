@@ -1,7 +1,5 @@
-﻿using PopUpUI.Surface;
-using PopUpUI.Toolkit;
+﻿using PopUpUI.Toolkit;
 using SideKicker.PanelSystem.Message;
-using System;
 using System.Collections.Generic;
 
 using TimeInfoSerializer = SideKicker.Panels.PanelContentSerializer<SideKicker.Panels.Timers.ITimeInfo>;
@@ -83,6 +81,14 @@ namespace SideKicker.Panels.Timers
             ITimeInfo first = _registeredTimers.Count > 0 ? _registeredTimers[0] : null;
             if (first != null && first.HasElapsed)
             {
+                if (first.IsRepeating)
+                {
+                    _registeredTimers.Sort(_timeInfoComparer);
+
+                    TriggerTimeInfo(first);
+                    return;
+                }
+
                 RemoveTimeInfo(first);
                 if (_shownTimer == first)
                 {
@@ -129,7 +135,7 @@ namespace SideKicker.Panels.Timers
                         return;
                     }
 
-                    TimerInfo info = new TimerInfo(TimeSpan.Zero);
+                    TimerInfo info = new TimerInfo();
                     _contextWindow.UpdateTimerWithUI(info);
                     AddTimeInfo(info);
 

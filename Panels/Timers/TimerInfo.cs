@@ -5,12 +5,21 @@ namespace SideKicker.Panels.Timers
 {
     internal class TimerInfo : ITimeInfo
     {
+        [JsonInclude]
         public DateTime EndTime { get; private set; }
+
+        [JsonInclude]
         public TimeSpan RemainingWhenPaused { get; private set; }
 
+        [JsonInclude]
         public bool IsPaused { get; private set; }
+
         public string LabelText { get; set; }
 
+        [JsonIgnore]
+        public bool IsRepeating => false;
+
+        [JsonIgnore]
         public bool HasElapsed
         {
             get
@@ -21,17 +30,9 @@ namespace SideKicker.Panels.Timers
             }
         }
 
-        public TimerInfo(TimeSpan duration)
+        public TimerInfo()
         {
-            SetDuration(duration);
-        }
-
-        [JsonConstructor]
-        private TimerInfo(DateTime endTime, TimeSpan remainingWhenPaused, bool isPaused)
-        {
-            EndTime = endTime;
-            RemainingWhenPaused = remainingWhenPaused;
-            IsPaused = isPaused;
+            SetDuration(TimeSpan.Zero);
         }
 
         public void SetDuration(TimeSpan duration)

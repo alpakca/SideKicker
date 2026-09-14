@@ -5,6 +5,7 @@ using SideKicker.PanelSystem.Message;
 using SideKicker.Theming;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 #nullable enable
 
@@ -18,11 +19,13 @@ namespace SideKicker.Panels.Timers
 
         // alarm UI elements
         private bool _isInspectingAlarm;
+        private bool _anyRepeatingDaysSelected;
         private readonly MultiLineTextBox _alarmLabelTextbox;
         private readonly CalendarShowcase _alarmCalendar;
         private readonly OrderedDictionary<NumberSelectorType, ScrollableNumberSelector> _alarmNumberSelectors;
         private readonly Dictionary<AlarmButtonType, TextedButton> _alarmButtons;
         private readonly IconedButton[] _alarmMonthChangeButtons;
+        private readonly ToggleButton[] _weekdaysButtons; // buttons start from monday to sunday
 
         // timer UI elements
         private TimerInfo? _inspectingTimer;
@@ -49,11 +52,21 @@ namespace SideKicker.Panels.Timers
         {
             _registedTimes = registeredTimes;
 
-            _alarmLabelTextbox = new MultiLineTextBox();
             _alarmCalendar = new CalendarShowcase();
+            _alarmCalendar.HitDay += () =>
+            {
+                _anyRepeatingDaysSelected = false;
+                foreach (var button in _weekdaysButtons!)
+                {
+                    button.SetStatusWithoutCommander(false);
+                }
+            };
+
+            _alarmLabelTextbox = new MultiLineTextBox();
             _alarmNumberSelectors = new OrderedDictionary<NumberSelectorType, ScrollableNumberSelector>();
             _alarmButtons = new Dictionary<AlarmButtonType, TextedButton>();
             _alarmMonthChangeButtons = new IconedButton[2];
+            _weekdaysButtons = new ToggleButton[7];
             InitializeAlarmUI();
 
             _recentTimeButtons = new RecentTimeButton[2];
@@ -81,7 +94,7 @@ namespace SideKicker.Panels.Timers
             };
             _timesList.ButtonPressed += ActiveTimesList_ButtonPressed;
 
-            this.Elements.AddRange([_alarmLabelTextbox, .. _alarmNumberSelectors.Values, .. _alarmButtons.Values, .. _alarmMonthChangeButtons, 
+            this.Elements.AddRange([_alarmLabelTextbox, .. _alarmNumberSelectors.Values, .. _alarmButtons.Values, .. _alarmMonthChangeButtons, .. _weekdaysButtons, 
                                     _timerLabelTextbox, .. _timerNumberSelectors.Values, .. _timerButtons.Values, .. _recentTimeButtons,
                                                                                          .. _stopwatchButtons.Values]);
 
@@ -114,6 +127,7 @@ namespace SideKicker.Panels.Timers
             _alarmButtons[AlarmButtonType.Add].Enabled = true;
 
             _isInspectingAlarm = false;
+            _anyRepeatingDaysSelected = false;
         }
 
         public void InspectAlarm(AlarmInfo info)
@@ -130,16 +144,38 @@ namespace SideKicker.Panels.Timers
             _alarmButtons[AlarmButtonType.Save].Enabled = true;
 
             _isInspectingAlarm = true;
+            _anyRepeatingDaysSelected = info.IsRepeating;
+
+            if (info.IsRepeating)
+            {
+                foreach (DayOfWeek day in info.RepeatingDays!)
+                {
+                    // from Sunday zero based to Monday based zero
+                    int index = ((int)day - 1 + 7) % 7;
+                    _weekdaysButtons[index].SetStatusWithoutCommander(true);
+                }
+            }
         }
 
         public void UpdateAlarmWithUI(AlarmInfo info)
         {
             info.LabelText = _alarmLabelTextbox.Text;
-            info.DueTime = GetAlarmUIDateTime();
+
+            if (_anyRepeatingDaysSelected)
+            {
+                info.SetRepeating(GetAlarmUIDateTime().TimeOfDay, GetAlarmUIRepeatingDays());
+            }
+            else
+            {
+                info.SetSingle(GetAlarmUIDateTime());
+            }
         }
 
         public bool IsSelectedAlarmAlreadyPassed()
         {
+            // repeating alarms doesn't get passed
+            if (_anyRepeatingDaysSelected) return false;
+
             return DateTime.Now >= GetAlarmUIDateTime();
         }
 
@@ -149,6 +185,24 @@ namespace SideKicker.Panels.Timers
                                 _alarmNumberSelectors[NumberSelectorType.Hour].CurrentNumber,
                                 _alarmNumberSelectors[NumberSelectorType.Minute].CurrentNumber,
                                 second: 0);
+        }
+
+        private DayOfWeek[] GetAlarmUIRepeatingDays()
+        {
+            int count = 0;
+            Span<DayOfWeek> days = stackalloc DayOfWeek[7];
+
+            for (int i = 0; i < 7; i++)
+            {
+                if (_weekdaysButtons[i].IsChecked)
+                {
+                    // buttons start from Monday, DayOfWeek's zero index start from Sunday
+                    // add one to adjust it
+                    days[count++] = (DayOfWeek)((i + 1) % 7);
+                }
+            }
+
+            return days.Slice(0, count).ToArray();
         }
 
         public void ResetTimer()
@@ -266,7 +320,7 @@ namespace SideKicker.Panels.Timers
         {
             _renderer.StartMainBatch();
 
-            _renderer.RenderMainElements(_textPlaques, _alarmCalendar);
+            _renderer.RenderMainElements(_textPlaques, _alarmCalendar, _weekdaysButtons, _anyRepeatingDaysSelected);
 
             _renderer.RenderIconedButtons(_alarmMonthChangeButtons);
             if (_isInspectingAlarm)
@@ -409,6 +463,25 @@ namespace SideKicker.Panels.Timers
                 SelectablePacket = selectPacket,
                 HoldPacket = holdPacket
             };
+
+            Point dayWeekOffset = new Point(20, 70);
+            ActionCommander<ToggleButton> weekDayToggleAction = new ActionCommander<ToggleButton>(_ =>
+            {
+                _anyRepeatingDaysSelected = _weekdaysButtons.Any(button => button.IsChecked);
+            });
+
+            for (int i = 0; i < _weekdaysButtons.Length; i++)
+            {
+                Rectangle bounds = TimesListLayoutCalculator.CalendarWeekDayBounds(i);
+                _weekdaysButtons[i] = new ToggleButton
+                {
+                    Boundaries = new Rectangle(dayWeekOffset + bounds.Location, bounds.Size),
+                    ToggleCommand = weekDayToggleAction,
+
+                    SelectablePacket = selectPacket,
+                    HoldPacket = holdPacket
+                };
+            }
         }
 
         private void InitializeTimerUI()

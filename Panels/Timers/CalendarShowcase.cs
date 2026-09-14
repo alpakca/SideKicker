@@ -36,6 +36,8 @@ namespace SideKicker.Panels.Timers
         public int ButtonMargin { get; set; }
         public Point Location { get; set; }
 
+        public event Action HitDay;
+
         public CalendarShowcase()
         {
             _calendar = new GregorianCalendar();
@@ -132,6 +134,7 @@ namespace SideKicker.Panels.Timers
             if (e.FirstTimeButtons.HasLeft && TryHitDay(e.MousePosition - Location, out int day))
             {
                 SetDate(_year, _month, day);
+                HitDay?.Invoke();
             }
         }
 
@@ -140,7 +143,7 @@ namespace SideKicker.Panels.Timers
             int weekRowIndex = locationRelativeMouse.Y / (ButtonHeight + ButtonMargin);
             int dayColumnIndex = locationRelativeMouse.X / (ButtonHeight + ButtonMargin);
 
-            if (0 > weekRowIndex || weekRowIndex > _maxDayColumnIndex ||
+            if (0 > weekRowIndex || weekRowIndex > _maxWeekRowIndex ||
                 0 > dayColumnIndex || dayColumnIndex > _maxDayColumnIndex)
             {
                 day = -1;

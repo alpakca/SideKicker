@@ -9,6 +9,9 @@ namespace SideKicker.Panels.Timers
     {
         [JsonIgnore]
         public bool HasElapsed { get; }
+        [JsonIgnore]
+        public bool IsRepeating { get; }
+
         public string LabelText { get; set; }
 
         public TimeSpan GetRemainingTime(DateTime asOf);
