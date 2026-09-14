@@ -221,7 +221,7 @@ namespace SideKicker.Panels.Timers
             const int NumbersMargin = 10;
             const int NumberWidth = 20;
             const int NumberTotalWidth = NumberWidth + NumbersMargin;
-            const int NumberY = 220;
+            const int NumberY = 260;
 
             FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Hours.ToString("00"), new Vector2(LeftMostStartX, NumberY), textColor);
             FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Minutes.ToString("00"), new Vector2(LeftMostStartX + NumberTotalWidth, NumberY), textColor);

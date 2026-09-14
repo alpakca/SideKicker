@@ -68,6 +68,7 @@ namespace SideKicker.Panels.Timers
 
         public override void OnExiting()
         {
+            _contextWindow.OnExiting();
             if (_timersListDirty)
             {
                 _timersListDirty = false;
