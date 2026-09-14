@@ -1,7 +1,6 @@
 ﻿using PopUpUI.Toolkit;
+using SideKicker.Native;
 using SideKicker.PanelSystem.Message;
-using System.Diagnostics;
-using System.IO;
 
 using SearcherSerializer = SideKicker.Panels.PanelContentSerializer<SideKicker.Panels.DesktopSearcher.SearcherResult>;
 
@@ -83,7 +82,7 @@ namespace SideKicker.Panels.DesktopSearcher
             _lastUsedResults.Enqueue(result);
             _lastUsedResultsDirty = true;
 
-            using Process proc = Process.Start("explorer.exe", $"\"{Path.GetDirectoryName(result.FileAbsolutePath)}\"");
+            NativeService.Current.OpenDirectoryExplorer(result.FileAbsolutePath);
         }
 
         private void Window_ResultCloseSelected(SearcherResult result)

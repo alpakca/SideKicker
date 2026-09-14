@@ -81,7 +81,7 @@ namespace SideKicker.Panels.DesktopSearcher
                 Rectangle relativeButtonBounds = resultsList.GetButtonBounds(i);
                 Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + resultsList.Boundaries.Location, relativeButtonBounds.Size);
 
-                if (FileIconCache.TryGetIcon(searcherResults[i].FileName, out Texture2D icon))
+                if (FileIconCache.TryGetIcon(searcherResults[i].FileName, out Texture2D icon) && icon != null)
                 {
                     DrawHelper.Batch.Draw(icon, ResultsListLayoutCalculator.ButtonIconBounds(buttonScreenBounds), Color.White);
                 }

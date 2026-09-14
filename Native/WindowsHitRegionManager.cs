@@ -1,10 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace SideKicker.Native
 {
-    internal static class GlobalHitRegionManager
+    [SupportedOSPlatform("windows")]
+    internal static class WindowsHitRegionManager
     {
         private const int RGN_OR = 2;
 

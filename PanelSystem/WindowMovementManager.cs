@@ -68,7 +68,7 @@ namespace SideKicker.PanelSystem
             _origin = value;
             SetAnimator();
             UpdateLocations();
-            SetRGN();
+            SetHittableAreas();
         }
 
         public void SidePanelSizeChanged(Point size)
@@ -76,7 +76,7 @@ namespace SideKicker.PanelSystem
             _sidePanelBounds = new Rectangle(Point.Zero, size);
             SetAnimator();
             UpdateLocations();
-            SetRGN();
+            SetHittableAreas();
         }
 
         public void ShowedPanelSizeChanged(Point size)
@@ -84,29 +84,29 @@ namespace SideKicker.PanelSystem
             _shownPanelBounds = new Rectangle(Point.Zero, size);
             SetAnimator();
             UpdateLocations();
-            SetRGN();
+            SetHittableAreas();
         }
 
         public void RunOpenAnimation()
         {
             // restore being top-most incase it lost
-            GlobalHitRegionManager.RestoreTopMost();
+            NativeService.Current.RestoreTopMost();
 
             // reserve the min boundary area for sliding effect drawing
-            GlobalHitRegionManager.SetArea(OpenStateMinBoundaryBox);
+            NativeService.Current.SetHittableArea(OpenStateMinBoundaryBox);
             _animator.AnimateTo(OpenAnimationTarget);
         }
 
         public void RunCloseAnimation()
         {
             // reserve the min boundary area for sliding effect drawing
-            GlobalHitRegionManager.SetArea(OpenStateMinBoundaryBox);
+            NativeService.Current.SetHittableArea(OpenStateMinBoundaryBox);
             _animator.AnimateTo(ClosingAnimationTarget);
         }
 
         public void StartTriggerAnimation()
         {
-            GlobalHitRegionManager.SetArea(TriggerVisibleArea);
+            NativeService.Current.SetHittableArea(TriggerVisibleArea);
             _animator.AnimateTo(TriggeredOpenAnimationTarget);
         }
 
@@ -122,19 +122,19 @@ namespace SideKicker.PanelSystem
             }
         }
 
-        private void SetRGN()
+        private void SetHittableAreas()
         {
             if (_controllerState.IsOpen)
             {
-                GlobalHitRegionManager.SetAreas(_sidePanelBounds, _shownPanelBounds);
+                NativeService.Current.SetHittableArea(_sidePanelBounds, _shownPanelBounds);
             }
             else if (_controllerState.IsTriggered)
             {
-                GlobalHitRegionManager.SetArea(TriggerVisibleArea);
+                NativeService.Current.SetHittableArea(TriggerVisibleArea);
             }
             else
             {
-                GlobalHitRegionManager.SetArea(Rectangle.Empty);
+                NativeService.Current.SetHittableArea(Rectangle.Empty);
             }
         }
 
@@ -150,7 +150,7 @@ namespace SideKicker.PanelSystem
         private void Animator_AnimationDone()
         {
             UpdateLocations();
-            SetRGN();
+            SetHittableAreas();
         }
 
         private Rectangle GetSidePanelBounds(int animatorCurrent)

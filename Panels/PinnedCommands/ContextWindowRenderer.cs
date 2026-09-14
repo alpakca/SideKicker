@@ -133,7 +133,7 @@ namespace SideKicker.Panels.PinnedCommands
 
                 DrawHelper.Batch.Draw(theme.GetIcon(ReorderButtonId), CommandListLayoutCalculator.ReorderButtonBounds(buttonScreenBounds), Color.White);
 
-                if (FileIconCache.TryGetIcon(savedCommands[i].FileName, out Texture2D icon))
+                if (FileIconCache.TryGetIcon(savedCommands[i].FileName, out Texture2D icon) && icon != null)
                 {
                     DrawHelper.Batch.Draw(icon, CommandListLayoutCalculator.ButtonFileIconBounds(buttonScreenBounds), Color.White);
                 }

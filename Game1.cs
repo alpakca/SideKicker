@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using PopUpUI.Toolkit;
 using SideKicker.Native;
 using SideKicker.PanelSystem;
@@ -41,20 +40,16 @@ namespace SideKicker
             _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
             _graphics.ApplyChanges();
 
-            GlobalHitRegionManager.Initialize(Window.Handle);
-
-            GlobalKeyboardWatcher.Initialize();
-            GlobalKeyboardWatcher.ALTGR_Plus_LessThan_Detected += GlobalKeyboardWatcher_ALTGR_Plus_LessThan_Detected;
+#if WINDOWS
+            NativeService.Initialize(new WindowsNativeService(), this.Window.Handle);
+            NativeService.Current.WindowHotkeyOpenTriggered += () => panelController.ToggleWindow();
+#else
+#endif
 
             HoverWindowOpener.OpenControllerWindow += () => panelController.SetWindowState(isOpen: true, openedByHover: true);
             HoverWindowOpener.CloseControllerWindow += () => panelController.SetWindowState(isOpen: false);
 
             base.Initialize();
-        }
-
-        private void GlobalKeyboardWatcher_ALTGR_Plus_LessThan_Detected()
-        {
-            panelController.ToggleWindow();
         }
 
         protected override void LoadContent()
@@ -87,7 +82,7 @@ namespace SideKicker
         protected override void Update(GameTime gameTime)
         {
             HoverWindowOpener.Update(gameTime.ElapsedGameTime.Milliseconds, panelController);
-            GlobalKeyboardWatcher.Update();
+            NativeService.Current.Update();
 
             if (panelController.IsOpen || panelController.IsMoving)
             {
@@ -129,7 +124,7 @@ namespace SideKicker
         protected override void OnExiting(object sender, ExitingEventArgs args)
         {
             panelController.OnExiting();
-            GlobalKeyboardWatcher.Dispose();
+            NativeService.Current.Dispose();
             base.OnExiting(sender, args);
         }
     }

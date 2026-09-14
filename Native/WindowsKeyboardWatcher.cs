@@ -8,7 +8,7 @@ using System.Threading;
 namespace SideKicker.Native
 {
     [SupportedOSPlatform("windows")]
-    public static class GlobalKeyboardWatcher
+    public static class WindowsKeyboardWatcher
     {
         public static event Action? CtrlCDetected;
         public static event Action? ALTGR_Plus_LessThan_Detected;
@@ -31,7 +31,7 @@ namespace SideKicker.Native
             _thread = new Thread(HookThreadProc)
             {
                 IsBackground = true,
-                Name = nameof(GlobalKeyboardWatcher)
+                Name = nameof(WindowsKeyboardWatcher)
             };
             _thread.Start();
 

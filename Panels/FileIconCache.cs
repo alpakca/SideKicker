@@ -1,19 +1,16 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
+using SideKicker.Native;
 using SideKicker.Panels.DesktopSearcher;
 using SideKicker.Panels.PinnedCommands;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 
 namespace SideKicker.Panels
 {
     internal static class FileIconCache
     {
-        private const string ExplorerFilePath = @"C:\Windows\explorer.exe";
-        private const string ExeFileExtension = ".exe";
-
         private static readonly MemoryStream _stream = new MemoryStream();
         private static Texture2D _explorerIcon;
 
@@ -74,21 +71,18 @@ namespace SideKicker.Panels
             // special case for directories: use explorer icon
             if (Directory.Exists(filePathStr))
             {
-                _explorerIcon ??= GetIconTexture(Icon.ExtractAssociatedIcon(ExplorerFilePath));
+                _explorerIcon ??= NativeService.Current.ExtractIconTexture(NativeService.Current.DirectoryExplorerSystemPath, _stream);
 
                 _savedIcons[toSave] = _explorerIcon;
             }
             else
             {
-                Icon icon = Icon.ExtractAssociatedIcon(filePathStr);
-                if (icon == null) return;
-
-                Texture2D iconTexture = GetIconTexture(icon);
+                Texture2D iconTexture = NativeService.Current.ExtractIconTexture(filePathStr, _stream);
                 string extension = new string(Path.GetExtension(filePath));
 
-                // special case for executables: they have different icons with same .exe extension,
+                // special case for executables: they have different icons with same extension,
                 // so don't save them for type icons
-                if (extension != ExeFileExtension)
+                if (extension != NativeService.Current.ExecutableExtension)
                 {
                     _fileTypeIcons[extension] = iconTexture;
                 }
@@ -100,16 +94,6 @@ namespace SideKicker.Panels
         public static bool TryGetIcon(string savedName, out Texture2D icon)
         {
             return _savedIcons.TryGetValue(savedName, out icon);
-        }
-
-        private static Texture2D GetIconTexture(Icon icon)
-        {
-            _stream.SetLength(0);
-
-            icon.ToBitmap().Save(_stream, System.Drawing.Imaging.ImageFormat.Png);
-            _stream.Seek(0, SeekOrigin.Begin);
-
-            return Texture2D.FromStream(DrawHelper.Device, _stream);
         }
     }
 }
