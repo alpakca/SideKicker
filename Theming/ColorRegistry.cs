@@ -20,6 +20,8 @@ namespace SideKicker.Theming
         public const string TextColorId = "base.textcolor";
         public const string VerticalBarColorId = "base.verticalbarcolor";
 
+        public const string SelectionBoxOverlayId = "base.selectionboxoverlay";
+
         private static readonly Dictionary<string, ColorDefinition> _definitions = new Dictionary<string, ColorDefinition>();
 
         public static IEnumerable<string> RegisteredIds => _definitions.Keys;
@@ -35,6 +37,7 @@ namespace SideKicker.Theming
             Register(new ColorDefinition { Id = HeldOverlayId });
             Register(new ColorDefinition { Id = TextColorId });
             Register(new ColorDefinition { Id = VerticalBarColorId });
+            Register(new ColorDefinition { Id = SelectionBoxOverlayId });
         }
 
         public static void Register(ColorDefinition definition)

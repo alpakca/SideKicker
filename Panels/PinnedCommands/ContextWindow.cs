@@ -3,11 +3,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using PopUpUI.Input;
-using Microsoft.Xna.Framework.Input;
-using System.Linq;
 using SideKicker.PanelSystem.Message;
-
-using Clipboard = System.Windows.Forms.Clipboard;
 
 namespace SideKicker.Panels.PinnedCommands
 {
@@ -48,19 +44,15 @@ namespace SideKicker.Panels.PinnedCommands
                 ButtonMargin = 4
             };
             _commandsList.ButtonPressed += CommandsList_ButtonPressed;
-            _commandsList.ButtonHeld += CommandsList_ButtonHeld;
+            _commandsList.ButtonHeld += CommandsList_ButtonHeld;;
 
-            KeyboardShortcutManager shortcutManager = new KeyboardShortcutManager();
-            KeyboardCombination pasteLeftCtrl = KeyboardCombination.GetSingleUse([Keys.LeftControl, Keys.V]);
-            KeyboardCombination pasteRightCtrl = KeyboardCombination.GetSingleUse([Keys.RightControl, Keys.V]);
-            pasteLeftCtrl.FirstTriggerAction = pasteRightCtrl.FirstTriggerAction = KeyboardPasteAction;
-            shortcutManager.AddCombinations(pasteLeftCtrl, pasteRightCtrl);
-
-            this.Elements.Add(shortcutManager);
             this.Elements.AddRange(_textBoxes.Values);
+            RegisterClipboardSupporters(_textBoxes.Values);
 
             this.Boundaries = new Rectangle(0, 0, 540, 250);
             _renderer = new ContextWindowRenderer(WindowTexture);
+
+            RegisterClipboardSupporters(_textBoxes.Values);
         }
 
         private void CommandsList_ButtonPressed(int buttonIndex)
@@ -87,20 +79,6 @@ namespace SideKicker.Panels.PinnedCommands
             {
                 _inReorderMode = true;
                 _reorderingButtonIndex = buttonIndex;
-            }
-        }
-
-        private void KeyboardPasteAction()
-        {
-            LinearTextBox activeBox = _textBoxes.Values.FirstOrDefault(box => box.ReceivingInput);
-            if (activeBox == null)
-            {
-                return;
-            }
-
-            if (Clipboard.ContainsText())
-            {
-                activeBox.InsertText(Clipboard.GetText());
             }
         }
 

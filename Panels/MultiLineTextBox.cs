@@ -9,27 +9,90 @@ using System.Text;
 
 namespace SideKicker.Panels
 {
-    internal class MultiLineTextBox : PopElement, ISelectable, IKeyReceiver, ITextReceiver, IMouseWheelReceiver
+    internal class MultiLineTextBox : PopElement, ISelectable, IKeyReceiver, ITextReceiver, IMouseWheelReceiver, IHoldable, IClipboardSupporter
     {
         private readonly StringBuilder _text;
         private readonly List<LineInfo> _lines;
 
-        private int _caret;
-        private int _caretLine; // for visual, as last index of a line shares the same index with the zero-index above the line
+        private CaretInfo _caret;
 
         private float _desiredCaretX;
         private int _scrolledOffset;
+
+        private CaretInfo _selectedStartCaretPosition;
+        private int _selectedStartCaretX;
+        private CaretInfo _selectedEndCaretPosition;
+        private int _selectedEndCaretX;
+
+        private bool IsSelectionBoxActive => _selectedStartCaretPosition.Index != _selectedEndCaretPosition.Index;
+
+        #region PopElement Interface Members
+
+        private bool _isHeld;
+        private Point _lastHeldMousePosition;
 
         SelectablePacket ISelectable.SelectablePacket { get; } = new SelectablePacket { EnabledOutsideSelecting = true };
         KeyReceiverPacket IKeyReceiver.KeyReceiverPacket { get; } = new KeyReceiverPacket();
         TextReceiverPacket ITextReceiver.TextReceiverPacket { get; } = new TextReceiverPacket();
         MouseWheelReceiverPacket IMouseWheelReceiver.MouseWheelReceiverPacket { get; } = new MouseWheelReceiverPacket();
+        HoldablePacket IHoldable.HoldPacket { get; } = new HoldablePacket();
 
         bool IKeyReceiver.ReceivesKeyInput => ReceivingInput;
         bool ITextReceiver.ReceivesTextInput => ReceivingInput;
+        bool IHoldable.IsHeld => _isHeld;
+
+        #endregion
 
         public Rectangle SelectableArea => new Rectangle(Boundaries.X - SelectableMargin, Boundaries.Y - SelectableMargin,
                                                          Boundaries.Width + 2 * SelectableMargin, Boundaries.Height + 2 * SelectableMargin);
+
+        public IEnumerable<Rectangle> SelectionBoxes
+        {
+            get
+            {
+                if (_selectedStartCaretPosition.Index == _selectedEndCaretPosition.Index)
+                {
+                    yield break;
+                }
+
+                CaretInfo left = _selectedStartCaretPosition;
+                CaretInfo right = _selectedEndCaretPosition;
+
+                int leftCaretX = _selectedStartCaretX;
+                int rightCaretX = _selectedEndCaretX;
+
+                if (_selectedStartCaretPosition.Index > _selectedEndCaretPosition.Index)
+                {
+                    (left, right) = (right, left);
+                    (leftCaretX, rightCaretX) = (rightCaretX, leftCaretX);
+                }
+
+                int lineSpacing = FontService.Regular.GetLineSpacing(TextSize);
+                LineInfo leftLine = _lines[left.LineIndex];
+
+                // single line case
+                if (left.LineIndex == right.LineIndex)
+                {
+                    yield return new Rectangle(leftCaretX, left.LineIndex * lineSpacing, rightCaretX - leftCaretX, lineSpacing);
+                    yield break;
+                }
+
+                // top line
+                int leftInline = left.Index - leftLine.StartIndex;
+                int topWidth = (int)MeasureWidth(leftLine.Text.Substring(leftInline));
+
+                yield return new Rectangle(leftCaretX, left.LineIndex * lineSpacing, topWidth, lineSpacing);
+
+                // middle lines
+                for (int lineIndex = left.LineIndex + 1; lineIndex < right.LineIndex; lineIndex++)
+                {
+                    yield return new Rectangle(0, lineIndex * lineSpacing, (int)MeasureWidth(_lines[lineIndex].Text), lineSpacing);
+                }
+
+                // bottom line
+                yield return new Rectangle(0, right.LineIndex * lineSpacing, rightCaretX, lineSpacing);
+            }
+        }
 
         public bool ReceivingInput { get; set; }
         public int SelectableMargin { get; set; }
@@ -48,9 +111,9 @@ namespace SideKicker.Panels
         {
             get
             {
-                LineInfo line = _lines[_caretLine];
-                return new Point((int)MeasureWidth(line.Text.Substring(0, _caret - line.StartIndex)),
-                                 _caretLine * FontService.Regular.GetLineSpacing(TextSize) - _scrolledOffset);
+                LineInfo line = _lines[_caret.LineIndex];
+                return new Point((int)MeasureWidth(line.Text.Substring(0, _caret.Index - line.StartIndex)),
+                                 _caret.LineIndex * FontService.Regular.GetLineSpacing(TextSize) - _scrolledOffset);
             }
         }
 
@@ -71,6 +134,12 @@ namespace SideKicker.Panels
             public string Text;
         }
 
+        private struct CaretInfo
+        {
+            public int Index;
+            public int LineIndex; // for visual, as last index of a line shares the same index with the zero-index above the line
+        }
+
         public MultiLineTextBox()
         {
             _lines = new List<LineInfo>();
@@ -80,34 +149,48 @@ namespace SideKicker.Panels
         public void SetText(string value)
         {
             _text.Clear();
-            _caret = 0;
+            _caret = new CaretInfo();
 
             InsertText(value);
         }
 
         public void InsertText(string str)
         {
-            _text.Insert(_caret, str);
+            _text.Insert(_caret.Index, str);
             RebuildLayout();
 
-            _caret += str.Length;
-            _caretLine = ResolveDefaultLine(_caret);
-            _desiredCaretX = GetCaretX(_caret, _caretLine);
+            UpdateCaret(_caret.Index + str.Length);
         }
 
         public void Backspace()
         {
-            if (_caret == 0)
+            if (_caret.Index == 0)
             {
                 return;
             }
 
-            _text.Remove(_caret - 1, 1);
-            RebuildLayout();
+            if (IsSelectionBoxActive)
+            {
+                int left = _selectedStartCaretPosition.Index;
+                int right = _selectedEndCaretPosition.Index;
 
-            _caret--;
-            _caretLine = ResolveDefaultLine(_caret);
-            _desiredCaretX = GetCaretX(_caret, _caretLine);
+                if (left > right)
+                {
+                    (left, right) = (right, left);
+                }
+
+                _text.Remove(left, right - left);
+                RebuildLayout();
+
+                UpdateCaret(left);
+            }
+            else
+            {
+                _text.Remove(_caret.Index - 1, 1);
+                RebuildLayout();
+
+                UpdateCaret(_caret.Index - 1);
+            }
         }
 
         public void KeyInput(Keys key)
@@ -115,19 +198,51 @@ namespace SideKicker.Panels
             switch (key)
             {
                 case Keys.Up:
-                    MoveCaretVertical(-1);
+
+                    if (IsSelectionBoxActive)
+                    {
+                        UpdateCaret(Math.Min(_selectedStartCaretPosition.Index, _selectedEndCaretPosition.Index));
+                    }
+
+                    MoveCaretVertical(toUp: true);
+
                     break;
 
                 case Keys.Down:
-                    MoveCaretVertical(+1);
+
+                    if (IsSelectionBoxActive)
+                    {
+                        UpdateCaret(Math.Max(_selectedStartCaretPosition.Index, _selectedEndCaretPosition.Index));
+                    }
+
+                    MoveCaretVertical(toUp: false);
+
                     break;
 
                 case Keys.Left:
-                    MoveCaretHorizontal(-1);
+
+                    if (IsSelectionBoxActive)
+                    {
+                        UpdateCaret(Math.Min(_selectedStartCaretPosition.Index, _selectedEndCaretPosition.Index));
+                    }
+                    else
+                    {
+                        MoveCaretHorizontal(toLeft: true);
+                    }
+
                     break;
 
                 case Keys.Right:
-                    MoveCaretHorizontal(+1);
+
+                    if (IsSelectionBoxActive)
+                    {
+                        UpdateCaret(Math.Max(_selectedStartCaretPosition.Index, _selectedEndCaretPosition.Index));
+                    }
+                    else
+                    {
+                        MoveCaretHorizontal(toLeft: false);
+                    }
+
                     break;
 
                 case Keys.Back:
@@ -146,77 +261,104 @@ namespace SideKicker.Panels
 
             if (_lines.Count == 0) return;
 
-            Point mouseInBoundaries = e.MousePosition - this.Boundaries.Location + new Point(0, _scrolledOffset);
+            _caret = GetCaretInfo(e.MousePosition);
+            _desiredCaretX = GetCaretX(_caret);
 
-            int lineIndex = (int)(mouseInBoundaries.Y / FontService.Regular.GetLineSpacing(TextSize));
+            AlignScrollOffset(_caret);
+            DiscardSelection();
+        }
+
+        private void UpdateCaret(int value)
+        {
+            _caret = new CaretInfo 
+            {
+                Index = value,
+                LineIndex = ResolveDefaultLine(value)
+            };
+
+            _desiredCaretX = GetCaretX(_caret);
+
+            AlignScrollOffset(_caret);
+            DiscardSelection();
+        }
+
+        private CaretInfo GetCaretInfo(Point mousePosition)
+        {
+            Point mouseInBoundaries = mousePosition - this.Boundaries.Location + new Point(0, _scrolledOffset);
+
+            int lineIndex = mouseInBoundaries.Y / FontService.Regular.GetLineSpacing(TextSize);
             lineIndex = Math.Clamp(lineIndex, 0, _lines.Count - 1);
 
             LineInfo line = _lines[lineIndex];
             int column = FindNearestColumn(line.Text, mouseInBoundaries.X);
 
-            _caret = line.StartIndex + column;
-            _caretLine = lineIndex;
-            _desiredCaretX = GetCaretX(_caret, _caretLine);
+            return new CaretInfo { Index = line.StartIndex + column, LineIndex = lineIndex };
         }
 
-        private void MoveCaretHorizontal(int amount)
+        private void MoveCaretHorizontal(bool toLeft)
         {
-            LineInfo line = _lines[_caretLine];
-            int column = _caret - line.StartIndex;
+            LineInfo line = _lines[_caret.LineIndex];
+            int column = _caret.Index - line.StartIndex;
 
-            if (amount > 0 && column == line.Text.Length && IsWrapBoundaryAfter(_caretLine))
+            if (toLeft && column == line.Text.Length && IsWrapBoundaryAfter(_caret.LineIndex))
             {
                 // caret is at the end of a wrapped line, increase caret line by one, without consuming a character
-                _caretLine++;
+                _caret.LineIndex++;
             }
-            else if (amount < 0 && column == 0 && IsWrapBoundaryAfter(_caretLine - 1))
+            else if (!toLeft && column == 0 && IsWrapBoundaryAfter(_caret.LineIndex - 1))
             {
                 // caret is at the beginning after a wrapped line, decrease line index by one without consuming a character
-                _caretLine--;
+                _caret.LineIndex--;
             }
             else
             {
-                _caret = Math.Clamp(_caret + amount, 0, _text.Length);
-                _caretLine = ResolveDefaultLine(_caret);
+                _caret.Index = Math.Clamp(_caret.Index + (toLeft ? -1 : 1), 0, _text.Length);
+                _caret.LineIndex = ResolveDefaultLine(_caret.Index);
             }
 
-            _desiredCaretX = GetCaretX(_caret, _caretLine);
+            _desiredCaretX = GetCaretX(_caret);
+
+            AlignScrollOffset(_caret);
+            DiscardSelection();
         }
 
-        private void MoveCaretVertical(int amount)
+        private void MoveCaretVertical(bool toUp)
         {
-            int lineIndex = _caretLine;
+            int lineIndex = _caret.LineIndex;
 
-            if (amount < 0 && lineIndex == 0)
+            if (toUp && lineIndex == 0)
             {
                 // if caret on first line, goes to position zero
-                _caret = 0;
-                _caretLine = 0;
-                _desiredCaretX = GetCaretX(_caret, _caretLine);
+                _caret.Index = 0;
+                _caret.LineIndex = 0;
+                _desiredCaretX = GetCaretX(_caret);
                 return;
             }
 
-            if (amount > 0 && lineIndex == _lines.Count - 1)
+            if (!toUp && lineIndex == _lines.Count - 1)
             {
                 // if caret on last line, goes to max position
-                _caret = _text.Length;
-                _caretLine = lineIndex;
-                _desiredCaretX = GetCaretX(_caret, _caretLine);
+                _caret.Index = _text.Length;
+                _caret.LineIndex = lineIndex;
+                _desiredCaretX = GetCaretX(_caret);
                 return;
             }
 
-            int targetLineIndex = lineIndex + amount;
+            int targetLineIndex = lineIndex + (toUp ? -1 : 1);
             LineInfo targetLine = _lines[targetLineIndex];
             int column = FindNearestColumn(targetLine.Text, _desiredCaretX);
 
-            _caret = targetLine.StartIndex + column;
-            _caretLine = targetLineIndex;
+            _caret.Index = targetLine.StartIndex + column;
+            _caret.LineIndex = targetLineIndex;
+
+            AlignScrollOffset(_caret);
+            DiscardSelection();
         }
 
-        private float GetCaretX(int caretIndex, int lineIndex)
+        private float GetCaretX(CaretInfo caretInfo)
         {
-            int column = caretIndex - _lines[lineIndex].StartIndex;
-            return MeasureWidth(_lines[lineIndex].Text.Substring(0, column));
+            int column = caretInfo.Index - _lines[caretInfo.LineIndex].StartIndex;
+            return MeasureWidth(_lines[caretInfo.LineIndex].Text.Substring(0, column));
         }
 
         /// <summary>Checks whether given line and next line share a boundary (doesn't have '\n' in between them).</summary>
@@ -360,14 +502,48 @@ namespace SideKicker.Panels
             _scrolledOffset = Math.Clamp(_scrolledOffset + value, 0, maxScrollableDistance);
         }
 
+        /// aligns scroll offset to be sure caret is always visible
+        private void AlignScrollOffset(CaretInfo caretInfo)
+        {
+            int lineSpacing = FontService.Regular.GetLineSpacing(TextSize);
+            int minScroll = caretInfo.LineIndex * lineSpacing;
+            
+            if (_scrolledOffset > minScroll)
+            {
+                _scrolledOffset = minScroll;
+                return;
+            }
+
+            int maxScroll = minScroll + lineSpacing - this.Boundaries.Height;
+            if (_scrolledOffset < maxScroll)
+            {
+                _scrolledOffset = maxScroll;
+                return;
+            }
+        }
+
         public bool CanBeSelected(Point point)
+        {
+            return SelectableArea.Contains(point);
+        }
+
+        public bool CanBeHeld(Point point)
         {
             return SelectableArea.Contains(point);
         }
 
         public void OnSelectingOutside(PopWindowMouseEventArgs e)
         {
-            ReceivingInput = false;
+            if (!IsSelectionBoxActive)
+            {
+                ReceivingInput = false;
+            }
+
+            if (IsSelectionBoxActive && e.FirstTimeButtons.HasLeft)
+            {
+                ReceivingInput = false;
+                DiscardSelection();
+            }
         }
 
         public void OnKeyDown(PopWindowMouseEventArgs e, Keys key)
@@ -399,6 +575,85 @@ namespace SideKicker.Panels
 
         public void OnMouseHorizontalScrollChangeReceive(PopWindowMouseEventArgs e, int change)
         {
+        }
+
+        public override void Update()
+        {
+            // placed in here since hold event raised when mouse position changed / mouse button state changed, and not every frames
+            if (_isHeld)
+            {
+                _selectedEndCaretPosition = GetCaretInfo(_lastHeldMousePosition);
+                _selectedEndCaretX = (int)GetCaretX(_selectedEndCaretPosition);
+
+                AlignScrollOffset(_selectedEndCaretPosition);
+            }
+
+            base.Update();
+        }
+
+        public void OnHolding(PopWindowMouseEventArgs e)
+        {
+            _lastHeldMousePosition = e.MousePosition;
+        }
+
+        public void OnHoldStateChange(PopWindowMouseEventArgs e, bool startedHolding)
+        {
+            _isHeld = startedHolding;
+
+            if (startedHolding)
+            {
+                _lastHeldMousePosition = e.MousePosition;
+
+                _selectedStartCaretPosition = GetCaretInfo(e.MousePosition);
+                _selectedStartCaretX = (int)GetCaretX(_selectedStartCaretPosition);
+
+                DiscardSelection();
+            }
+            else
+            {
+                // if mouse left outside of boundaries, don't update its last position
+                if (!SelectableArea.Contains(e.MousePosition))
+                {
+                    return;
+                }
+
+                _selectedEndCaretPosition = GetCaretInfo(e.MousePosition);
+                _selectedEndCaretX = (int)GetCaretX(_selectedEndCaretPosition);
+            }
+        }
+
+        private void DiscardSelection()
+        {
+            _selectedEndCaretPosition = _selectedStartCaretPosition;
+            _selectedEndCaretX = _selectedStartCaretX;
+        }
+
+        public void CopyFromClipboard(string text)
+        {
+            // remove selected text before inserting new
+            if (IsSelectionBoxActive)
+            {
+                Backspace();
+            }
+
+            InsertText(text);
+        }
+
+        public string GetSelectedText()
+        {
+            if (!ReceivingInput) return null;
+
+            if (!IsSelectionBoxActive) return string.Empty;
+
+            int left = _selectedStartCaretPosition.Index;
+            int right = _selectedEndCaretPosition.Index;
+
+            if (left > right)
+            {
+                (left, right) = (right, left);
+            }
+
+            return _text.ToString(left, right - left);
         }
     }
 }

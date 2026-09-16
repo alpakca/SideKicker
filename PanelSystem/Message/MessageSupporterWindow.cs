@@ -1,8 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using PopUpUI.Input;
 using PopUpUI.Surface;
 using PopUpUI.Toolkit;
+using SideKicker.Native;
 using SideKicker.Panels;
+using System;
 using System.Collections.Generic;
 
 namespace SideKicker.PanelSystem.Message
@@ -10,6 +13,7 @@ namespace SideKicker.PanelSystem.Message
     internal class MessageSupporterWindow : PopWindow
     {
         private readonly List<MessageWindow> _activeMessages = new List<MessageWindow>();
+        private readonly List<IClipboardSupporter> _clipboardSupporters = new List<IClipboardSupporter>();
 
         public override Rectangle Boundaries 
         {
@@ -20,6 +24,68 @@ namespace SideKicker.PanelSystem.Message
                 foreach (var window in _activeMessages)
                 {
                     window.Location = (value.Size - window.WindowSize) / 2;
+                }
+            }
+        }
+
+        public MessageSupporterWindow()
+        {
+            KeyboardShortcutManager manager = new KeyboardShortcutManager();
+
+            KeyboardCombination copyLeft = KeyboardCombination.GetSingleUse([Keys.LeftControl, Keys.C]);
+            KeyboardCombination copyRight = KeyboardCombination.GetSingleUse([Keys.RightControl, Keys.C]);
+            copyLeft.FirstTriggerAction = copyRight.FirstTriggerAction = TryCopyToClipboard;
+
+            KeyboardCombination pasteLeft = KeyboardCombination.GetSingleUse([Keys.LeftControl, Keys.V]);
+            KeyboardCombination pasteRight = KeyboardCombination.GetSingleUse([Keys.RightControl, Keys.V]);
+            pasteLeft.FirstTriggerAction = pasteRight.FirstTriggerAction = TryGetFromClipboard;
+
+            manager.AddCombinations(copyLeft, copyRight, pasteLeft, pasteRight);
+            this.Elements.Add(manager);
+        }
+
+        protected void RegisterClipboardSupporters(params ReadOnlySpan<IClipboardSupporter> supporters)
+        {
+            _clipboardSupporters.AddRange(supporters);
+        }
+
+        protected void RegisterClipboardSupporters(IEnumerable<IClipboardSupporter> supporters)
+        {
+            _clipboardSupporters.AddRange(supporters);
+        }
+
+        private void TryCopyToClipboard()
+        {
+            foreach (IClipboardSupporter supporter in _clipboardSupporters)
+            {
+                if (supporter.ReceivingInput)
+                {
+                    string? selected = supporter.GetSelectedText();
+
+                    if (selected == null)
+                    {
+                        continue;
+                    }
+
+                    NativeService.Current.CopyToClipboard(selected);
+                    return;
+                }
+            }
+        }
+
+        private void TryGetFromClipboard()
+        {
+            if (!NativeService.Current.TryGetClipboardText(out string text))
+            {
+                return;
+            }
+
+            foreach (IClipboardSupporter supporter in _clipboardSupporters)
+            {
+                if (supporter.ReceivingInput)
+                {
+                    supporter.CopyFromClipboard(text);
+                    return;
                 }
             }
         }

@@ -62,6 +62,7 @@ namespace SideKicker.Panels.DesktopSearcher
             _resultsList.ButtonPressed += ResultsList_ButtonPressed;
 
             this.Elements.Add(_searchBox);
+            RegisterClipboardSupporters(_searchBox);
 
             this.Boundaries = new Rectangle(Point.Zero, new Point(400, 400));
             _renderer = new ContextWindowRenderer(WindowTexture);

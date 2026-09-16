@@ -28,5 +28,8 @@ namespace SideKicker.Native
 
         public Texture2D? ExtractIconTexture(string path, Stream stream);
         public void OpenDirectoryExplorer(string path);
+
+        public void CopyToClipboard(string text);
+        public bool TryGetClipboardText(out string text);
     }
 }

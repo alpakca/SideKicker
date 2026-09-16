@@ -182,6 +182,15 @@ namespace SideKicker.Panels.Timers
                 DrawHelper.DrawBackground(new Rectangle(textbox.Boundaries.Location + textbox.CaretPosition, new Point(CaretWidth, lineSpacing)), textColor);
             }
 
+            Color selectionOverlay = theme.GetColor(ColorRegistry.SelectionBoxOverlayId);
+            foreach (Rectangle selectionBox in textbox.SelectionBoxes)
+            {
+                DrawHelper.DrawBackground(new Rectangle(textbox.Boundaries.X + selectionBox.X,
+                                                        textbox.Boundaries.Y + selectionBox.Y - textbox.ScrollOffset,
+                                                        selectionBox.Width, selectionBox.Height),
+                                          selectionOverlay);
+            }
+
             DrawHelper.EndBatch();
         }
 

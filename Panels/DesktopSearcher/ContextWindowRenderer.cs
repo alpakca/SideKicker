@@ -54,6 +54,12 @@ namespace SideKicker.Panels.DesktopSearcher
                 new Vector2(searchBox.Boundaries.X + searchBox.TextOffset, searchBox.Boundaries.Y), searchBox.Boundaries.Height,
                 textColor);
 
+            Rectangle selectionBox = searchBox.SelectionBox;
+            DrawHelper.DrawBackground(new Rectangle(searchBox.Boundaries.X + selectionBox.X + searchBox.TextOffset,
+                                                    searchBox.Boundaries.Y + selectionBox.Y,
+                                                    selectionBox.Width, selectionBox.Height),
+                                      theme.GetColor(ColorRegistry.SelectionBoxOverlayId));
+
             if (searchBox.ReceivingInput)
             {
                 const int CaretWidth = 1;

@@ -79,6 +79,12 @@ namespace SideKicker.Panels.PinnedCommands
                 new Vector2(textBox.Boundaries.X + textBox.TextOffset, textBox.Boundaries.Y), textBox.Boundaries.Height,
                 textColor);
 
+            Rectangle selectionBox = textBox.SelectionBox;
+            DrawHelper.DrawBackground(new Rectangle(textBox.Boundaries.X + selectionBox.X + textBox.TextOffset,
+                                                    textBox.Boundaries.Y + selectionBox.Y,
+                                                    selectionBox.Width, selectionBox.Height),
+                                      theme.GetColor(ColorRegistry.SelectionBoxOverlayId));
+
             if (textBox.ReceivingInput)
             {
                 const int CaretWidth = 2;

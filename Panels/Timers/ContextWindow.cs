@@ -97,6 +97,7 @@ namespace SideKicker.Panels.Timers
             this.Elements.AddRange([_alarmLabelTextbox, .. _alarmNumberSelectors.Values, .. _alarmButtons.Values, .. _alarmMonthChangeButtons, .. _weekdaysButtons, 
                                     _timerLabelTextbox, .. _timerNumberSelectors.Values, .. _timerButtons.Values, .. _recentTimeButtons,
                                                                                          .. _stopwatchButtons.Values]);
+            RegisterClipboardSupporters(_alarmLabelTextbox, _timerLabelTextbox);
 
             this.Boundaries = new Rectangle(0, 0, 450, 460);
             _renderer = new ContextWindowRenderer(WindowTexture);

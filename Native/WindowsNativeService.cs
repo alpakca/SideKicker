@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Windows.Forms;
 
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
@@ -76,6 +77,23 @@ namespace SideKicker.Native
         public void SetHittableArea(Rectangle firstArea, Rectangle secondArea)
         {
             WindowsHitRegionManager.SetAreas(firstArea, secondArea);
+        }
+
+        public void CopyToClipboard(string text)
+        {
+            Clipboard.SetText(text);
+        }
+
+        public bool TryGetClipboardText(out string text)
+        {
+            if (Clipboard.ContainsText())
+            {
+                text = Clipboard.GetText();
+                return true;
+            }
+
+            text = null;
+            return false;
         }
     }
 }
