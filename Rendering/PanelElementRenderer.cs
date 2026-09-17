@@ -2,8 +2,8 @@
 using PopUpUI.Elements;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
-using SideKicker.Theming;
 using System;
+using System.Collections.Generic;
 
 namespace SideKicker.Rendering
 {
@@ -13,7 +13,12 @@ namespace SideKicker.Rendering
 
         public static void RenderBackground(Point size)
         {
-            DrawHelper.DrawBorderedBackground(new Rectangle(Point.Zero, size), RenderData.Background, RenderData.Surface, 1);
+            DrawHelper.DrawBorderedBackground(new Rectangle(Point.Zero, size), RenderData.Border, RenderData.Surface, 1);
+        }
+
+        public static void RenderBackground(Rectangle bounds)
+        {
+            DrawHelper.DrawBorderedBackground(bounds, RenderData.Border, RenderData.Surface, 1);
         }
 
         public static void RenderTextPlaque(params ReadOnlySpan<TextPlaque> plaques)
@@ -53,6 +58,19 @@ namespace SideKicker.Rendering
         }
 
         public static void RenderToggleButton(params ReadOnlySpan<ToggleButton> buttons)
+        {
+            foreach (ToggleButton button in buttons)
+            {
+                DrawHelper.DrawBorderedBackground(button.Boundaries, RenderData.BorderAccent, RenderData.Background, 1);
+
+                if (button.IsChecked)
+                {
+                    DrawHelper.Batch.Draw(RenderData.GetIcon(IconType.CheckedToggleButton), button.Boundaries, Color.White);
+                }
+            }
+        }
+
+        public static void RenderToggleButton(IEnumerable<ToggleButton> buttons)
         {
             foreach (ToggleButton button in buttons)
             {
@@ -127,7 +145,7 @@ namespace SideKicker.Rendering
             }
         }
 
-        public static void DrawScrollableButtonListHoverOverlay<TRegion>(ScrollableButtonList list, ButtonRegionLayout<TRegion> layout) 
+        public static void RenderScrollableButtonListHoverOverlay<TRegion>(ScrollableButtonList list, ButtonRegionLayout<TRegion> layout) 
             where TRegion : struct, Enum
         {
             Rectangle overlayLocal = layout.TryHitLocalBounds(list.ButtonSize, list.RelativeMouseToHovered, out _, out Rectangle regionBounds)
@@ -137,19 +155,6 @@ namespace SideKicker.Rendering
             overlayLocal.Location += list.Boundaries.Location + list.GetButtonLocation(list.HoveredButtonIndex); // to screen bounds
 
             DrawHelper.DrawBackground(overlayLocal, list.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
-        }
-
-        public static void DrawScrollableButtonListRegions<TRegion>(ScrollableButtonList list, int buttonIndex, ButtonRegionLayout<TRegion> layout, 
-                                                                    ButtonRegionRendering<TRegion> rendering, params ReadOnlySpan<TRegion> regions)
-            where TRegion : struct, Enum
-        {
-            foreach (TRegion region in regions)
-            {
-                Rectangle local = layout.GetLocalBounds(region, list.ButtonSize);
-                local.Location += list.Boundaries.Location + list.GetButtonLocation(buttonIndex);
-
-                rendering.GetRenderer(region).Invoke(local);
-            }
         }
     }
 }

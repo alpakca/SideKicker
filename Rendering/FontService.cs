@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using PopUpUI.Toolkit;
 
-namespace SideKicker.Theming
+namespace SideKicker.Rendering
 {
     internal static class FontService
     {

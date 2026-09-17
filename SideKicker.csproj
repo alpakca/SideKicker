@@ -20,9 +20,6 @@
     <Folder Include="assets\themes\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Panels\PinnedCommands\EditorButton.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.5.1" />
     <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.5.1" />
   </ItemGroup>

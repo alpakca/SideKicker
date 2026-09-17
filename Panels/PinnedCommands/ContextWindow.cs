@@ -216,12 +216,7 @@ namespace SideKicker.Panels.PinnedCommands
 
         protected override void RenderUpdateWithoutMessages()
         {
-            _renderer.RenderMainElements(_commandEditorTexts, _inEditingMode ? _editingCommandButtons : _addingCommandButtons);
-
-            foreach (LinearTextBox textBox in _textBoxes.Values)
-            {
-                _renderer.RenderTextBox(textBox);
-            }
+            _renderer.Render(_commandEditorTexts, _inEditingMode ? _editingCommandButtons : _addingCommandButtons, _textBoxes.Values);
 
             for (int i = 0; i < _savedCommands.Count; i++)
             {

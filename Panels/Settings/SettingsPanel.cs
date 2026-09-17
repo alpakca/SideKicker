@@ -10,8 +10,6 @@ namespace SideKicker.Panels.Settings
         private readonly Preferences _preferences;
         private readonly ContextWindow _window;
 
-        public override string IconId => PanelIconValues.Settings_IconId;
-        public override string IconPath => PanelIconValues.Settings_IconPath;
         public override ContextPanelType Type => ContextPanelType.Settings;
         public override MessageSupporterWindow Window => _window;
 

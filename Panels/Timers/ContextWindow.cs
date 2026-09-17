@@ -2,7 +2,7 @@
 using PopUpUI.Elements;
 using PopUpUI.Input;
 using SideKicker.PanelSystem.Message;
-using SideKicker.Theming;
+using SideKicker.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -321,7 +321,7 @@ namespace SideKicker.Panels.Timers
         {
             _renderer.StartMainBatch();
 
-            _renderer.RenderMainElements(_textPlaques, _alarmCalendar, _weekdaysButtons, _anyRepeatingDaysSelected);
+            _renderer.Render(_textPlaques, _alarmCalendar, _weekdaysButtons, _anyRepeatingDaysSelected);
 
             _renderer.RenderIconedButtons(_alarmMonthChangeButtons);
             if (_isInspectingAlarm)
@@ -451,7 +451,7 @@ namespace SideKicker.Panels.Timers
 
             _alarmMonthChangeButtons[0] = new IconedButton
             {
-                IconId = ContextWindowRenderer.AlarmCalendarPreviousMonthButtonId,
+                IconType = Rendering.IconType.UpArrow,
                 Boundaries = new Rectangle(175, 45, TimesListLayoutCalculator.CalendarDayButtonHeight, TimesListLayoutCalculator.CalendarDayButtonHeight),
                 ClickCommand = new ActionCommander<Clickable>(_ => _alarmCalendar.MoveMonth(-1)),
 
@@ -460,7 +460,7 @@ namespace SideKicker.Panels.Timers
             };
             _alarmMonthChangeButtons[1] = new IconedButton
             {
-                IconId = ContextWindowRenderer.AlarmCalendarNextMonthButtonId,
+                IconType = Rendering.IconType.DownArrow,
                 Boundaries = new Rectangle(210, 45, TimesListLayoutCalculator.CalendarDayButtonHeight, TimesListLayoutCalculator.CalendarDayButtonHeight),
                 ClickCommand = new ActionCommander<Clickable>(_ => _alarmCalendar.MoveMonth(+1)),
 
@@ -515,7 +515,7 @@ namespace SideKicker.Panels.Timers
             HoldablePacket holdPacket = new HoldablePacket();
             _timerButtons[TimerButtonType.Add] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerAddButton,
+                IconType = Rendering.IconType.TimerAddButton,
                 Boundaries = new Rectangle(338, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Add)),
 
@@ -524,7 +524,7 @@ namespace SideKicker.Panels.Timers
             };
             _timerButtons[TimerButtonType.Discard] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerDiscardButton,
+                IconType = Rendering.IconType.TimerDiscardButton,
                 Boundaries = new Rectangle(299, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Discard)),
 
@@ -533,7 +533,7 @@ namespace SideKicker.Panels.Timers
             };
             _timerButtons[TimerButtonType.Stop] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerStopButton,
+                IconType = Rendering.IconType.TimerPauseButton,
                 Boundaries = new Rectangle(341, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Stop)),
 
@@ -542,7 +542,7 @@ namespace SideKicker.Panels.Timers
             };
             _timerButtons[TimerButtonType.Continue] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerAddButton,
+                IconType = Rendering.IconType.TimerAddButton,
                 Boundaries = new Rectangle(341, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Continue)),
 
@@ -551,7 +551,7 @@ namespace SideKicker.Panels.Timers
             };
             _timerButtons[TimerButtonType.Save] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerSaveButton,
+                IconType = Rendering.IconType.TimerSaveButton,
                 Boundaries = new Rectangle(383, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Save)),
 
@@ -590,7 +590,7 @@ namespace SideKicker.Panels.Timers
             HoldablePacket holdPacket = new HoldablePacket();
             _stopwatchButtons[TimerButtonType.Add] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerAddButton,
+                IconType = Rendering.IconType.TimerAddButton,
                 Boundaries = new Rectangle(338, 300, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: true, isPaused: false)),
 
@@ -599,7 +599,7 @@ namespace SideKicker.Panels.Timers
             };
             _stopwatchButtons[TimerButtonType.Discard] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerDiscardButton,
+                IconType = Rendering.IconType.TimerDiscardButton,
                 Boundaries = new Rectangle(317, 300, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: false, isPaused: true)),
 
@@ -608,7 +608,7 @@ namespace SideKicker.Panels.Timers
             };
             _stopwatchButtons[TimerButtonType.Stop] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerStopButton,
+                IconType = Rendering.IconType.TimerPauseButton,
                 Boundaries = new Rectangle(359, 300, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: true, isPaused: true)),
 
@@ -617,7 +617,7 @@ namespace SideKicker.Panels.Timers
             };
             _stopwatchButtons[TimerButtonType.Continue] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerAddButton,
+                IconType = Rendering.IconType.TimerAddButton,
                 Boundaries = new Rectangle(359, 300, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: true, isPaused: false)),
 

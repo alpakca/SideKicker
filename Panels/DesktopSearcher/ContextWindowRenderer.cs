@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
-using SideKicker.Theming;
+using SideKicker.Rendering;
 using System.Collections.Generic;
 
 namespace SideKicker.Panels.DesktopSearcher
@@ -24,61 +24,20 @@ namespace SideKicker.Panels.DesktopSearcher
             _windowSize = new Point(windowTexture.Width, windowTexture.Height);
         }
 
-        public void RenderMainElements(TextPlaque plaque)
+        public void Render(TextPlaque plaque, LinearTextBox searchBox)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
-
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaBlendDrawOptions);
-
-            DrawHelper.DrawBorderedBackground(new Rectangle(Point.Zero, _windowSize), theme.GetColor(ColorRegistry.BorderId),
-                                              theme.GetColor(ColorRegistry.SurfaceId), 1);
-
-            FontService.Regular.DrawText(plaque.TextSize, plaque.Text, plaque.Position, textColor);
-
+            PanelElementRenderer.RenderBackground(_windowSize);
+            PanelElementRenderer.RenderTextPlaque(plaque);
             DrawHelper.EndBatch();
-        }
 
-        public void RenderSearchBox(LinearTextBox searchBox)
-        {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
-
-            DrawHelper.Device.ScissorRectangle = searchBox.Boundaries;
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            DrawHelper.DrawBorderedBackground(searchBox.SelectableArea, theme.GetColor(ColorRegistry.BorderAccentId),
-                                              theme.GetColor(ColorRegistry.BackgroundId), 1);
-
-            FontService.Regular.DrawVerticallyCenteredText(searchBox.TextSize, searchBox.Text,
-                new Vector2(searchBox.Boundaries.X + searchBox.TextOffset, searchBox.Boundaries.Y), searchBox.Boundaries.Height,
-                textColor);
-
-            Rectangle selectionBox = searchBox.SelectionBox;
-            DrawHelper.DrawBackground(new Rectangle(searchBox.Boundaries.X + selectionBox.X + searchBox.TextOffset,
-                                                    searchBox.Boundaries.Y + selectionBox.Y,
-                                                    selectionBox.Width, selectionBox.Height),
-                                      theme.GetColor(ColorRegistry.SelectionBoxOverlayId));
-
-            if (searchBox.ReceivingInput)
-            {
-                const int CaretWidth = 1;
-
-                int caretHeight = FontService.Regular.GetLineSpacing(searchBox.TextSize);
-                DrawHelper.DrawBackground(new Rectangle(searchBox.Boundaries.X + searchBox.CaretX + searchBox.TextOffset,
-                                                        searchBox.Boundaries.Y + (searchBox.Boundaries.Height - caretHeight) / 2,
-                                                        CaretWidth,
-                                                        caretHeight),
-                                          textColor);
-            }
-
+            PanelElementRenderer.RenderLinearTextBox(searchBox);
             DrawHelper.EndBatch();
         }
 
         public void RenderResultsListBackgrounds(ScrollableButtonList resultsList, IReadOnlyList<SearcherResult> searcherResults, bool showClosingOption)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-
             DrawHelper.Device.ScissorRectangle = resultsList.Boundaries;
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
 
@@ -99,7 +58,7 @@ namespace SideKicker.Panels.DesktopSearcher
                     if (showClosingOption)
                     {
                         Rectangle closeButtonBounds = ResultsListLayoutCalculator.ButtonCloseBounds(buttonScreenBounds);
-                        DrawHelper.Batch.Draw(theme.GetIcon(IconRegistry.CloseButtonId), closeButtonBounds, Color.White);
+                        DrawHelper.Batch.Draw(RenderData.GetIcon(IconType.CloseButton), closeButtonBounds, Color.White);
 
                         if (ResultsListLayoutCalculator.HitCloseBounds(buttonScreenBounds.Size, resultsList.RelativeMouseToHovered))
                         {
@@ -107,8 +66,7 @@ namespace SideKicker.Panels.DesktopSearcher
                         }
                     }
 
-                    DrawHelper.DrawBackground(overlayBounds, resultsList.IsHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
-                                                                                             : theme.GetColor(ColorRegistry.HoverOverlayId));
+                    DrawHelper.DrawBackground(overlayBounds, resultsList.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
                 }
             }
 
@@ -135,7 +93,7 @@ namespace SideKicker.Panels.DesktopSearcher
                 filePathTextPosition.X += ResultsListLayoutCalculator.GetTextSlideOffset(filePathTextWidth, buttonScreenBounds.Width);
             }
 
-            Color textColor = ThemeService.CurrentTheme.GetColor(ColorRegistry.TextColorId);
+            Color textColor = RenderData.Text;
 
             // we need intersect here since button may have been cut through if because of scrolling, so text should be cut too
             DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(resultsList.Boundaries, buttonNameScreenBounds);

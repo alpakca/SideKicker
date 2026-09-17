@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace SideKicker.Rendering
 {
-    internal delegate void LayoutRenderer(Rectangle layoutBounds);
+    internal delegate void LayoutRenderer(Rectangle layoutBounds, int buttonIndex);
 
     internal class ButtonRegionRendering<TRegion> where TRegion : struct, Enum
     {

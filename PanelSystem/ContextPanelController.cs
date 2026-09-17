@@ -6,10 +6,7 @@ using SideKicker.Panels.PinnedCommands;
 using SideKicker.Panels.Settings;
 using SideKicker.Panels.Timers;
 using SideKicker.PanelSystem.Settings;
-using SideKicker.Theming;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace SideKicker.PanelSystem
 {
@@ -61,9 +58,6 @@ namespace SideKicker.PanelSystem
 
             SetOrigin(Preferences.Origin);
             ShowPanel(_allPanels[Preferences.ShownPanelIndex]);
-
-            ThemeService.Refresh();
-            ThemeService.SetTheme(Preferences.ThemeId);
         }
 
         private void InputManager_MouseButtonStateChange(PopUpUI.Input.PopWindowMouseEventArgs e)

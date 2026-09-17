@@ -5,9 +5,6 @@ namespace SideKicker.Panels
 {
     internal abstract class ContextPanel
     {
-        public abstract string IconId { get; }
-        public abstract string IconPath { get; }
-
         public abstract ContextPanelType Type { get; }
         public abstract MessageSupporterWindow Window { get; }
 

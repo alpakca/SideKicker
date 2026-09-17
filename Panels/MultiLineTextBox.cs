@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Input;
 using PopUpUI.Elements;
 using PopUpUI.Input;
-using SideKicker.Theming;
+using SideKicker.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Text;

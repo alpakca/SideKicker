@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using PopUpUI.Toolkit;
-using SideKicker.Theming;
+using SideKicker.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Text;

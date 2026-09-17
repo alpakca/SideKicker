@@ -26,8 +26,6 @@ namespace SideKicker.Panels.Timers
         private AlarmInfo _shownAlarm;
         private TimerInfo _shownTimer;
 
-        public override string IconId => PanelIconValues.Timers_IconId;
-        public override string IconPath => PanelIconValues.Timers_IconPath;
         public override ContextPanelType Type => ContextPanelType.Timers;
         public override MessageSupporterWindow Window => _contextWindow;
 

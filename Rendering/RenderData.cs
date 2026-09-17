@@ -1,8 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
+using SideKicker.Panels;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace SideKicker.Rendering
@@ -11,8 +13,23 @@ namespace SideKicker.Rendering
     {
         private static readonly Dictionary<IconType, TextureInfo> _icons = new Dictionary<IconType, TextureInfo>
         {
-            { IconType.EditButton, new TextureInfo(null) }, { IconType.CloseButton, new TextureInfo(null) },
-            { IconType.CheckedToggleButton, new TextureInfo(null) }
+            { IconType.PinnedCommandsPanel, new TextureInfo(@"pinnedcommandspanelicon.png") }, 
+            { IconType.TimersPanel, new TextureInfo(@"timerspanelicon.png") },
+            { IconType.DesktopSearcherPanel, new TextureInfo(@"desktopsearcherpanelicon.png") }, 
+            { IconType.SettingsPanel, new TextureInfo(@"settingspanelicon.png") },
+
+            { IconType.EditButton, new TextureInfo(@"editbutton.png") }, 
+            { IconType.CloseButton, new TextureInfo(@"closebutton.png") },
+            { IconType.ReorderButton, new TextureInfo(@"reorderbutton.png") }, 
+            { IconType.CheckedToggleButton, new TextureInfo(@"checkedtogglebutton.png") },
+
+            { IconType.DownArrow, new TextureInfo(@"downarrow.png") }, 
+            { IconType.UpArrow, new TextureInfo(@"uparrow.png") },
+
+            { IconType.TimerAddButton, new TextureInfo(@"timeraddbutton.png") }, 
+            { IconType.TimerDiscardButton, new TextureInfo(@"timerdiscardbutton.png") },
+            { IconType.TimerPauseButton, new TextureInfo(@"timerpausebutton.png") }, 
+            { IconType.TimerSaveButton, new TextureInfo(@"timersavebutton.png") }
         };
 
         public static Color Border => new Color(145, 132, 238, 255);
@@ -30,6 +47,19 @@ namespace SideKicker.Rendering
 
         public static Texture2D GetIcon(IconType type) => LoadIfNotPresent(type);
 
+        public static Texture2D GetPanelIcon(ContextPanelType panelType)
+        {
+            return GetIcon(panelType switch
+            {
+                ContextPanelType.PinnedCommands => IconType.PinnedCommandsPanel,
+                ContextPanelType.Timers => IconType.TimersPanel,
+                ContextPanelType.DesktopSearcher => IconType.DesktopSearcherPanel,
+                ContextPanelType.Settings => IconType.SettingsPanel,
+
+                _ => throw new ArgumentException("Given panel type couldn't resolved " + panelType)
+            });
+        }
+
         private static Texture2D LoadIfNotPresent(IconType type)
         {
             TextureInfo info = _icons[type];
@@ -45,7 +75,7 @@ namespace SideKicker.Rendering
 
             public TextureInfo(string path)
             {
-                LoadPath = path;
+                LoadPath = Path.Combine(Program.AssetsFolderPath, "panels", path);
             }
         }
     }

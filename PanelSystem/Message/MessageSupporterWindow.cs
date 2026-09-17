@@ -5,6 +5,7 @@ using PopUpUI.Surface;
 using PopUpUI.Toolkit;
 using SideKicker.Native;
 using SideKicker.Panels;
+using SideKicker.Rendering;
 using System;
 using System.Collections.Generic;
 

@@ -2,10 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
-using SideKicker.Theming;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using SideKicker.Rendering;
 
 namespace SideKicker.PanelSystem
 {
@@ -22,24 +19,20 @@ namespace SideKicker.PanelSystem
 
         public void Render(PanelToggle[] toggles)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaBlendDrawOptions);
-
-            DrawHelper.DrawBorderedBackground(new Rectangle(Point.Zero, _windowSize), 
-                                              theme.GetColor(ColorRegistry.BorderId), theme.GetColor(ColorRegistry.SurfaceId), 1);
+            PanelElementRenderer.RenderBackground(_windowSize);
 
             for (int i = 0; i < toggles.Length; i++)
             {
                 PanelToggle toggle = toggles[i];
                 Rectangle iconBounds = ControllerLayoutCalculator.GetContextPanelIconBounds(i);
 
-                DrawHelper.DrawTextureCenteralized(iconBounds, theme.GetIcon(toggle.Panel.IconId));
+                DrawHelper.DrawTextureCenteralized(iconBounds, RenderData.GetPanelIcon(toggle.Panel.Type));
 
                 // replace with a vertical bar that has animation when switched to another panel, also shows the current open panel
                 if (toggle.IsChecked)
                 {
-                    DrawHelper.DrawBackground(ControllerLayoutCalculator.GetOpenPanelBarBounds(i), theme.GetColor(ColorRegistry.VerticalBarColorId));
+                    DrawHelper.DrawBackground(ControllerLayoutCalculator.GetOpenPanelBarBounds(i), RenderData.VerticalBar);
                 }
             }
 

@@ -2,24 +2,15 @@
 using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Elements;
 using PopUpUI.Toolkit;
-using SideKicker.Panels.PinnedCommands;
-using SideKicker.Theming;
+using SideKicker.Rendering;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace SideKicker.Panels.Timers
 {
     internal class ContextWindowRenderer
     {
-        public const string AlarmCalendarPreviousMonthButtonId = "AlarmCalendarPreviousMonthButton";
-        public const string AlarmCalendarNextMonthButtonId = "AlarmCalendarNextMonthButtonId";
-        public const string TimerAddButton = "TimerAddButton";
-        public const string TimerDiscardButton = "TimerDiscardButton";
-        public const string TimerStopButton = "TimerStopButton";
-        public const string TimerSaveButton = "TimerSaveButton";
-
+        private const int AlarmTextSize = 12;
         private const int TimesListTextSize = 12;
         private const int TimersNumberTextSize = 16;
         private static readonly int TimesListTextLineSpacing = FontService.Regular.GetLineSpacing(TimesListTextSize);
@@ -33,46 +24,6 @@ namespace SideKicker.Panels.Timers
             _windowSize = new Point(windowTexture.Width, windowTexture.Height);
         }
 
-        [ModuleInitializer]
-        public static void InitializeIcons()
-        {
-            IconRegistry.Register(new IconDefinition
-            {
-                Id = AlarmCalendarNextMonthButtonId,
-                DefaultPath = @"panels\AlarmCalendarNextMonthButton.png"
-            });
-
-            IconRegistry.Register(new IconDefinition
-            {
-                Id = AlarmCalendarPreviousMonthButtonId,
-                DefaultPath = @"panels\AlarmCalendarPreviousMonthButton.png",
-            });
-
-            IconRegistry.Register(new IconDefinition
-            {
-                Id = TimerAddButton,
-                DefaultPath = @"panels\TimerAddButton.png"
-            });
-
-            IconRegistry.Register(new IconDefinition
-            {
-                Id = TimerDiscardButton,
-                DefaultPath = @"panels\TimerDiscardButton.png"
-            });
-
-            IconRegistry.Register(new IconDefinition
-            {
-                Id = TimerStopButton,
-                DefaultPath = @"panels\TimerStopButton.png"
-            });
-
-            IconRegistry.Register(new IconDefinition
-            {
-                Id = TimerSaveButton,
-                DefaultPath = @"panels\TimerSaveButton.png"
-            });
-        }
-
         public void StartMainBatch()
         {
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaBlendDrawOptions);
@@ -83,121 +34,54 @@ namespace SideKicker.Panels.Timers
             DrawHelper.EndBatch();
         }
 
-        public void RenderMainElements(TextPlaque[] textPlaques, CalendarShowcase calendar, ToggleButton[] weekdaysButtons, bool anyWeekdaysSelected)
+        public void Render(TextPlaque[] textPlaques, CalendarShowcase calendar, ToggleButton[] weekdaysButtons, bool anyWeekdaysSelected)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
+            PanelElementRenderer.RenderBackground(_windowSize);
+            PanelElementRenderer.RenderTextPlaque(textPlaques);
 
-            DrawHelper.DrawBorderedBackground(new Rectangle(Point.Zero, _windowSize), theme.GetColor(ColorRegistry.BorderId), theme.GetColor(ColorRegistry.SurfaceId), 1);
+            // calendary current month/year
+            FontService.Regular.DrawText(AlarmTextSize, calendar.ShownDateText, new Vector2(20, 45), RenderData.Text);
 
-            // plaques
-            foreach (var plaque in textPlaques)
-            {
-                FontService.Regular.DrawText(plaque.TextSize, plaque.Text, plaque.Position, textColor);
-            }
-
-            // calendar
-            FontService.Regular.DrawText(12, calendar.ShownDateText, new Vector2(20, 45), textColor);
-
-            int dayIndex = 0;
-            for (int i = 0; i < weekdaysButtons.Length; i++)
-            {
-                FontService.Regular.DrawCenteredText(12, CalendarShowcase.WeekDayNames[i], weekdaysButtons[i].Boundaries, textColor);
-
-                if (anyWeekdaysSelected && weekdaysButtons[i].IsChecked)
-                {
-                    DrawHelper.DrawBackground(weekdaysButtons[i].Boundaries, theme.GetColor(ColorRegistry.HeldOverlayId));
-                }
-
-                dayIndex++;
-            }
-
+            // alarm days
             for (int i = 1; i <= calendar.MaxDays; i++)
             {
                 (int dayColumn, int weekRow) = calendar.GetDayIndexPosition(i);
                 Rectangle buttonRelativeBounds = calendar.GetDayButtonBounds(weekRow, dayColumn);
                 Rectangle buttonScreenBounds = new Rectangle(calendar.Location + buttonRelativeBounds.Location, buttonRelativeBounds.Size);
 
-                FontService.Regular.DrawCenteredText(16, i.ToString(), buttonScreenBounds, textColor);
+                FontService.Regular.DrawCenteredText(AlarmTextSize, i.ToString(), buttonScreenBounds, RenderData.Text);
 
                 if (!anyWeekdaysSelected && i == calendar.SelectedDay)
                 {
-                    DrawHelper.DrawBackground(buttonScreenBounds, theme.GetColor(ColorRegistry.HoverOverlayId));
+                    DrawHelper.DrawBackground(buttonScreenBounds, RenderData.HoverOverlay);
                 }
             }
-        }
 
-        public void RenderIconedButtons(params ReadOnlySpan<IconedButton> buttons)
-        {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            foreach (var button in buttons)
+            // alarm weekdays
+            for (int i = 0; i < weekdaysButtons.Length; i++)
             {
-                DrawHelper.Batch.Draw(theme.GetIcon(button.IconId), button.Boundaries, Color.White);
+                FontService.Regular.DrawCenteredText(12, CalendarShowcase.WeekDayNames[i], weekdaysButtons[i].Boundaries, RenderData.Text);
 
-                if (button.IsHovered)
+                if (anyWeekdaysSelected && weekdaysButtons[i].IsChecked)
                 {
-                    DrawHelper.DrawBackground(button.Boundaries, button.IsHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
-                                                                               : theme.GetColor(ColorRegistry.HoverOverlayId));
+                    DrawHelper.DrawBackground(weekdaysButtons[i].Boundaries, RenderData.HeldOverlay);
                 }
             }
         }
 
-        public void RenderTextedButtons(params ReadOnlySpan<TextedButton> buttons)
-        {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            foreach (var button in buttons)
-            {
-                DrawHelper.DrawBackground(button.Boundaries, theme.GetColor(ColorRegistry.BackgroundId));
-                FontService.Regular.DrawCenteredText(12, button.Text, button.Boundaries, theme.GetColor(ColorRegistry.TextColorId));
-
-                if (button.IsHovered)
-                {
-                    DrawHelper.DrawBackground(button.Boundaries, button.IsHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
-                                                                               : theme.GetColor(ColorRegistry.HoverOverlayId));
-                }
-            }
-        }
+        public void RenderIconedButtons(params ReadOnlySpan<IconedButton> buttons) => PanelElementRenderer.RenderIconedButton(buttons);
+        public void RenderTextedButtons(params ReadOnlySpan<TextedButton> buttons) => PanelElementRenderer.RenderTextedButton(buttons);
 
         public void RenderTextBox(MultiLineTextBox textbox)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
-            int lineSpacing = FontService.Regular.GetLineSpacing(textbox.TextSize);
-
-            DrawHelper.Device.ScissorRectangle = textbox.SelectableArea;
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            DrawHelper.DrawBackground(textbox.SelectableArea, theme.GetColor(ColorRegistry.BackgroundId));
-
-            Vector2 position = textbox.Boundaries.Location.ToVector2() - new Vector2(0, textbox.ScrollOffset);
-            foreach (var line in textbox.Lines)
-            {
-                FontService.Regular.DrawText(textbox.TextSize, line, position, textColor);
-                position.Y += lineSpacing;
-            }
-
-            if (textbox.ReceivingInput)
-            {
-                const int CaretWidth = 1;
-                DrawHelper.DrawBackground(new Rectangle(textbox.Boundaries.Location + textbox.CaretPosition, new Point(CaretWidth, lineSpacing)), textColor);
-            }
-
-            Color selectionOverlay = theme.GetColor(ColorRegistry.SelectionBoxOverlayId);
-            foreach (Rectangle selectionBox in textbox.SelectionBoxes)
-            {
-                DrawHelper.DrawBackground(new Rectangle(textbox.Boundaries.X + selectionBox.X,
-                                                        textbox.Boundaries.Y + selectionBox.Y - textbox.ScrollOffset,
-                                                        selectionBox.Width, selectionBox.Height),
-                                          selectionOverlay);
-            }
-
+            PanelElementRenderer.RenderMultiLineTextBox(textbox);
             DrawHelper.EndBatch();
         }
 
         public void RenderNumberSelectors(IList<ScrollableNumberSelector> selectorGroup)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
+            Color textColor = RenderData.Text;
             int lineSpacing = FontService.Regular.GetLineSpacing(TimersNumberTextSize);
 
             int index = 0;
@@ -227,8 +111,7 @@ namespace SideKicker.Panels.Timers
 
         public void RenderStopwatch(StopwatchShowcase stopwatch)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
+            Color textColor = RenderData.Text;
             TimeSpan elapsed = stopwatch.Elapsed;
 
             const int LeftMostStartX = 290;
@@ -255,8 +138,6 @@ namespace SideKicker.Panels.Timers
 
         public void RenderTimesListBackgrounds(ScrollableButtonList timesList)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-
             DrawHelper.Device.ScissorRectangle = timesList.Boundaries;
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
 
@@ -265,15 +146,14 @@ namespace SideKicker.Panels.Timers
                 Rectangle relativeButtonBounds = timesList.GetButtonBounds(i);
                 Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + timesList.Boundaries.Location, relativeButtonBounds.Size);
 
-                DrawHelper.Batch.Draw(theme.GetIcon(IconRegistry.EditButtonId), TimesListLayoutCalculator.EditButtonBounds(buttonScreenBounds), Color.White);
+                DrawHelper.Batch.Draw(RenderData.GetIcon(IconType.EditButton), TimesListLayoutCalculator.EditButtonBounds(buttonScreenBounds), Color.White);
 
                 if (i == timesList.HoveredButtonIndex)
                 {
                     bool hitEditButton = TimesListLayoutCalculator.HitEditButton(buttonScreenBounds.Size, timesList.RelativeMouseToHovered);
                     Rectangle overlayBounds = hitEditButton ? TimesListLayoutCalculator.EditButtonBounds(buttonScreenBounds) : buttonScreenBounds;
 
-                    DrawHelper.DrawBackground(overlayBounds, timesList.IsHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
-                                                                                           : theme.GetColor(ColorRegistry.HoverOverlayId));
+                    DrawHelper.DrawBackground(overlayBounds, timesList.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
                 }
             }
 
@@ -300,7 +180,7 @@ namespace SideKicker.Panels.Timers
             DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(timesList.Boundaries, buttonNameScreenBounds);
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
 
-            FontService.Regular.DrawText(TimesListTextSize, buttonName, textPosition, ThemeService.CurrentTheme.GetColor(ColorRegistry.TextColorId));
+            FontService.Regular.DrawText(TimesListTextSize, buttonName, textPosition, RenderData.Text);
 
             DrawHelper.EndBatch();
         }

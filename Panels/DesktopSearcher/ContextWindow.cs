@@ -116,9 +116,7 @@ namespace SideKicker.Panels.DesktopSearcher
 
         protected override void RenderUpdateWithoutMessages()
         {
-            _renderer.RenderMainElements(_searchBox.Text.Length == 0 ? _emptySearchBoxPlaque : _nonEmptySearchBoxPlaque);
-
-            _renderer.RenderSearchBox(_searchBox);
+            _renderer.Render(_searchBox.Text.Length == 0 ? _emptySearchBoxPlaque : _nonEmptySearchBoxPlaque, _searchBox);
 
             for (int i = 0; i < _searcherResults.Count; i++)
             {
