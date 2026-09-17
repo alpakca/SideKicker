@@ -18,6 +18,8 @@ namespace SideKicker.Panels
         public bool IsHoveredButtonHeld { get; private set; }
         public Point RelativeMouseToHovered { get; private set; }
 
+        public Point ButtonSize => new Point(Boundaries.Width - 2 * ButtonMargin, ButtonHeight);
+
         public event Action<int> ButtonPressed;
         public event Action<int> ButtonHeld;
 
@@ -26,6 +28,8 @@ namespace SideKicker.Panels
             return new Rectangle(ButtonMargin, ButtonMargin + index * (ButtonHeight + ButtonMargin) - scrolledLength,
                                  Boundaries.Width - 2 * ButtonMargin, ButtonHeight);
         }
+
+        public Point GetButtonLocation(int index) => new Point(ButtonMargin, ButtonMargin + index * (ButtonHeight + ButtonMargin) - scrolledLength);
 
         public int GetButtonOn(Point relativePosition)
         {

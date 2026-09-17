@@ -421,6 +421,7 @@ namespace SideKicker.Panels.Timers
             _alarmButtons[AlarmButtonType.Add] = new TextedButton
             {
                 Text = "Add",
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(164, 385, 80, 30),
                 ClickCommand = new ActionCommander<Clickable>(_ => AlarmButtonPressed?.Invoke(AlarmButtonType.Add)),
 
@@ -430,6 +431,7 @@ namespace SideKicker.Panels.Timers
             _alarmButtons[AlarmButtonType.Delete] = new TextedButton
             {
                 Text = "Delete",
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(86, 385, 70, 30),
                 ClickCommand = new ActionCommander<Clickable>(_ => AlarmButtonPressed?.Invoke(AlarmButtonType.Delete)),
 
@@ -439,6 +441,7 @@ namespace SideKicker.Panels.Timers
             _alarmButtons[AlarmButtonType.Save] = new TextedButton
             {
                 Text = "Save",
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(174, 385, 70, 30),
                 ClickCommand = new ActionCommander<Clickable>(_ => AlarmButtonPressed?.Invoke(AlarmButtonType.Save)),
 
@@ -563,6 +566,7 @@ namespace SideKicker.Panels.Timers
 
             _recentTimeButtons[0] = new RecentTimeButton
             {
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(266, 178, 80, 30),
                 ClickCommand = recentTimeButtonAction,
 
@@ -571,6 +575,7 @@ namespace SideKicker.Panels.Timers
             };
             _recentTimeButtons[1] = new RecentTimeButton
             {
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(354, 178, 80, 30),
                 ClickCommand = recentTimeButtonAction,
 

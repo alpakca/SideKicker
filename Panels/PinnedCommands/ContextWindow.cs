@@ -183,6 +183,7 @@ namespace SideKicker.Panels.PinnedCommands
                 new TextedButton
                 {
                     Text = "Add",
+                    TextSize = PanelTextSize,
                     Boundaries = new Rectangle(220 - 90, 200, 90, 30),
                     ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Add)),
                     SelectablePacket = new SelectablePacket(),
@@ -195,6 +196,7 @@ namespace SideKicker.Panels.PinnedCommands
                 new TextedButton
                 {
                     Text = "Delete",
+                    TextSize = PanelTextSize,
                     Boundaries = new Rectangle(20, 200, 90, 30),
                     ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Delete)),
                     SelectablePacket = new SelectablePacket(),
@@ -203,6 +205,7 @@ namespace SideKicker.Panels.PinnedCommands
                 new TextedButton
                 {
                     Text = "Save",
+                    TextSize = PanelTextSize,
                     Boundaries = new Rectangle(220 - 90, 200, 90, 30),
                     ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Save)),
                     SelectablePacket = new SelectablePacket(),
