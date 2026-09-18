@@ -78,6 +78,19 @@ namespace SideKicker.Rendering
             throw new ArgumentException();
         }
 
+        public bool IsCommonIconRegionEligible(TRegion region, int buttonIndex)
+        {
+            foreach (var (regionCandidate, _) in _commonIconRegions)
+            {
+                if (EqualityComparer<TRegion>.Default.Equals(regionCandidate, region))
+                {
+                    return _commonIconPredicate(region, buttonIndex);
+                }
+            }
+
+            return false;
+        }
+
         public void AddRegionCachedFileIcon(TRegion region)
         {
             _cachedFileIconRegions.Add(region);

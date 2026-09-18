@@ -173,40 +173,51 @@ namespace SideKicker.Rendering
                 {
                     if (rendering.TryGetRegionCommonIcon(commonIconRegion, i, out IconType commonIcon))
                     {
-                        DrawHelper.Batch.Draw(RenderData.GetIcon(commonIcon), layoutCalculator.ToCachedFileIconRegion(commonIconRegion, localButtonBounds), Color.White);
+                        DrawHelper.Batch.Draw(RenderData.GetIcon(commonIcon), layoutCalculator.ToCommonIconRegion(commonIconRegion, localButtonBounds), Color.White);
                     }
                 }
             }
-
-            Rectangle overlayBounds = layoutCalculator.GetHoveredRegionBounds(list.HoveredButtonIndex);
-            overlayBounds.Location += list.Boundaries.Location;
-
-            DrawHelper.DrawBackground(overlayBounds, list.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
         }
 
-        public static void RenderScrollableButtonListSlidingText<TSource, TRegion>(ScrollableButtonList list, int buttonIndex, TSource source,
+        public static void RenderScrollableButtonListSlidingText<TSource, TRegion>(ScrollableButtonList list, 
+                                                                                   TRegion slidingTextRegion, int buttonIndex, TSource source,
                                                                                    ButtonListRendering<TSource, TRegion> rendering,
                                                                                    IButtonListLayoutCalculator<TRegion> layoutCalculator)
         {
             Rectangle localButtonBounds = list.GetButtonBounds(buttonIndex);
             localButtonBounds.Location += list.Boundaries.Location;
 
-            foreach (TRegion slidingTextRegion in rendering.SlidingTextRegions)
+            Rectangle slidingTextBounds = layoutCalculator.ToSlidingTextRegion(slidingTextRegion, localButtonBounds);
+            DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(list.Boundaries, slidingTextBounds);
+
+            Vector2 textPosition = slidingTextBounds.Location.ToVector2();
+            string textResult = rendering.GetSlidingTextResult(slidingTextRegion, source);
+            int textSize = layoutCalculator.GetSlidingTextSize(slidingTextRegion);
+
+            if (list.HoveredButtonIndex == buttonIndex)
             {
-                Rectangle slidingTextBounds = layoutCalculator.ToSlidingTextRegion(slidingTextRegion, localButtonBounds);
-                DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(list.Boundaries, slidingTextBounds);
-
-                Vector2 textPosition = slidingTextBounds.Location.ToVector2();
-                string textResult = rendering.GetSlidingTextResult(slidingTextRegion, source);
-                int textSize = layoutCalculator.GetSlidingTextSize(slidingTextRegion);
-
-                if (list.HoveredButtonIndex == buttonIndex)
-                {
-                    textPosition.X += GetTextSlideOffset(FontService.Regular.MeasureWidth(textSize, textResult), slidingTextBounds.Width);
-                }
-
-                FontService.Regular.DrawText(textSize, textResult, textPosition, RenderData.Text);
+                textPosition.X += GetTextSlideOffset(FontService.Regular.MeasureWidth(textSize, textResult), slidingTextBounds.Width);
             }
+
+            FontService.Regular.DrawText(textSize, textResult, textPosition, RenderData.Text);
+        }
+
+        public static void RenderScrollableButtonListHoverOverlay<TSource, TRegion>(ScrollableButtonList list, ButtonListRendering<TSource, TRegion> rendering,
+                                                                                    IButtonListLayoutCalculator<TRegion> layoutCalculator)
+        {
+            Rectangle hoveredRegionBounds = list.GetButtonBounds(list.HoveredButtonIndex);
+            Rectangle overlayBounds = hoveredRegionBounds;
+
+            if (layoutCalculator.TryGetHoveredCommonIconRegion(list.RelativeMouseToHovered, hoveredRegionBounds.Size, out TRegion hoveredRegion) &&
+                rendering.IsCommonIconRegionEligible(hoveredRegion, list.HoveredButtonIndex))
+            {
+                overlayBounds = layoutCalculator.ToCommonIconRegion(hoveredRegion, hoveredRegionBounds);
+            }
+
+            overlayBounds.Location += list.Boundaries.Location;
+
+            DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(list.Boundaries, overlayBounds);
+            DrawHelper.DrawBackground(overlayBounds, list.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
         }
 
         private static float GetTextSlideOffset(float totalTextWidth, int textLayoutWidth)

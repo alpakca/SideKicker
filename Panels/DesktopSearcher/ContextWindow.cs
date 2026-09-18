@@ -80,7 +80,7 @@ namespace SideKicker.Panels.DesktopSearcher
 
         private void ResultsList_ButtonPressed(int buttonIndex)
         {
-            if (_showClosingOption && ResultsListLayoutCalculator.HitCloseBounds(_resultsList.GetButtonBounds(buttonIndex).Size, _resultsList.RelativeMouseToHovered))
+            if (_showClosingOption && ResultsListLayoutCalculator.Instance.HitCloseButton(_resultsList.GetButtonBounds(buttonIndex), _resultsList.RelativeMouseToHovered))
             {
                 ResultCloseSelected?.Invoke(_searcherResults[buttonIndex]);
             }
@@ -117,12 +117,7 @@ namespace SideKicker.Panels.DesktopSearcher
         protected override void RenderUpdateWithoutMessages()
         {
             _renderer.Render(_searchBox.Text.Length == 0 ? _emptySearchBoxPlaque : _nonEmptySearchBoxPlaque, _searchBox);
-
-            for (int i = 0; i < _searcherResults.Count; i++)
-            {
-                _renderer.RenderResultsListText(_resultsList, _searcherResults[i], i);
-            }
-            _renderer.RenderResultsListBackgrounds(_resultsList, _searcherResults, _showClosingOption);
+            _renderer.RenderScrollableButtonList(_resultsList, _searcherResults, _showClosingOption);
         }
 
         protected override void OnMouseButtonStateChangeWithoutMessages(PopWindowMouseEventArgs e)

@@ -2,26 +2,41 @@
 using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
 using SideKicker.Rendering;
+using System;
 using System.Collections.Generic;
 
 namespace SideKicker.Panels.DesktopSearcher
 {
     internal class ContextWindowRenderer
     {
-        private const int ResultListFileNameTextSize = 16;
-        private const int ResultListFilePathTextSize = 12;
-
-        private static readonly int ResultListFileNameTextLineSpacing = FontService.Regular.GetLineSpacing(ResultListFileNameTextSize);
-        private static readonly int ResultListTextLineSpacing = FontService.Regular.GetLineSpacing(ResultListFileNameTextSize)
-                                                              + FontService.Regular.GetLineSpacing(ResultListFilePathTextSize);
-
         private readonly Point _windowSize;
         private readonly RenderTarget2D _windowTexture;
+        private readonly ButtonListRendering<SearcherResult, ResultsListButtonRegion> _resultsListRendering;
+
+        // captured by results list renderer's common icon predicate, for drawing closing button
+        private int _resultsListHoveredButtonIndex;
+        private bool _resultsListShowClosingOption;
 
         public ContextWindowRenderer(RenderTarget2D windowTexture)
         {
             _windowTexture = windowTexture;
             _windowSize = new Point(windowTexture.Width, windowTexture.Height);
+
+            _resultsListRendering = new ButtonListRendering<SearcherResult, ResultsListButtonRegion>(
+                cachedFileIconGatherer: (region, searchResult) => searchResult.FileName,
+                slidingTextGatherer: (region, searchResult) => region switch
+                {
+                    ResultsListButtonRegion.FileName => searchResult.FileName,
+                    ResultsListButtonRegion.FileRelativePath => searchResult.FileRelativePath,
+
+                    _ => throw new ArgumentException("Region not supported " + region)
+                },
+                commonIconPredicate: (region, buttonIndex) => _resultsListShowClosingOption && buttonIndex == _resultsListHoveredButtonIndex);
+
+            _resultsListRendering.AddRegionCachedFileIcon(ResultsListButtonRegion.FileIcon);
+            _resultsListRendering.AddRegionSlidingText(ResultsListButtonRegion.FileName, ResultsListLayoutCalculator.FileNameTextSize);
+            _resultsListRendering.AddRegionSlidingText(ResultsListButtonRegion.FileRelativePath, ResultsListLayoutCalculator.FilePathTextSize);
+            _resultsListRendering.AddRegionCommonIcon(ResultsListButtonRegion.CloseButton, IconType.CloseButton);
         }
 
         public void Render(TextPlaque plaque, LinearTextBox searchBox)
@@ -36,72 +51,28 @@ namespace SideKicker.Panels.DesktopSearcher
             DrawHelper.EndBatch();
         }
 
-        public void RenderResultsListBackgrounds(ScrollableButtonList resultsList, IReadOnlyList<SearcherResult> searcherResults, bool showClosingOption)
+        public void RenderScrollableButtonList(ScrollableButtonList resultsList, IReadOnlyList<SearcherResult> searcherResults, bool showClosingOption)
         {
-            DrawHelper.Device.ScissorRectangle = resultsList.Boundaries;
+            _resultsListHoveredButtonIndex = resultsList.HoveredButtonIndex;
+            _resultsListShowClosingOption = showClosingOption;
+
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            for (int i = 0; i < resultsList.ButtonCount; i++)
-            {
-                Rectangle relativeButtonBounds = resultsList.GetButtonBounds(i);
-                Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + resultsList.Boundaries.Location, relativeButtonBounds.Size);
-
-                if (FileIconCache.TryGetIcon(searcherResults[i].FileName, out Texture2D icon) && icon != null)
-                {
-                    DrawHelper.Batch.Draw(icon, ResultsListLayoutCalculator.ButtonIconBounds(buttonScreenBounds), Color.White);
-                }
-
-                if (i == resultsList.HoveredButtonIndex)
-                {
-                    Rectangle overlayBounds = buttonScreenBounds;
-
-                    if (showClosingOption)
-                    {
-                        Rectangle closeButtonBounds = ResultsListLayoutCalculator.ButtonCloseBounds(buttonScreenBounds);
-                        DrawHelper.Batch.Draw(RenderData.GetIcon(IconType.CloseButton), closeButtonBounds, Color.White);
-
-                        if (ResultsListLayoutCalculator.HitCloseBounds(buttonScreenBounds.Size, resultsList.RelativeMouseToHovered))
-                        {
-                            overlayBounds = closeButtonBounds;
-                        }
-                    }
-
-                    DrawHelper.DrawBackground(overlayBounds, resultsList.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
-                }
-            }
-
+            PanelElementRenderer.RenderScrollableButtonListBackground(resultsList, searcherResults, _resultsListRendering, ResultsListLayoutCalculator.Instance);
             DrawHelper.EndBatch();
-        }
 
-        public void RenderResultsListText(ScrollableButtonList resultsList, SearcherResult result, int buttonIndex)
-        {
-            Rectangle relativeButtonBounds = resultsList.GetButtonBounds(buttonIndex);
-            Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + resultsList.Boundaries.Location, relativeButtonBounds.Size);
-            Rectangle buttonNameScreenBounds = ResultsListLayoutCalculator.ButtonNameBounds(buttonScreenBounds);
-
-            int verticalCenterOffset = (resultsList.ButtonHeight - ResultListTextLineSpacing) / 2;
-            Vector2 fileNameTextPosition = buttonNameScreenBounds.Location.ToVector2() + new Vector2(0, verticalCenterOffset);
-            Vector2 filePathTextPosition = buttonNameScreenBounds.Location.ToVector2() + new Vector2(0, verticalCenterOffset + ResultListFileNameTextLineSpacing);
-
-            // apply sliding offset
-            if (buttonIndex == resultsList.HoveredButtonIndex)
+            for (int i = 0; i < searcherResults.Count; i++)
             {
-                float fileNameTextWidth = FontService.Regular.MeasureWidth(ResultListFileNameTextSize, result.FileName);
-                fileNameTextPosition.X += ResultsListLayoutCalculator.GetTextSlideOffset(fileNameTextWidth, buttonScreenBounds.Width);
-
-                float filePathTextWidth = FontService.Regular.MeasureWidth(ResultListFilePathTextSize, result.FileRelativePath);
-                filePathTextPosition.X += ResultsListLayoutCalculator.GetTextSlideOffset(filePathTextWidth, buttonScreenBounds.Width);
+                foreach (ResultsListButtonRegion region in _resultsListRendering.SlidingTextRegions)
+                {
+                    DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+                    PanelElementRenderer.RenderScrollableButtonListSlidingText(resultsList, region, i, searcherResults[i], 
+                                                                               _resultsListRendering, ResultsListLayoutCalculator.Instance);
+                    DrawHelper.EndBatch();
+                }
             }
 
-            Color textColor = RenderData.Text;
-
-            // we need intersect here since button may have been cut through if because of scrolling, so text should be cut too
-            DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(resultsList.Boundaries, buttonNameScreenBounds);
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            FontService.Regular.DrawText(ResultListFileNameTextSize, result.FileName, fileNameTextPosition, textColor);
-            FontService.Regular.DrawText(ResultListFilePathTextSize, result.FileRelativePath, filePathTextPosition, textColor);
-
+            PanelElementRenderer.RenderScrollableButtonListHoverOverlay(resultsList, _resultsListRendering, ResultsListLayoutCalculator.Instance);
             DrawHelper.EndBatch();
         }
     }
