@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Elements;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
@@ -10,6 +11,9 @@ namespace SideKicker.Rendering
     internal static class PanelElementRenderer
     {
         private const int CaretWidth = 1;
+        private const int SlidingTextPauseStart = 1; // seconds
+        private const int SlidingTextPauseEnd = 1; // seconds
+        private const int SlidingTextSpeed = 40; // pixels/second
 
         public static void RenderBackground(Point size)
         {
@@ -145,16 +149,90 @@ namespace SideKicker.Rendering
             }
         }
 
-        public static void RenderScrollableButtonListHoverOverlay<TRegion>(ScrollableButtonList list, ButtonRegionLayout<TRegion> layout) 
+        public static void RenderScrollableButtonListBackground<TSource, TRegion>(ScrollableButtonList list, IReadOnlyList<TSource> source, 
+                                                                                  ButtonListRendering<TSource, TRegion> rendering, 
+                                                                                  IButtonListLayoutCalculator<TRegion> layoutCalculator)
             where TRegion : struct, Enum
         {
-            Rectangle overlayLocal = layout.TryHitLocalBounds(list.ButtonSize, list.RelativeMouseToHovered, out _, out Rectangle regionBounds)
-                                   ? regionBounds
-                                   : new Rectangle(Point.Zero, list.ButtonSize);
+            DrawHelper.Device.ScissorRectangle = list.Boundaries;
 
-            overlayLocal.Location += list.Boundaries.Location + list.GetButtonLocation(list.HoveredButtonIndex); // to screen bounds
+            for (int i = 0; i < source.Count; i++)
+            {
+                Rectangle localButtonBounds = list.GetButtonBounds(i);
+                localButtonBounds.Location += list.Boundaries.Location;
 
-            DrawHelper.DrawBackground(overlayLocal, list.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
+                foreach (TRegion cachedFileRegion in rendering.CachedFileIconRegions)
+                {
+                    if (FileIconCache.TryGetIcon(rendering.GetCachedFileIconKey(cachedFileRegion, source[i]), out Texture2D icon) && icon != null)
+                    {
+                        DrawHelper.Batch.Draw(icon, layoutCalculator.ToCachedFileIconRegion(cachedFileRegion, localButtonBounds), Color.White);
+                    }
+                }
+
+                foreach (TRegion commonIconRegion in rendering.CommonIconRegions)
+                {
+                    if (rendering.TryGetRegionCommonIcon(commonIconRegion, i, out IconType commonIcon))
+                    {
+                        DrawHelper.Batch.Draw(RenderData.GetIcon(commonIcon), layoutCalculator.ToCachedFileIconRegion(commonIconRegion, localButtonBounds), Color.White);
+                    }
+                }
+            }
+
+            Rectangle overlayBounds = layoutCalculator.GetHoveredRegionBounds(list.HoveredButtonIndex);
+            overlayBounds.Location += list.Boundaries.Location;
+
+            DrawHelper.DrawBackground(overlayBounds, list.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
+        }
+
+        public static void RenderScrollableButtonListSlidingText<TSource, TRegion>(ScrollableButtonList list, int buttonIndex, TSource source,
+                                                                                   ButtonListRendering<TSource, TRegion> rendering,
+                                                                                   IButtonListLayoutCalculator<TRegion> layoutCalculator)
+        {
+            Rectangle localButtonBounds = list.GetButtonBounds(buttonIndex);
+            localButtonBounds.Location += list.Boundaries.Location;
+
+            foreach (TRegion slidingTextRegion in rendering.SlidingTextRegions)
+            {
+                Rectangle slidingTextBounds = layoutCalculator.ToSlidingTextRegion(slidingTextRegion, localButtonBounds);
+                DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(list.Boundaries, slidingTextBounds);
+
+                Vector2 textPosition = slidingTextBounds.Location.ToVector2();
+                string textResult = rendering.GetSlidingTextResult(slidingTextRegion, source);
+                int textSize = layoutCalculator.GetSlidingTextSize(slidingTextRegion);
+
+                if (list.HoveredButtonIndex == buttonIndex)
+                {
+                    textPosition.X += GetTextSlideOffset(FontService.Regular.MeasureWidth(textSize, textResult), slidingTextBounds.Width);
+                }
+
+                FontService.Regular.DrawText(textSize, textResult, textPosition, RenderData.Text);
+            }
+        }
+
+        private static float GetTextSlideOffset(float totalTextWidth, int textLayoutWidth)
+        {
+            float scrollDistance = totalTextWidth - textLayoutWidth;
+            if (scrollDistance <= 0)
+            {
+                return 0;
+            }
+
+            float scrollTime = scrollDistance / SlidingTextSpeed;
+            float cycleTime = SlidingTextPauseStart + scrollTime + SlidingTextPauseEnd;
+
+            float currentCyleTimePosition = (float)(Time.ElapsedGameTime.TotalSeconds % cycleTime);
+
+            if (currentCyleTimePosition < SlidingTextPauseStart) // start pause state
+            {
+                return 0;
+            }
+
+            if (currentCyleTimePosition < SlidingTextPauseStart + scrollTime) // sliding
+            {
+                return -(currentCyleTimePosition - SlidingTextPauseStart) * SlidingTextSpeed;
+            }
+
+            return -scrollDistance; // end pause state
         }
     }
 }

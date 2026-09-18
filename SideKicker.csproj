@@ -12,12 +12,12 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="Rendering\ButtonListRendering.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="PopUpUI">
       <HintPath>..\..\PopUpUI\PopUpUI\bin\Release\net10.0\PopUpUI.dll</HintPath>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="assets\themes\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.5.1" />
