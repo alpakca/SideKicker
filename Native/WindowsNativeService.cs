@@ -13,7 +13,7 @@ namespace SideKicker.Native
 {
     internal class WindowsNativeService : INativeService
     {
-        public string DirectoryExplorerSystemPath { get; } = @"C:\Program Files\explorer.exe";
+        public string DirectoryExplorerSystemPath { get; } = @"C:\Windows\explorer.exe";
         public string ExecutableExtension { get; } = ".exe";
 
         public event Action WindowHotkeyOpenTriggered;
@@ -61,7 +61,7 @@ namespace SideKicker.Native
 
         public void OpenDirectoryExplorer(string path)
         {
-            using Process proc = Process.Start("explorer.exe", $"\"{path}\"");
+            using Process proc = Process.Start("explorer.exe", $"\"{Path.GetDirectoryName(path)}\"");
         }
 
         public void RestoreTopMost()
