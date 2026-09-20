@@ -95,7 +95,7 @@ namespace SideKicker.PanelSystem.Message
                         continue;
                     }
 
-                    if (FontService.Regular.MeasureWidth(TextSize, text[lastStart..i]) >= MaxTextRowWidth)
+                    if (FontService.MeasureWidth(TextSize, text[lastStart..i]) >= MaxTextRowWidth)
                     {
                         if (lastSpaceIndex == lastStart) // no space found, force break
                         {
@@ -114,7 +114,7 @@ namespace SideKicker.PanelSystem.Message
             }
 
             _textStartPosition = new Point(FrameMargin, FrameMargin);
-            Point textSize = new Point(MaxTextRowWidth, FontService.Regular.GetLineSpacing(TextSize) * _lines.Count);
+            Point textSize = new Point(MaxTextRowWidth, FontService.GetLineSpacing(TextSize) * _lines.Count);
 
             _rightMostButtonPosition = new Point(_textStartPosition.X + textSize.X - BottomButtonWidth, 
                                                  _textStartPosition.Y + textSize.Y + BottomButtonMargin);
@@ -132,8 +132,8 @@ namespace SideKicker.PanelSystem.Message
 
             for (int i = 0; i < _lines.Count; i++)
             {
-                FontService.Regular.DrawText(TextSize, _lines[i], currentTextPosition, textColor);
-                currentTextPosition.Y += FontService.Regular.GetLineSpacing(TextSize);
+                FontService.DrawText(TextSize, _lines[i], currentTextPosition, textColor);
+                currentTextPosition.Y += FontService.GetLineSpacing(TextSize);
             }
 
             Point currentButtonPosition = Location + _rightMostButtonPosition;
@@ -142,7 +142,7 @@ namespace SideKicker.PanelSystem.Message
                 Rectangle bounds = new Rectangle(currentButtonPosition.X, currentButtonPosition.Y, BottomButtonWidth, BottomButtonHeight);
 
                 DrawHelper.DrawBackground(bounds, RenderData.Background);
-                FontService.Regular.DrawCenteredText(TextSize, _buttonTexts[i].Text, bounds, textColor);
+                FontService.DrawCenteredText(TextSize, _buttonTexts[i].Text, bounds, textColor);
 
                 currentButtonPosition.X -= BottomButtonMargin + BottomButtonWidth;
             }

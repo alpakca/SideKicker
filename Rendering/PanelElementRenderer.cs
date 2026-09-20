@@ -29,7 +29,7 @@ namespace SideKicker.Rendering
         {
             foreach (TextPlaque plaque in plaques)
             {
-                FontService.Regular.DrawText(plaque.TextSize, plaque.Text, plaque.Position, RenderData.Text);
+                FontService.DrawText(plaque.TextSize, plaque.Text, plaque.Position, RenderData.Text);
             }
         }
 
@@ -52,7 +52,7 @@ namespace SideKicker.Rendering
             {
                 DrawHelper.DrawBorderedBackground(button.Boundaries, RenderData.BorderAccent, RenderData.Background, 1);
 
-                FontService.Regular.DrawCenteredText(button.TextSize, button.Text, button.Boundaries, RenderData.Text);
+                FontService.DrawCenteredText(button.TextSize, button.Text, button.Boundaries, RenderData.Text);
 
                 if (button.IsHovered)
                 {
@@ -93,7 +93,7 @@ namespace SideKicker.Rendering
 
             DrawHelper.DrawBorderedBackground(textbox.SelectableArea, RenderData.BorderAccent, RenderData.Background, 1);
 
-            FontService.Regular.DrawVerticallyCenteredText(textbox.TextSize, textbox.Text,
+            FontService.DrawVerticallyCenteredText(textbox.TextSize, textbox.Text,
                                                            new Vector2(textbox.Boundaries.X + textbox.TextOffset, textbox.Boundaries.Y),
                                                            textbox.Boundaries.Height,
                                                            RenderData.Text);
@@ -107,7 +107,7 @@ namespace SideKicker.Rendering
 
             if (textbox.ReceivingInput)
             {
-                int caretHeight = FontService.Regular.GetLineSpacing(textbox.TextSize);
+                int caretHeight = FontService.GetLineSpacing(textbox.TextSize);
 
                 DrawHelper.DrawBackground(new Rectangle(textbox.Boundaries.X + textbox.TextOffset + textbox.CaretX,
                                                         textbox.Boundaries.Y + (textbox.Boundaries.Height - caretHeight) / 2,
@@ -123,12 +123,12 @@ namespace SideKicker.Rendering
 
             DrawHelper.DrawBorderedBackground(textbox.SelectableArea, RenderData.BorderAccent, RenderData.Background, 1);
 
-            int lineSpacing = FontService.Regular.GetLineSpacing(textbox.TextSize);
+            int lineSpacing = FontService.GetLineSpacing(textbox.TextSize);
 
             Vector2 currentPosition = textbox.Boundaries.Location.ToVector2() - new Vector2(0, textbox.ScrollOffset);
             foreach (string line in textbox.Lines)
             {
-                FontService.Regular.DrawText(textbox.TextSize, line, currentPosition, RenderData.Text);
+                FontService.DrawText(textbox.TextSize, line, currentPosition, RenderData.Text);
                 currentPosition.Y += lineSpacing;
             }
 
@@ -196,10 +196,10 @@ namespace SideKicker.Rendering
 
             if (list.HoveredButtonIndex == buttonIndex)
             {
-                textPosition.X += GetTextSlideOffset(FontService.Regular.MeasureWidth(textSize, textResult), slidingTextBounds.Width);
+                textPosition.X += GetTextSlideOffset(FontService.MeasureWidth(textSize, textResult), slidingTextBounds.Width);
             }
 
-            FontService.Regular.DrawText(textSize, textResult, textPosition, RenderData.Text);
+            FontService.DrawText(textSize, textResult, textPosition, RenderData.Text);
         }
 
         public static void RenderScrollableButtonListHoverOverlay<TSource, TRegion>(ScrollableButtonList list, ButtonListRendering<TSource, TRegion> rendering,

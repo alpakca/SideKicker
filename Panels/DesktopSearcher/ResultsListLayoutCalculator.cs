@@ -15,8 +15,8 @@ namespace SideKicker.Panels.DesktopSearcher
         private const int IconMargin = 8;
         private const int ButtonContentCenterizingMargin = (ButtonHeight - IconSideLength) / 2;
 
-        private static readonly int FileNameTextLineSpacing = FontService.Regular.GetLineSpacing(FileNameTextSize);
-        private static readonly int FilePathTextLineSpacing = FontService.Regular.GetLineSpacing(FilePathTextSize);
+        private static readonly int FileNameTextLineSpacing = FontService.GetLineSpacing(FileNameTextSize);
+        private static readonly int FilePathTextLineSpacing = FontService.GetLineSpacing(FilePathTextSize);
 
         public static ResultsListLayoutCalculator Instance { get; } = new ResultsListLayoutCalculator();
 

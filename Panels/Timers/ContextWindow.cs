@@ -399,7 +399,7 @@ namespace SideKicker.Panels.Timers
             _alarmCalendar.ButtonMargin = TimesListLayoutCalculator.CalendarDayButtonMargin;
             _alarmCalendar.Location = new Point(20, 100);
 
-            int numberSelectingDistance = FontService.Regular.GetLineSpacing(NumberSelectorTextSize) + 4;
+            int numberSelectingDistance = FontService.GetLineSpacing(NumberSelectorTextSize) + 4;
             _alarmNumberSelectors[NumberSelectorType.Hour] = new ScrollableNumberSelector(0, 23)
             {
                 DistanceToChangeNumber = numberSelectingDistance,
@@ -489,7 +489,7 @@ namespace SideKicker.Panels.Timers
             _timerLabelTextbox.Boundaries = new Rectangle(270, 140, 160, 28);
             _timerLabelTextbox.SelectableMargin = 4;
 
-            int numberSelectingDistance = FontService.Regular.GetLineSpacing(NumberSelectorTextSize) + 4;
+            int numberSelectingDistance = FontService.GetLineSpacing(NumberSelectorTextSize) + 4;
             _timerNumberSelectors[NumberSelectorType.Hour] = new ScrollableNumberSelector(0, 23)
             {
                 DistanceToChangeNumber = numberSelectingDistance,

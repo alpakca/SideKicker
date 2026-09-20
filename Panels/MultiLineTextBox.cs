@@ -67,7 +67,7 @@ namespace SideKicker.Panels
                     (leftCaretX, rightCaretX) = (rightCaretX, leftCaretX);
                 }
 
-                int lineSpacing = FontService.Regular.GetLineSpacing(TextSize);
+                int lineSpacing = FontService.GetLineSpacing(TextSize);
                 LineInfo leftLine = _lines[left.LineIndex];
 
                 // single line case
@@ -113,7 +113,7 @@ namespace SideKicker.Panels
             {
                 LineInfo line = _lines[_caret.LineIndex];
                 return new Point((int)MeasureWidth(line.Text.Substring(0, _caret.Index - line.StartIndex)),
-                                 _caret.LineIndex * FontService.Regular.GetLineSpacing(TextSize) - _scrolledOffset);
+                                 _caret.LineIndex * FontService.GetLineSpacing(TextSize) - _scrolledOffset);
             }
         }
 
@@ -286,7 +286,7 @@ namespace SideKicker.Panels
         {
             Point mouseInBoundaries = mousePosition - this.Boundaries.Location + new Point(0, _scrolledOffset);
 
-            int lineIndex = mouseInBoundaries.Y / FontService.Regular.GetLineSpacing(TextSize);
+            int lineIndex = mouseInBoundaries.Y / FontService.GetLineSpacing(TextSize);
             lineIndex = Math.Clamp(lineIndex, 0, _lines.Count - 1);
 
             LineInfo line = _lines[lineIndex];
@@ -388,7 +388,7 @@ namespace SideKicker.Panels
 
         private float MeasureWidth(string text)
         {
-            return string.Empty == text ? 0f : FontService.Regular.MeasureWidth(TextSize, text);
+            return string.Empty == text ? 0f : FontService.MeasureWidth(TextSize, text);
         }
 
         private int FindNearestColumn(string lineText, float targetX)
@@ -492,7 +492,7 @@ namespace SideKicker.Panels
 
         private void UpdateScroll(int value)
         {
-            int maxScrollableDistance = _lines.Count * FontService.Regular.GetLineSpacing(TextSize) - this.Boundaries.Height;
+            int maxScrollableDistance = _lines.Count * FontService.GetLineSpacing(TextSize) - this.Boundaries.Height;
             if (maxScrollableDistance <= 0)
             {
                 _scrolledOffset = 0;
@@ -505,7 +505,7 @@ namespace SideKicker.Panels
         /// aligns scroll offset to be sure caret is always visible
         private void AlignScrollOffset(CaretInfo caretInfo)
         {
-            int lineSpacing = FontService.Regular.GetLineSpacing(TextSize);
+            int lineSpacing = FontService.GetLineSpacing(TextSize);
             int minScroll = caretInfo.LineIndex * lineSpacing;
             
             if (_scrolledOffset > minScroll)
@@ -557,7 +557,7 @@ namespace SideKicker.Panels
 
         public void OnTextInputReceive(PopWindowMouseEventArgs e, char ch)
         {
-            if (FontService.Regular.CanCharacterResolved(TextSize, ch))
+            if (FontService.CanCharacterResolved(TextSize, ch))
             {
                 InsertText(ch.ToString());
             }

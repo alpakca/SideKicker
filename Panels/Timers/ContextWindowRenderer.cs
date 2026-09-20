@@ -49,7 +49,7 @@ namespace SideKicker.Panels.Timers
             PanelElementRenderer.RenderTextPlaque(textPlaques);
 
             // calendary current month/year
-            FontService.Regular.DrawText(AlarmTextSize, calendar.ShownDateText, new Vector2(20, 45), RenderData.Text);
+            FontService.DrawText(AlarmTextSize, calendar.ShownDateText, new Vector2(20, 45), RenderData.Text);
 
             // alarm days
             for (int i = 1; i <= calendar.MaxDays; i++)
@@ -58,7 +58,7 @@ namespace SideKicker.Panels.Timers
                 Rectangle buttonRelativeBounds = calendar.GetDayButtonBounds(weekRow, dayColumn);
                 Rectangle buttonScreenBounds = new Rectangle(calendar.Location + buttonRelativeBounds.Location, buttonRelativeBounds.Size);
 
-                FontService.Regular.DrawCenteredText(AlarmTextSize, i.ToString(), buttonScreenBounds, RenderData.Text);
+                FontService.DrawCenteredText(AlarmTextSize, i.ToString(), buttonScreenBounds, RenderData.Text);
 
                 if (!anyWeekdaysSelected && i == calendar.SelectedDay)
                 {
@@ -69,7 +69,7 @@ namespace SideKicker.Panels.Timers
             // alarm weekdays
             for (int i = 0; i < weekdaysButtons.Length; i++)
             {
-                FontService.Regular.DrawCenteredText(12, CalendarShowcase.WeekDayNames[i], weekdaysButtons[i].Boundaries, RenderData.Text);
+                FontService.DrawCenteredText(12, CalendarShowcase.WeekDayNames[i], weekdaysButtons[i].Boundaries, RenderData.Text);
 
                 if (anyWeekdaysSelected && weekdaysButtons[i].IsChecked)
                 {
@@ -115,7 +115,7 @@ namespace SideKicker.Panels.Timers
         public void RenderNumberSelectors(IList<ScrollableNumberSelector> selectorGroup)
         {
             Color textColor = RenderData.Text;
-            int lineSpacing = FontService.Regular.GetLineSpacing(TimersNumberTextSize);
+            int lineSpacing = FontService.GetLineSpacing(TimersNumberTextSize);
 
             int index = 0;
             foreach (var selector in selectorGroup)
@@ -124,9 +124,9 @@ namespace SideKicker.Panels.Timers
                 int startX = selector.Boundaries.X;
                 int startY = selector.Boundaries.Y;
 
-                FontService.Regular.DrawText(TimersNumberTextSize, selector.PreviousNumberFormatted, new Vector2(startX, startY), textColor * 0.5f);
-                FontService.Regular.DrawText(TimersNumberTextSize, selector.CurrentNumberFormatted, new Vector2(startX, startY + marginBetween + lineSpacing), textColor);
-                FontService.Regular.DrawText(TimersNumberTextSize, selector.NextNumberFormatted, new Vector2(startX, startY + 2 * (marginBetween + lineSpacing)), textColor * 0.5f);
+                FontService.DrawText(TimersNumberTextSize, selector.PreviousNumberFormatted, new Vector2(startX, startY), textColor * 0.5f);
+                FontService.DrawText(TimersNumberTextSize, selector.CurrentNumberFormatted, new Vector2(startX, startY + marginBetween + lineSpacing), textColor);
+                FontService.DrawText(TimersNumberTextSize, selector.NextNumberFormatted, new Vector2(startX, startY + 2 * (marginBetween + lineSpacing)), textColor * 0.5f);
 
                 // if not on last selector, draw middle points
                 if (index != selectorGroup.Count - 1)
@@ -153,13 +153,13 @@ namespace SideKicker.Panels.Timers
             const int NumberTotalWidth = NumberWidth + NumbersMargin;
             const int NumberY = 260;
 
-            FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Hours.ToString("00"), new Vector2(LeftMostStartX, NumberY), textColor);
-            FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Minutes.ToString("00"), new Vector2(LeftMostStartX + NumberTotalWidth, NumberY), textColor);
-            FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Seconds.ToString("00"), new Vector2(LeftMostStartX + 2 * NumberTotalWidth, NumberY), textColor); 
-            FontService.Regular.DrawText(TimersNumberTextSize, elapsed.Milliseconds.ToString("000"), new Vector2(LeftMostStartX + 3 * NumberTotalWidth, NumberY), textColor);
+            FontService.DrawText(TimersNumberTextSize, elapsed.Hours.ToString("00"), new Vector2(LeftMostStartX, NumberY), textColor);
+            FontService.DrawText(TimersNumberTextSize, elapsed.Minutes.ToString("00"), new Vector2(LeftMostStartX + NumberTotalWidth, NumberY), textColor);
+            FontService.DrawText(TimersNumberTextSize, elapsed.Seconds.ToString("00"), new Vector2(LeftMostStartX + 2 * NumberTotalWidth, NumberY), textColor); 
+            FontService.DrawText(TimersNumberTextSize, elapsed.Milliseconds.ToString("000"), new Vector2(LeftMostStartX + 3 * NumberTotalWidth, NumberY), textColor);
 
             // draw middle points
-            int yMiddle = NumberY + FontService.Regular.GetLineSpacing(TimersNumberTextSize) / 2;
+            int yMiddle = NumberY + FontService.GetLineSpacing(TimersNumberTextSize) / 2;
             for (int i = 0; i < 3; i++)
             {
                 int xMiddle = LeftMostStartX + NumberWidth + i * NumberTotalWidth + (NumbersMargin / 2);

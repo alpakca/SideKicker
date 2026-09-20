@@ -34,7 +34,7 @@ namespace SideKicker.Panels
                     return Rectangle.Empty;
                 }
 
-                int lineSpacing = FontService.Regular.GetLineSpacing(TextSize);
+                int lineSpacing = FontService.GetLineSpacing(TextSize);
                 Rectangle bounds = new Rectangle(_selectionStartCaretX, (this.Boundaries.Height - lineSpacing) / 2,
                                                  _selectionEndCaretX - _selectionStartCaretX, lineSpacing);
 
@@ -202,7 +202,7 @@ namespace SideKicker.Panels
 
             for (int c = 0; c <= _text.Length; c++)
             {
-                float x = FontService.Regular.MeasureWidth(TextSize, _text.Substring(0, c));
+                float x = FontService.MeasureWidth(TextSize, _text.Substring(0, c));
                 float dist = Math.Abs(x - targetX);
                 if (dist < bestDist)
                 {
@@ -217,7 +217,7 @@ namespace SideKicker.Panels
         private void UpdateCaret(int value)
         {
             _caretPosition = Math.Clamp(value, 0, _text.Length);
-            _caretX = (int)FontService.Regular.MeasureWidth(TextSize, _text[.._caretPosition]);
+            _caretX = (int)FontService.MeasureWidth(TextSize, _text[.._caretPosition]);
 
             AlignTextOffset(_caretPosition, _caretX);
             DiscardSelection();
@@ -225,7 +225,7 @@ namespace SideKicker.Panels
 
         private void AlignTextOffset(int caretPosition, int caretXPosition)
         {
-            int previousCharWidth = caretPosition > 0 ? (int)FontService.Regular.MeasureWidth(TextSize, _text[caretPosition - 1].ToString())
+            int previousCharWidth = caretPosition > 0 ? (int)FontService.MeasureWidth(TextSize, _text[caretPosition - 1].ToString())
                                                       : 0;
 
             if (_textOffset + caretXPosition + SelectableMargin > this.Boundaries.Width)
@@ -265,7 +265,7 @@ namespace SideKicker.Panels
 
         public void OnTextInputReceive(PopWindowMouseEventArgs e, char ch)
         {
-            if (FontService.Regular.CanCharacterResolved(TextSize, ch))
+            if (FontService.CanCharacterResolved(TextSize, ch))
             {
                 InsertText(ch.ToString());
             }
@@ -277,7 +277,7 @@ namespace SideKicker.Panels
             if (_isHeld)
             {
                 _selectionEndCaretPosition = GetNearestColumn(_lastHeldMousePosition);
-                _selectionEndCaretX = (int)FontService.Regular.MeasureWidth(TextSize, _text[.._selectionEndCaretPosition]);
+                _selectionEndCaretX = (int)FontService.MeasureWidth(TextSize, _text[.._selectionEndCaretPosition]);
 
                 AlignTextOffset(_selectionEndCaretPosition, _selectionEndCaretX);
             }
@@ -299,7 +299,7 @@ namespace SideKicker.Panels
                 _lastHeldMousePosition = e.MousePosition;
 
                 _selectionStartCaretPosition = GetNearestColumn(e.MousePosition);
-                _selectionStartCaretX = (int)FontService.Regular.MeasureWidth(TextSize, _text[.._selectionStartCaretPosition]);
+                _selectionStartCaretX = (int)FontService.MeasureWidth(TextSize, _text[.._selectionStartCaretPosition]);
 
                 DiscardSelection();
             }
@@ -312,7 +312,7 @@ namespace SideKicker.Panels
                 }
 
                 _selectionEndCaretPosition = GetNearestColumn(e.MousePosition);
-                _selectionEndCaretX = (int)FontService.Regular.MeasureWidth(TextSize, _text[.._selectionEndCaretPosition]);
+                _selectionEndCaretX = (int)FontService.MeasureWidth(TextSize, _text[.._selectionEndCaretPosition]);
             }
         }
 

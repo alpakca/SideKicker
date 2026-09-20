@@ -13,7 +13,7 @@ namespace SideKicker.Panels.Timers
         public const int TimesListTextSize = 12;
         private const int NameTextMargin = 4;
 
-        public static readonly int CalendarDayButtonHeight = FontService.Regular.GetLineSpacing(CalendarDaysTextSize);
+        public static readonly int CalendarDayButtonHeight = FontService.GetLineSpacing(CalendarDaysTextSize);
 
         public static TimesListLayoutCalculator Instance { get; } = new TimesListLayoutCalculator();
 
