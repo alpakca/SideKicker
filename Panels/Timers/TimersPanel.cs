@@ -1,4 +1,4 @@
-﻿using PopUpUI.Toolkit;
+﻿using SideKicker.PanelSystem;
 using SideKicker.PanelSystem.Message;
 using System.Collections.Generic;
 
@@ -49,7 +49,7 @@ namespace SideKicker.Panels.Timers
         {
             CheckAlarmTrigger();
 
-            _elapsedSinceLastDirtyCheck += Time.DeltaTime;
+            _elapsedSinceLastDirtyCheck += TimeManager.DeltaTime;
             if (_elapsedSinceLastDirtyCheck >= TimersListDirtyCheckTime)
             {
                 _elapsedSinceLastDirtyCheck = 0;

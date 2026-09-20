@@ -1,4 +1,4 @@
-﻿using PopUpUI.Toolkit;
+﻿using SideKicker.PanelSystem;
 using SideKicker.PanelSystem.Message;
 using System;
 using System.Collections.Generic;
@@ -45,7 +45,7 @@ namespace SideKicker.Panels.PinnedCommands
 
         public override void Update()
         {
-            _elapsedSinceLastDirtyCheck += Time.DeltaTime;
+            _elapsedSinceLastDirtyCheck += TimeManager.DeltaTime;
             if (_elapsedSinceLastDirtyCheck >= SavedCommandsListDirtyCheckTime)
             {
                 _elapsedSinceLastDirtyCheck = 0;

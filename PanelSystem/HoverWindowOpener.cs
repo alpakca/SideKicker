@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Diagnostics;
 
 namespace SideKicker.PanelSystem
 {
@@ -16,6 +15,7 @@ namespace SideKicker.PanelSystem
         private static float _hoverOpenElapsed;
         private static float _hoverCloseElapsed;
         private static Rectangle _hoverOpenArea;
+        private static IControllerState _controllerState;
 
         public static event Action OpenControllerWindow;
         public static event Action CloseControllerWindow;
@@ -26,20 +26,25 @@ namespace SideKicker.PanelSystem
             _hoverCloseElapsed = 0;
         }
 
+        public static void Initialize(IControllerState state)
+        {
+            _controllerState = state;
+        }
+
         public static void OriginUpdated(Point value)
         {
             _hoverOpenArea = new Rectangle(value.X - HoveredAreaWidth, value.Y - HoveredAreaHeight, HoveredAreaWidth, HoveredAreaHeight);
         }
 
-        public static void Update(float deltaTime, IControllerState state)
+        public static void Update()
         {
             Point mousePosition = Mouse.GetState().Position;
 
-            if (!state.IsOpen)
+            if (!_controllerState.IsOpen)
             {
                 if (_hoverOpenArea.Contains(mousePosition))
                 {
-                    _hoverOpenElapsed += deltaTime;
+                    _hoverOpenElapsed += TimeManager.DeltaTime;
                     if (_hoverOpenElapsed >= HoverOpenDelay)
                     {
                         OpenControllerWindow?.Invoke();
@@ -57,11 +62,11 @@ namespace SideKicker.PanelSystem
             }
 
             // hover to close, only possible if window was opened by hover (not by hotkey)
-            if (state.IsOpen && state.IsOpenByHover)
+            if (_controllerState.IsOpen && _controllerState.IsOpenByHover)
             {
-                if (!state.MinBoundaryBox.Contains(mousePosition))
+                if (!_controllerState.MinBoundaryBox.Contains(mousePosition))
                 {
-                    _hoverCloseElapsed += deltaTime;
+                    _hoverCloseElapsed += TimeManager.DeltaTime;
                     if (_hoverCloseElapsed >= HoverCloseDelay)
                     {
                         CloseControllerWindow?.Invoke();

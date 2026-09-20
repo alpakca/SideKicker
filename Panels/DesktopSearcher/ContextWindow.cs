@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using PopUpUI.Input;
-using PopUpUI.Toolkit;
+using SideKicker.PanelSystem;
 using SideKicker.PanelSystem.Message;
 using System;
 using System.Collections.Generic;
@@ -104,7 +104,7 @@ namespace SideKicker.Panels.DesktopSearcher
         {
             if (_remainingTextWaitingTime > 0)
             {
-                _remainingTextWaitingTime -= Time.DeltaTime;
+                _remainingTextWaitingTime -= TimeManager.DeltaTime;
                 if (_remainingTextWaitingTime <= 0)
                 {
                     SearchForResult?.Invoke(_searchBox.Text);

@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Elements;
 using PopUpUI.Toolkit;
 using SideKicker.Panels;
+using SideKicker.PanelSystem;
 using System;
 using System.Collections.Generic;
 
@@ -231,7 +232,7 @@ namespace SideKicker.Rendering
             float scrollTime = scrollDistance / SlidingTextSpeed;
             float cycleTime = SlidingTextPauseStart + scrollTime + SlidingTextPauseEnd;
 
-            float currentCyleTimePosition = (float)(Time.ElapsedGameTime.TotalSeconds % cycleTime);
+            float currentCyleTimePosition = (float)(TimeManager.TotalGameTime.TotalSeconds % cycleTime);
 
             if (currentCyleTimePosition < SlidingTextPauseStart) // start pause state
             {

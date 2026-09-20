@@ -1,5 +1,5 @@
-﻿using PopUpUI.Toolkit;
-using SideKicker.Native;
+﻿using SideKicker.Native;
+using SideKicker.PanelSystem;
 using SideKicker.PanelSystem.Message;
 
 using SearcherSerializer = SideKicker.Panels.PanelContentSerializer<SideKicker.Panels.DesktopSearcher.SearcherResult>;
@@ -53,7 +53,7 @@ namespace SideKicker.Panels.DesktopSearcher
 
         public override void Update()
         {
-            _elapsedSinceLastDirtyCheck += Time.DeltaTime;
+            _elapsedSinceLastDirtyCheck += TimeManager.DeltaTime;
             if (_elapsedSinceLastDirtyCheck >= LastUsedResultsDirtyCheckTime)
             {
                 _elapsedSinceLastDirtyCheck = 0;

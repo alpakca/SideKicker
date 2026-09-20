@@ -40,12 +40,16 @@ namespace SideKicker
             _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
             _graphics.ApplyChanges();
 
-#if WINDOWS
-            NativeService.Initialize(new WindowsNativeService(), this.Window.Handle);
-            NativeService.Current.WindowHotkeyOpenTriggered += () => panelController.ToggleWindow();
-#else
-#endif
+            if (OperatingSystem.IsWindows())
+            {
+                NativeService.Initialize(new WindowsNativeService(), this.Window.Handle);
+            }
+            else
+            {
+                throw new PlatformNotSupportedException();
+            }
 
+            NativeService.Current.WindowHotkeyOpenTriggered += () => panelController.ToggleWindow();
             HoverWindowOpener.OpenControllerWindow += () => panelController.SetWindowState(isOpen: true, openedByHover: true);
             HoverWindowOpener.CloseControllerWindow += () => panelController.SetWindowState(isOpen: false);
 
@@ -69,12 +73,15 @@ namespace SideKicker
             panelController.ExitApp += Exit;
             panelController.Preferences.OriginUpdated += HoverWindowOpener.OriginUpdated;
 
+            HoverWindowOpener.Initialize(panelController);
             HoverWindowOpener.OriginUpdated(panelController.Preferences.Origin);
         }
 
         protected override void Update(GameTime gameTime)
         {
-            HoverWindowOpener.Update(gameTime.ElapsedGameTime.Milliseconds, panelController);
+            TimeManager.Update(gameTime);
+
+            HoverWindowOpener.Update();
             NativeService.Current.Update();
 
             if (panelController.IsOpen || panelController.IsMoving)

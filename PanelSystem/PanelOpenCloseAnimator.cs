@@ -1,5 +1,4 @@
-﻿using PopUpUI.Toolkit;
-using System;
+﻿using System;
 
 namespace SideKicker.PanelSystem
 {
@@ -40,7 +39,7 @@ namespace SideKicker.PanelSystem
         {
             if (!IsRunning) return;
 
-            _elapsed += Time.DeltaTime;
+            _elapsed += TimeManager.DeltaTime;
             float t = DefaultDuration <= 0f ? 1f : Math.Clamp(_elapsed / DefaultDuration, 0f, 1f);
 
             _currentValue = Lerp(_fromValue, _toValue, SmoothStep(t));
