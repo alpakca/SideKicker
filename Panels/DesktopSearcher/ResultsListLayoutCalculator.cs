@@ -80,7 +80,7 @@ namespace SideKicker.Panels.DesktopSearcher
             throw new ArgumentException("Region not supported " + region);
         }
 
-        public int GetSlidingTextSize(ResultsListButtonRegion region)
+        public int GetSlidingTextRegionTextSize(ResultsListButtonRegion region)
         {
             return region switch
             {

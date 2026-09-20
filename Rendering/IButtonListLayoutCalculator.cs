@@ -8,7 +8,7 @@ namespace SideKicker.Rendering
         public Rectangle ToSlidingTextRegion(TRegion region, Rectangle localButtonBounds);
         public Rectangle ToCommonIconRegion(TRegion region, Rectangle localButtonBounds);
 
-        public int GetSlidingTextSize(TRegion region);
+        public int GetSlidingTextRegionTextSize(TRegion region);
         public bool TryGetHoveredCommonIconRegion(Point relativeMouseToHovered, Point buttonSize, out TRegion region);
     }
 }

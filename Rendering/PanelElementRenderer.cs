@@ -192,7 +192,7 @@ namespace SideKicker.Rendering
 
             Vector2 textPosition = slidingTextBounds.Location.ToVector2();
             string textResult = rendering.GetSlidingTextResult(slidingTextRegion, source);
-            int textSize = layoutCalculator.GetSlidingTextSize(slidingTextRegion);
+            int textSize = layoutCalculator.GetSlidingTextRegionTextSize(slidingTextRegion);
 
             if (list.HoveredButtonIndex == buttonIndex)
             {

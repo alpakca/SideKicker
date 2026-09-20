@@ -8,18 +8,28 @@ namespace SideKicker.Panels.PinnedCommands
 {
     internal class ContextWindowRenderer
     {
-        private const int PanelTextSize = ContextWindow.PanelTextSize;
-
-        private readonly RenderTarget2D _windowTexture;
         private readonly Point _windowSize;
+        private readonly RenderTarget2D _windowTexture;
+        private readonly ButtonListRendering<SavedCommand, CommandsListButtonRegion> _commandsListRendering;
 
         public ContextWindowRenderer(RenderTarget2D windowTexture)
         {
             _windowTexture = windowTexture;
             _windowSize = new Point(windowTexture.Width, windowTexture.Height);
+
+            _commandsListRendering = new ButtonListRendering<SavedCommand, CommandsListButtonRegion>(
+                cachedFileIconGatherer: (_, source) => source.FileName,
+                slidingTextGatherer: (_, source) => source.Name,
+                commonIconPredicate: (_, _) => true);
+
+            _commandsListRendering.AddRegionCachedFileIcon(CommandsListButtonRegion.FileIcon);
+            _commandsListRendering.AddRegionSlidingText(CommandsListButtonRegion.SavedName, CommandListLayoutCalculator.PanelTextSize);
+            _commandsListRendering.AddRegionCommonIcon(CommandsListButtonRegion.ReorderButton, IconType.ReorderButton);
+            _commandsListRendering.AddRegionCommonIcon(CommandsListButtonRegion.EditButton, IconType.EditButton);
         }
 
-        public void Render(TextPlaque[] editorTextPlaques, TextedButton[] editorButtons, IEnumerable<LinearTextBox> textboxes)
+        public void Render(TextPlaque[] editorTextPlaques, TextedButton[] editorButtons, IEnumerable<LinearTextBox> textboxes, 
+                           ScrollableButtonList commandsList, IReadOnlyList<SavedCommand> savedCommands)
         {
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaBlendDrawOptions);
             PanelElementRenderer.RenderBackground(_windowSize);
@@ -33,71 +43,24 @@ namespace SideKicker.Panels.PinnedCommands
                 PanelElementRenderer.RenderLinearTextBox(textbox);
                 DrawHelper.EndBatch();
             }
-        }
 
-        public void RenderCommandListButtonText(ScrollableButtonList commandsList, int buttonIndex, string buttonName)
-        {
-            Rectangle relativeButtonBounds = commandsList.GetButtonBounds(buttonIndex);
-            Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + commandsList.Boundaries.Location, relativeButtonBounds.Size);
-            Rectangle buttonNameScreenBounds = CommandListLayoutCalculator.ButtonNameBounds(buttonScreenBounds);
-
-            int verticalCenterOffset = (commandsList.ButtonHeight - FontService.Regular.GetLineSpacing(PanelTextSize)) / 2;
-            Vector2 textPosition = buttonNameScreenBounds.Location.ToVector2() + new Vector2(0, verticalCenterOffset);
-
-            // apply sliding offset
-            if (buttonIndex == commandsList.HoveredButtonIndex)
-            {
-                float textWidth = FontService.Regular.MeasureWidth(PanelTextSize, buttonName);
-                textPosition.X += CommandListLayoutCalculator.GetCommandListTextSlideOffset(textWidth, buttonScreenBounds.Width);
-            }
-
-            // we need intersect here since button may have been cut through if because of scrolling, so text should be cut too
-            DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(commandsList.Boundaries, buttonNameScreenBounds);
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            FontService.Regular.DrawText(PanelTextSize, buttonName, textPosition, RenderData.Text);
-
+            PanelElementRenderer.RenderScrollableButtonListBackground(commandsList, savedCommands, _commandsListRendering, CommandListLayoutCalculator.Instance);
             DrawHelper.EndBatch();
-        }
-
-        public void RenderCommandListBackgrounds(ScrollableButtonList commandsList, IReadOnlyList<SavedCommand> savedCommands)
-        {
-            DrawHelper.Device.ScissorRectangle = commandsList.Boundaries;
-            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
 
             for (int i = 0; i < savedCommands.Count; i++)
             {
-                Rectangle relativeButtonBounds = commandsList.GetButtonBounds(i);
-                Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + commandsList.Boundaries.Location, relativeButtonBounds.Size);
-
-                DrawHelper.Batch.Draw(RenderData.GetIcon(IconType.ReorderButton), CommandListLayoutCalculator.ReorderButtonBounds(buttonScreenBounds), Color.White);
-
-                if (FileIconCache.TryGetIcon(savedCommands[i].FileName, out Texture2D icon) && icon != null)
+                foreach (CommandsListButtonRegion slidingTextRegion in _commandsListRendering.SlidingTextRegions)
                 {
-                    DrawHelper.Batch.Draw(icon, CommandListLayoutCalculator.ButtonFileIconBounds(buttonScreenBounds), Color.White);
-                }
-
-                DrawHelper.Batch.Draw(RenderData.GetIcon(IconType.EditButton), CommandListLayoutCalculator.EditButtonBounds(buttonScreenBounds), Color.White);
-
-                if (i == commandsList.HoveredButtonIndex)
-                {
-                    CommandButtonLayout layout = CommandListLayoutCalculator.GetLayout(commandsList.GetButtonBounds(i).Size,
-                                                                                       commandsList.RelativeMouseToHovered);
-
-                    Rectangle overlayBounds = buttonScreenBounds;
-                    if (layout == CommandButtonLayout.ReorderButton)
-                    {
-                        overlayBounds = CommandListLayoutCalculator.ReorderButtonBounds(buttonScreenBounds);
-                    }
-                    else if (layout == CommandButtonLayout.EditButton)
-                    {
-                        overlayBounds = CommandListLayoutCalculator.EditButtonBounds(buttonScreenBounds);
-                    }
-
-                    DrawHelper.DrawBackground(overlayBounds, commandsList.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
+                    DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+                    PanelElementRenderer.RenderScrollableButtonListSlidingText(commandsList, slidingTextRegion, i, 
+                                                                               savedCommands[i], _commandsListRendering, CommandListLayoutCalculator.Instance);
+                    DrawHelper.EndBatch();
                 }
             }
 
+            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+            PanelElementRenderer.RenderScrollableButtonListHoverOverlay(commandsList, _commandsListRendering, CommandListLayoutCalculator.Instance);
             DrawHelper.EndBatch();
         }
     }
