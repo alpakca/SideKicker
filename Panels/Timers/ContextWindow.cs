@@ -89,7 +89,7 @@ namespace SideKicker.Panels.Timers
             _timesList = new ScrollableButtonList
             {
                 Boundaries = new Rectangle(260, 340, 178, 114),
-                ButtonHeight = TimesListLayoutCalculator.TimesListButtonHeight,
+                ButtonHeight = TimesListLayoutCalculator.IconSideLength,
                 ButtonMargin = 4
             };
             _timesList.ButtonPressed += ActiveTimesList_ButtonPressed;
@@ -286,7 +286,9 @@ namespace SideKicker.Panels.Timers
 
         private void ActiveTimesList_ButtonPressed(int buttonIndex)
         {
-            if (TimesListLayoutCalculator.HitEditButton(_timesList.GetButtonBounds(buttonIndex).Size, _timesList.RelativeMouseToHovered))
+            if (TimesListLayoutCalculator.Instance.TryGetHoveredCommonIconRegion(_timesList.RelativeMouseToHovered, _timesList.ButtonSize,
+                                                                                 out TimesListRegion region) &&
+                region == TimesListRegion.EditButton)
             {
                 TimesListButtonEditPressed?.Invoke(buttonIndex);
             }
@@ -363,14 +365,7 @@ namespace SideKicker.Panels.Timers
             _renderer.RenderTextBox(_alarmLabelTextbox);
             _renderer.RenderTextBox(_timerLabelTextbox);
 
-            // times list
-            DateTime now = DateTime.Now;
-            for (int i = 0; i < _registedTimes.Count; i++)
-            {
-                ITimeInfo timeInfo = _registedTimes[i];
-                _renderer.RenderTimesListText(_timesList, i, timeInfo.DisplayString(now));
-            }
-            _renderer.RenderTimesListBackgrounds(_timesList);
+            _renderer.RenderScrollableButtonList(_timesList, _registedTimes);
         }
 
         protected override void OnMouseButtonStateChangeWithoutMessages(PopWindowMouseEventArgs e)

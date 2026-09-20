@@ -11,17 +11,26 @@ namespace SideKicker.Panels.Timers
     internal class ContextWindowRenderer
     {
         private const int AlarmTextSize = 12;
-        private const int TimesListTextSize = 12;
         private const int TimersNumberTextSize = 16;
-        private static readonly int TimesListTextLineSpacing = FontService.Regular.GetLineSpacing(TimesListTextSize);
 
-        private readonly RenderTarget2D _windowTexture;
         private readonly Point _windowSize;
+        private readonly RenderTarget2D _windowTexture;
+        private readonly ButtonListRendering<ITimeInfo, TimesListRegion> _timesListRendering;
+
+        private DateTime _timesListDateNow; // for rendering display strings of ITimeInfo(s)
 
         public ContextWindowRenderer(RenderTarget2D windowTexture)
         {
             _windowTexture = windowTexture;
             _windowSize = new Point(windowTexture.Width, windowTexture.Height);
+
+            _timesListRendering = new ButtonListRendering<ITimeInfo, TimesListRegion>(
+                cachedFileIconGatherer: null,
+                slidingTextGatherer: (_, timeInfo) => timeInfo.DisplayString(_timesListDateNow),
+                commonIconPredicate: (_, _) => true);
+
+            _timesListRendering.AddRegionSlidingText(TimesListRegion.TimeInfoDescription, TimesListLayoutCalculator.TimesListTextSize);
+            _timesListRendering.AddRegionCommonIcon(TimesListRegion.EditButton, IconType.EditButton);
         }
 
         public void StartMainBatch()
@@ -76,6 +85,30 @@ namespace SideKicker.Panels.Timers
         {
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
             PanelElementRenderer.RenderMultiLineTextBox(textbox);
+            DrawHelper.EndBatch();
+        }
+
+        public void RenderScrollableButtonList(ScrollableButtonList timesList, IReadOnlyList<ITimeInfo> registeredTimers)
+        {
+            _timesListDateNow = DateTime.Now;
+
+            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+            PanelElementRenderer.RenderScrollableButtonListBackground(timesList, registeredTimers, _timesListRendering, TimesListLayoutCalculator.Instance);
+            DrawHelper.EndBatch();
+
+            for (int i = 0; i < registeredTimers.Count; i++)
+            {
+                foreach (TimesListRegion slidingTextRegion in _timesListRendering.SlidingTextRegions)
+                {
+                    DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+                    PanelElementRenderer.RenderScrollableButtonListSlidingText(timesList, slidingTextRegion, i, registeredTimers[i],
+                                                                               _timesListRendering, TimesListLayoutCalculator.Instance);
+                    DrawHelper.EndBatch();
+                }
+            }
+
+            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+            PanelElementRenderer.RenderScrollableButtonListHoverOverlay(timesList, _timesListRendering, TimesListLayoutCalculator.Instance);
             DrawHelper.EndBatch();
         }
 
@@ -134,55 +167,6 @@ namespace SideKicker.Panels.Timers
                 DrawHelper.DrawBackground(new Rectangle(xMiddle, yMiddle, 2, 2), textColor);
                 DrawHelper.DrawBackground(new Rectangle(xMiddle, yMiddle + 6, 2, 2), textColor);
             }
-        }
-
-        public void RenderTimesListBackgrounds(ScrollableButtonList timesList)
-        {
-            DrawHelper.Device.ScissorRectangle = timesList.Boundaries;
-            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            for (int i = 0; i < timesList.ButtonCount; i++)
-            {
-                Rectangle relativeButtonBounds = timesList.GetButtonBounds(i);
-                Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + timesList.Boundaries.Location, relativeButtonBounds.Size);
-
-                DrawHelper.Batch.Draw(RenderData.GetIcon(IconType.EditButton), TimesListLayoutCalculator.EditButtonBounds(buttonScreenBounds), Color.White);
-
-                if (i == timesList.HoveredButtonIndex)
-                {
-                    bool hitEditButton = TimesListLayoutCalculator.HitEditButton(buttonScreenBounds.Size, timesList.RelativeMouseToHovered);
-                    Rectangle overlayBounds = hitEditButton ? TimesListLayoutCalculator.EditButtonBounds(buttonScreenBounds) : buttonScreenBounds;
-
-                    DrawHelper.DrawBackground(overlayBounds, timesList.IsHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
-                }
-            }
-
-            DrawHelper.EndBatch();
-        }
-
-        public void RenderTimesListText(ScrollableButtonList timesList, int buttonIndex, string buttonName)
-        {
-            Rectangle relativeButtonBounds = timesList.GetButtonBounds(buttonIndex);
-            Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + timesList.Boundaries.Location, relativeButtonBounds.Size);
-            Rectangle buttonNameScreenBounds = TimesListLayoutCalculator.ButtonNameBounds(buttonScreenBounds);
-
-            int verticalCenterOffset = TimesListTextLineSpacing / 2;
-            Vector2 textPosition = buttonNameScreenBounds.Location.ToVector2() + new Vector2(0, verticalCenterOffset);
-
-            // apply sliding offset
-            if (buttonIndex == timesList.HoveredButtonIndex)
-            {
-                float textWidth = FontService.Regular.MeasureWidth(TimesListTextSize, buttonName);
-                textPosition.X += TimesListLayoutCalculator.GetTimesListTextSlideOffset(textWidth, buttonScreenBounds.Width);
-            }
-
-            // we need intersect here since button may have been cut through if because of scrolling, so text should be cut too
-            DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(timesList.Boundaries, buttonNameScreenBounds);
-            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            FontService.Regular.DrawText(TimesListTextSize, buttonName, textPosition, RenderData.Text);
-
-            DrawHelper.EndBatch();
         }
     }
 }
