@@ -1,86 +1,94 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Toolkit;
+using SideKicker.Rendering;
+using System;
 
 namespace SideKicker.Panels.PinnedCommands
 {
-    internal static class CommandListLayoutCalculator
+    internal class CommandListLayoutCalculator : IButtonListLayoutCalculator<CommandsListButtonRegion>
     {
-        public const int ButtonHeight = 32;
+        public const int IconSideLength = 32;
+        public const int PanelTextSize = 12;
         private const int NameTextMargin = 4;
 
-        private const int SlidingTextPauseStart = 1; // seconds
-        private const int SlidingTextPauseEnd = 1; // seconds
-        private const int SlidingTextSpeed = 40; // pixels/second
+        public static CommandListLayoutCalculator Instance { get; } = new CommandListLayoutCalculator();
 
-        public static CommandButtonLayout GetLayout(Point buttonSize, Point relativeMousePosition)
+        public Rectangle ToCachedFileIconRegion(CommandsListButtonRegion region, Rectangle localButtonBounds)
         {
-            if (0 <= relativeMousePosition.X && relativeMousePosition.X < ButtonHeight &&
-                0 <= relativeMousePosition.Y && relativeMousePosition.Y < ButtonHeight)
+            if (region == CommandsListButtonRegion.FileIcon)
             {
-                return CommandButtonLayout.ReorderButton;
+                localButtonBounds.X += IconSideLength;
+                localButtonBounds.Width = IconSideLength;
+                localButtonBounds.Height = IconSideLength;
+
+                return localButtonBounds;
             }
 
-            if (buttonSize.X - ButtonHeight <= relativeMousePosition.X && relativeMousePosition.X < buttonSize.X &&
-                0 <= relativeMousePosition.Y && relativeMousePosition.Y < ButtonHeight)
+            throw new ArgumentException();
+        }
+
+        public Rectangle ToSlidingTextRegion(CommandsListButtonRegion region, Rectangle localButtonBounds)
+        {
+            if (region == CommandsListButtonRegion.SavedName)
             {
-                return CommandButtonLayout.EditButton;
+                localButtonBounds.X += 2 * IconSideLength + NameTextMargin;
+                localButtonBounds.Width -= 3 * IconSideLength - NameTextMargin;
+                localButtonBounds.Height = IconSideLength;
+
+                return localButtonBounds;
             }
 
-            return CommandButtonLayout.Body;
+            throw new ArgumentException();
         }
 
-        public static Rectangle ReorderButtonBounds(Rectangle buttonScreenBounds)
+        public Rectangle ToCommonIconRegion(CommandsListButtonRegion region, Rectangle localButtonBounds)
         {
-            return new Rectangle(buttonScreenBounds.X, buttonScreenBounds.Y, ButtonHeight, ButtonHeight);
-        }
-
-        public static Rectangle EditButtonBounds(Rectangle buttonScreenBounds)
-        {
-            return new Rectangle(buttonScreenBounds.Right - ButtonHeight, buttonScreenBounds.Y, ButtonHeight, ButtonHeight);
-        }
-
-
-        public static Rectangle ButtonFileIconBounds(Rectangle buttonScreenBounds)
-        {
-            return new Rectangle(buttonScreenBounds.X + ButtonHeight, buttonScreenBounds.Y, ButtonHeight, ButtonHeight);
-        }
-
-        public static Rectangle ButtonNameBounds(Rectangle buttonScreenBounds)
-        {
-            return new Rectangle(buttonScreenBounds.X + 2 * ButtonHeight + NameTextMargin, buttonScreenBounds.Y,
-                                 ButtonNameMaxDisplayWidth(buttonScreenBounds.Width), buttonScreenBounds.Height);
-        }
-
-        public static int ButtonNameMaxDisplayWidth(int buttonScreenWidth)
-        {
-            // 3 heights: reorder button, file icon, edit button
-            return buttonScreenWidth - 3 * ButtonHeight - NameTextMargin;
-        }
-        
-        public static float GetCommandListTextSlideOffset(float textWidth, int buttonScreenWidth)
-        {
-            float scrollDistance = textWidth - ButtonNameMaxDisplayWidth(buttonScreenWidth);
-            if (scrollDistance <= 0)
+            if (region == CommandsListButtonRegion.ReorderButton)
             {
-                return 0;
+                localButtonBounds.Width = IconSideLength;
+                localButtonBounds.Height = IconSideLength;
+
+                return localButtonBounds;
+            }
+            else if (region == CommandsListButtonRegion.EditButton)
+            {
+                localButtonBounds.X = localButtonBounds.Right - IconSideLength;
+                localButtonBounds.Width = IconSideLength;
+                localButtonBounds.Height = IconSideLength;
+
+                return localButtonBounds;
             }
 
-            float scrollTime = scrollDistance / SlidingTextSpeed;
-            float cycleTime = SlidingTextPauseStart + scrollTime + SlidingTextPauseEnd;
+            throw new ArgumentException();
+        }
 
-            float currentCyleTimePosition = (float)(Time.ElapsedGameTime.TotalSeconds % cycleTime);
-
-            if (currentCyleTimePosition < SlidingTextPauseStart) // start pause state
+        public int GetSlidingTextRegionTextSize(CommandsListButtonRegion region)
+        {
+            if (region == CommandsListButtonRegion.SavedName)
             {
-                return 0;
+                return PanelTextSize;
             }
 
-            if (currentCyleTimePosition < SlidingTextPauseStart + scrollTime) // sliding
+            throw new ArgumentException();
+        }
+
+        public bool TryGetHoveredCommonIconRegion(Point relativeMouseToHovered, Point buttonSize, out CommandsListButtonRegion region)
+        {
+            Rectangle current = ToCommonIconRegion(CommandsListButtonRegion.ReorderButton, new Rectangle(Point.Zero, buttonSize));
+            if (current.Contains(relativeMouseToHovered))
             {
-                return -(currentCyleTimePosition - SlidingTextPauseStart) * SlidingTextSpeed;
+                region = CommandsListButtonRegion.ReorderButton;
+                return true;
             }
 
-            return -scrollDistance; // end pause state
+            current = ToCommonIconRegion(CommandsListButtonRegion.EditButton, new Rectangle(Point.Zero, buttonSize));
+            if (current.Contains(relativeMouseToHovered))
+            {
+                region = CommandsListButtonRegion.EditButton;
+                return true;
+            }
+
+            region = CommandsListButtonRegion.Body;
+            return false;
         }
     }
 }

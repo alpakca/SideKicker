@@ -1,25 +1,21 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Toolkit;
-using SideKicker.Theming;
+using SideKicker.Rendering;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SideKicker.Panels.Timers
 {
-    internal static class TimesListLayoutCalculator
+    internal class TimesListLayoutCalculator : IButtonListLayoutCalculator<TimesListRegion>
     {
         public const int CalendarDaysTextSize = 16;
         public const int CalendarDayButtonMargin = 4;
 
-        public const int TimesListButtonHeight = 32;
+        public const int IconSideLength = 32;
+        public const int TimesListTextSize = 12;
         private const int NameTextMargin = 4;
 
-        private const int SlidingTextPauseStart = 1; // seconds
-        private const int SlidingTextPauseEnd = 1; // seconds
-        private const int SlidingTextSpeed = 40; // pixels/second
+        public static readonly int CalendarDayButtonHeight = FontService.GetLineSpacing(CalendarDaysTextSize);
 
-        public static readonly int CalendarDayButtonHeight = FontService.Regular.GetLineSpacing(CalendarDaysTextSize);
+        public static TimesListLayoutCalculator Instance { get; } = new TimesListLayoutCalculator();
 
         public static Rectangle CalendarWeekDayBounds(int columnIndex)
         {
@@ -27,52 +23,62 @@ namespace SideKicker.Panels.Timers
                                  CalendarDayButtonHeight, CalendarDayButtonHeight);
         }
 
-        public static bool HitEditButton(Point buttonSize, Point relativeMousePosition)
+        public Rectangle ToCachedFileIconRegion(TimesListRegion region, Rectangle localButtonBounds)
         {
-            return buttonSize.X - TimesListButtonHeight <= relativeMousePosition.X && relativeMousePosition.X < buttonSize.X &&
-                   0 <= relativeMousePosition.Y && relativeMousePosition.Y < buttonSize.Y;
+            throw new ArgumentException();
         }
 
-        public static Rectangle EditButtonBounds(Rectangle buttonScreenBounds)
+        public Rectangle ToSlidingTextRegion(TimesListRegion region, Rectangle localButtonBounds)
         {
-            return new Rectangle(buttonScreenBounds.Right - TimesListButtonHeight, buttonScreenBounds.Y, TimesListButtonHeight, TimesListButtonHeight);
-        }
-
-        public static Rectangle ButtonNameBounds(Rectangle buttonScreenBounds)
-        {
-            return new Rectangle(buttonScreenBounds.X + NameTextMargin, buttonScreenBounds.Y, 
-                                 ButtonMaxNameWidth(buttonScreenBounds.Width), buttonScreenBounds.Height);
-        }
-
-        private static int ButtonMaxNameWidth(int buttonWidth)
-        {
-            return buttonWidth - NameTextMargin - TimesListButtonHeight;
-        }
-
-        public static float GetTimesListTextSlideOffset(float textWidth, int buttonScreenWidth)
-        {
-            float scrollDistance = textWidth - ButtonMaxNameWidth(buttonScreenWidth);
-            if (scrollDistance <= 0)
+            if (region == TimesListRegion.TimeInfoDescription)
             {
-                return 0;
+                localButtonBounds.X += NameTextMargin;
+                localButtonBounds.Width -= NameTextMargin - IconSideLength;
+                localButtonBounds.Height = IconSideLength;
+
+                return localButtonBounds;
             }
 
-            float scrollTime = scrollDistance / SlidingTextSpeed;
-            float cycleTime = SlidingTextPauseStart + scrollTime + SlidingTextPauseEnd;
+            throw new ArgumentException();
+        }
 
-            float currentCyleTimePosition = (float)(Time.ElapsedGameTime.TotalSeconds % cycleTime);
-
-            if (currentCyleTimePosition < SlidingTextPauseStart) // start pause state
+        public Rectangle ToCommonIconRegion(TimesListRegion region, Rectangle localButtonBounds)
+        {
+            if (region == TimesListRegion.EditButton)
             {
-                return 0;
+                localButtonBounds.X = localButtonBounds.Right - IconSideLength;
+                localButtonBounds.Width = IconSideLength;
+                localButtonBounds.Height = IconSideLength;
+
+                return localButtonBounds;
             }
 
-            if (currentCyleTimePosition < SlidingTextPauseStart + scrollTime) // sliding
+            throw new ArgumentException();
+        }
+
+        public int GetSlidingTextRegionTextSize(TimesListRegion region)
+        {
+            if (region == TimesListRegion.TimeInfoDescription)
             {
-                return -(currentCyleTimePosition - SlidingTextPauseStart) * SlidingTextSpeed;
+                return TimesListTextSize;
             }
 
-            return -scrollDistance; // end pause state
+            throw new ArgumentException();
+        }
+
+        public bool TryGetHoveredCommonIconRegion(Point relativeMouseToHovered, Point buttonSize, out TimesListRegion region)
+        {
+            Rectangle current = ToCommonIconRegion(TimesListRegion.EditButton, new Rectangle(Point.Zero, buttonSize));
+            if (current.Contains(relativeMouseToHovered))
+            {
+                region = TimesListRegion.EditButton;
+            }
+            else
+            {
+                region = TimesListRegion.Body;
+            }
+
+            return true;
         }
     }
 }

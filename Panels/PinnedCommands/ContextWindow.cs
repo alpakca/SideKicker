@@ -9,7 +9,7 @@ namespace SideKicker.Panels.PinnedCommands
 {
     internal class ContextWindow : MessageSupporterWindow
     {
-        public const int PanelTextSize = 12;
+        private int PanelTextSize = 12;
 
         private readonly IReadOnlyList<SavedCommand> _savedCommands;
         private readonly ContextWindowRenderer _renderer;
@@ -40,7 +40,7 @@ namespace SideKicker.Panels.PinnedCommands
             _commandsList = new ScrollableButtonList
             {
                 Boundaries = new Rectangle(270, 20, 250, 210),
-                ButtonHeight = CommandListLayoutCalculator.ButtonHeight,
+                ButtonHeight = CommandListLayoutCalculator.IconSideLength,
                 ButtonMargin = 4
             };
             _commandsList.ButtonPressed += CommandsList_ButtonPressed;
@@ -57,14 +57,13 @@ namespace SideKicker.Panels.PinnedCommands
 
         private void CommandsList_ButtonPressed(int buttonIndex)
         {
-            CommandButtonLayout layout = CommandListLayoutCalculator.GetLayout(_commandsList.GetButtonBounds(buttonIndex).Size, 
-                                                                               _commandsList.RelativeMouseToHovered);
-
-            if (layout == CommandButtonLayout.EditButton)
+            CommandListLayoutCalculator.Instance.TryGetHoveredCommonIconRegion(_commandsList.RelativeMouseToHovered, _commandsList.ButtonSize, 
+                                                                               out CommandsListButtonRegion region);
+            if (region == CommandsListButtonRegion.EditButton)
             {
                 CommandListButtonEditPressed?.Invoke(buttonIndex);
             }
-            else if (layout == CommandButtonLayout.Body)
+            else if (region == CommandsListButtonRegion.Body)
             {
                 CommandListButtonBodyPressed?.Invoke(buttonIndex);
             }
@@ -72,10 +71,9 @@ namespace SideKicker.Panels.PinnedCommands
 
         private void CommandsList_ButtonHeld(int buttonIndex)
         {
-            CommandButtonLayout layout = CommandListLayoutCalculator.GetLayout(_commandsList.GetButtonBounds(buttonIndex).Size,
-                                                                   _commandsList.RelativeMouseToHovered);
-
-            if (layout == CommandButtonLayout.ReorderButton)
+            CommandListLayoutCalculator.Instance.TryGetHoveredCommonIconRegion(_commandsList.RelativeMouseToHovered, _commandsList.ButtonSize,
+                                                                               out CommandsListButtonRegion region);
+            if (region == CommandsListButtonRegion.ReorderButton)
             {
                 _inReorderMode = true;
                 _reorderingButtonIndex = buttonIndex;
@@ -183,6 +181,7 @@ namespace SideKicker.Panels.PinnedCommands
                 new TextedButton
                 {
                     Text = "Add",
+                    TextSize = PanelTextSize,
                     Boundaries = new Rectangle(220 - 90, 200, 90, 30),
                     ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Add)),
                     SelectablePacket = new SelectablePacket(),
@@ -195,6 +194,7 @@ namespace SideKicker.Panels.PinnedCommands
                 new TextedButton
                 {
                     Text = "Delete",
+                    TextSize = PanelTextSize,
                     Boundaries = new Rectangle(20, 200, 90, 30),
                     ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Delete)),
                     SelectablePacket = new SelectablePacket(),
@@ -203,6 +203,7 @@ namespace SideKicker.Panels.PinnedCommands
                 new TextedButton
                 {
                     Text = "Save",
+                    TextSize = PanelTextSize,
                     Boundaries = new Rectangle(220 - 90, 200, 90, 30),
                     ClickCommand = new ActionCommander<Clickable>(_ => EditorButtonPressed?.Invoke(EditorButton.Save)),
                     SelectablePacket = new SelectablePacket(),
@@ -213,19 +214,8 @@ namespace SideKicker.Panels.PinnedCommands
 
         protected override void RenderUpdateWithoutMessages()
         {
-            _renderer.RenderMainElements(_commandEditorTexts, _inEditingMode ? _editingCommandButtons : _addingCommandButtons);
-
-            foreach (LinearTextBox textBox in _textBoxes.Values)
-            {
-                _renderer.RenderTextBox(textBox);
-            }
-
-            for (int i = 0; i < _savedCommands.Count; i++)
-            {
-                _renderer.RenderCommandListButtonText(_commandsList, i, _savedCommands[i].Name);
-            }
-
-            _renderer.RenderCommandListBackgrounds(_commandsList, _savedCommands);
+            _renderer.Render(_commandEditorTexts, _inEditingMode ? _editingCommandButtons : _addingCommandButtons, _textBoxes.Values,
+                             _commandsList, _savedCommands);
         }
 
         protected override void OnMouseButtonStateChangeWithoutMessages(PopWindowMouseEventArgs e)

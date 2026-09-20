@@ -1,78 +1,107 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Toolkit;
+using SideKicker.Rendering;
+using System;
 
 namespace SideKicker.Panels.DesktopSearcher
 {
-    internal static class ResultsListLayoutCalculator
+    internal class ResultsListLayoutCalculator : IButtonListLayoutCalculator<ResultsListButtonRegion>
     {
         public const int ButtonHeight = 54;
-        private const int ButtonIconHeight = 32;
+        public const int FileNameTextSize = 16;
+        public const int FilePathTextSize = 12;
+
+        private const int IconSideLength = 32;
         private const int NameTextMargin = 4;
         private const int IconMargin = 8;
+        private const int ButtonContentCenterizingMargin = (ButtonHeight - IconSideLength) / 2;
 
-        private const int ButtonContentCenterizingMargin = (ButtonHeight - ButtonIconHeight) / 2;
+        private static readonly int FileNameTextLineSpacing = FontService.GetLineSpacing(FileNameTextSize);
+        private static readonly int FilePathTextLineSpacing = FontService.GetLineSpacing(FilePathTextSize);
 
-        private const int SlidingTextPauseStart = 1; // seconds
-        private const int SlidingTextPauseEnd = 1; // seconds
-        private const int SlidingTextSpeed = 40; // pixels/second
+        public static ResultsListLayoutCalculator Instance { get; } = new ResultsListLayoutCalculator();
 
-        public static Rectangle ButtonNameBounds(Rectangle buttonScreenBounds)
+        private ResultsListLayoutCalculator() { }
+
+        public bool HitCloseButton(Rectangle localButtonBounds, Point relativeMouseToHovered)
         {
-            return new Rectangle(buttonScreenBounds.X + 2 * IconMargin + ButtonIconHeight + NameTextMargin, buttonScreenBounds.Y,
-                                 ButtonMaxNameWidth(buttonScreenBounds.Width), buttonScreenBounds.Height);
+            return ToCommonIconRegion(ResultsListButtonRegion.CloseButton, localButtonBounds).Contains(relativeMouseToHovered);
         }
 
-        public static Rectangle ButtonIconBounds(Rectangle buttonScreenBounds)
+        public Rectangle ToCachedFileIconRegion(ResultsListButtonRegion region, Rectangle localButtonBounds)
         {
-            return new Rectangle(buttonScreenBounds.X + IconMargin, buttonScreenBounds.Y + ButtonContentCenterizingMargin,
-                                 ButtonIconHeight, ButtonIconHeight);
-        }
-
-        public static Rectangle ButtonCloseBounds(Rectangle buttonScreenBounds)
-        {
-            return new Rectangle(buttonScreenBounds.Right - ButtonContentCenterizingMargin - ButtonIconHeight,
-                                 buttonScreenBounds.Y + ButtonContentCenterizingMargin,
-                                 ButtonIconHeight, ButtonIconHeight);
-        }
-
-        public static bool HitCloseBounds(Point buttonSize, Point relativeMousePosition)
-        {
-            return buttonSize.X - ButtonContentCenterizingMargin - ButtonHeight <= relativeMousePosition.X && 
-                   relativeMousePosition.X < buttonSize.X - ButtonContentCenterizingMargin &&
-
-                   ButtonContentCenterizingMargin <= relativeMousePosition.Y && 
-                   relativeMousePosition.Y <= buttonSize.Y - ButtonContentCenterizingMargin;
-        }
-        
-        private static int ButtonMaxNameWidth(int buttonWidth)
-        {
-            return buttonWidth - NameTextMargin - ButtonIconHeight - 2 * IconMargin;
-        }
-
-        public static float GetTextSlideOffset(float textWidth, int buttonScreenWidth)
-        {
-            float scrollDistance = textWidth - ButtonMaxNameWidth(buttonScreenWidth);
-            if (scrollDistance <= 0)
+            if (region == ResultsListButtonRegion.FileIcon)
             {
-                return 0;
+                localButtonBounds.X += IconMargin;
+                localButtonBounds.Y += ButtonContentCenterizingMargin;
+                localButtonBounds.Width = IconSideLength;
+                localButtonBounds.Height = IconSideLength;
+
+                return localButtonBounds;
             }
 
-            float scrollTime = scrollDistance / SlidingTextSpeed;
-            float cycleTime = SlidingTextPauseStart + scrollTime + SlidingTextPauseEnd;
+            throw new ArgumentException("Region not supported " + region);
+        }
 
-            float currentCyleTimePosition = (float)(Time.ElapsedGameTime.TotalSeconds % cycleTime);
+        public Rectangle ToSlidingTextRegion(ResultsListButtonRegion region, Rectangle localButtonBounds)
+        {
+            localButtonBounds.X += 2 * IconMargin + IconSideLength + NameTextMargin;
+            localButtonBounds.Y += (localButtonBounds.Height - FileNameTextLineSpacing - FilePathTextLineSpacing) / 2;
+            localButtonBounds.Width -= NameTextMargin + IconSideLength + 2 * IconMargin;
 
-            if (currentCyleTimePosition < SlidingTextPauseStart) // start pause state
+            if (region == ResultsListButtonRegion.FileName)
             {
-                return 0;
+                localButtonBounds.Height = FileNameTextLineSpacing;
+
+                return localButtonBounds;
+            }
+            else if (region == ResultsListButtonRegion.FileRelativePath)
+            {
+                localButtonBounds.Y += FileNameTextLineSpacing;
+                localButtonBounds.Height = FilePathTextLineSpacing;
+
+                return localButtonBounds;
             }
 
-            if (currentCyleTimePosition < SlidingTextPauseStart + scrollTime) // sliding
+            throw new ArgumentException("Region not supported " + region);
+        }
+
+        public Rectangle ToCommonIconRegion(ResultsListButtonRegion region, Rectangle localButtonBounds)
+        {
+            if (region == ResultsListButtonRegion.CloseButton)
             {
-                return -(currentCyleTimePosition - SlidingTextPauseStart) * SlidingTextSpeed;
+                localButtonBounds.X = localButtonBounds.Right - ButtonContentCenterizingMargin - IconSideLength;
+                localButtonBounds.Y += ButtonContentCenterizingMargin;
+                localButtonBounds.Width = IconSideLength;
+                localButtonBounds.Height = IconSideLength;
+
+                return localButtonBounds;
             }
 
-            return -scrollDistance; // end pause state
+            throw new ArgumentException("Region not supported " + region);
+        }
+
+        public int GetSlidingTextRegionTextSize(ResultsListButtonRegion region)
+        {
+            return region switch
+            {
+                ResultsListButtonRegion.FileName => FileNameTextSize,
+                ResultsListButtonRegion.FileRelativePath => FilePathTextSize,
+
+                _ => throw new ArgumentException("Region not supported " + region)
+            };
+        }
+
+        public bool TryGetHoveredCommonIconRegion(Point relativeMouseToHovered, Point buttonSize, out ResultsListButtonRegion region)
+        {
+            Rectangle closeButton = ToCommonIconRegion(ResultsListButtonRegion.CloseButton, new Rectangle(Point.Zero, buttonSize));
+            if (closeButton.Contains(relativeMouseToHovered))
+            {
+                region = ResultsListButtonRegion.CloseButton;
+                return true;
+            }
+
+            region = default;
+            return false;
         }
     }
 }

@@ -1,149 +1,78 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
-using SideKicker.Theming;
+using SideKicker.Rendering;
+using System;
 using System.Collections.Generic;
 
 namespace SideKicker.Panels.DesktopSearcher
 {
     internal class ContextWindowRenderer
     {
-        private const int ResultListFileNameTextSize = 16;
-        private const int ResultListFilePathTextSize = 12;
-
-        private static readonly int ResultListFileNameTextLineSpacing = FontService.Regular.GetLineSpacing(ResultListFileNameTextSize);
-        private static readonly int ResultListTextLineSpacing = FontService.Regular.GetLineSpacing(ResultListFileNameTextSize)
-                                                              + FontService.Regular.GetLineSpacing(ResultListFilePathTextSize);
-
         private readonly Point _windowSize;
         private readonly RenderTarget2D _windowTexture;
+        private readonly ButtonListRendering<SearcherResult, ResultsListButtonRegion> _resultsListRendering;
+
+        // captured by results list renderer's common icon predicate, for drawing closing button
+        private int _resultsListHoveredButtonIndex;
+        private bool _resultsListShowClosingOption;
 
         public ContextWindowRenderer(RenderTarget2D windowTexture)
         {
             _windowTexture = windowTexture;
             _windowSize = new Point(windowTexture.Width, windowTexture.Height);
+
+            _resultsListRendering = new ButtonListRendering<SearcherResult, ResultsListButtonRegion>(
+                cachedFileIconGatherer: (region, searchResult) => searchResult.FileName,
+                slidingTextGatherer: (region, searchResult) => region switch
+                {
+                    ResultsListButtonRegion.FileName => searchResult.FileName,
+                    ResultsListButtonRegion.FileRelativePath => searchResult.FileRelativePath,
+
+                    _ => throw new ArgumentException("Region not supported " + region)
+                },
+                commonIconPredicate: (region, buttonIndex) => _resultsListShowClosingOption && buttonIndex == _resultsListHoveredButtonIndex);
+
+            _resultsListRendering.AddRegionCachedFileIcon(ResultsListButtonRegion.FileIcon);
+            _resultsListRendering.AddRegionSlidingText(ResultsListButtonRegion.FileName, ResultsListLayoutCalculator.FileNameTextSize);
+            _resultsListRendering.AddRegionSlidingText(ResultsListButtonRegion.FileRelativePath, ResultsListLayoutCalculator.FilePathTextSize);
+            _resultsListRendering.AddRegionCommonIcon(ResultsListButtonRegion.CloseButton, IconType.CloseButton);
         }
 
-        public void RenderMainElements(TextPlaque plaque)
+        public void Render(TextPlaque plaque, LinearTextBox searchBox)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
-
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaBlendDrawOptions);
+            PanelElementRenderer.RenderBackground(_windowSize);
+            PanelElementRenderer.RenderTextPlaque(plaque);
+            DrawHelper.EndBatch();
 
-            DrawHelper.DrawBorderedBackground(new Rectangle(Point.Zero, _windowSize), theme.GetColor(ColorRegistry.BorderId),
-                                              theme.GetColor(ColorRegistry.SurfaceId), 1);
-
-            FontService.Regular.DrawText(plaque.TextSize, plaque.Text, plaque.Position, textColor);
-
+            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+            PanelElementRenderer.RenderLinearTextBox(searchBox);
             DrawHelper.EndBatch();
         }
 
-        public void RenderSearchBox(LinearTextBox searchBox)
+        public void RenderScrollableButtonList(ScrollableButtonList resultsList, IReadOnlyList<SearcherResult> searcherResults, bool showClosingOption)
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
+            _resultsListHoveredButtonIndex = resultsList.HoveredButtonIndex;
+            _resultsListShowClosingOption = showClosingOption;
 
-            DrawHelper.Device.ScissorRectangle = searchBox.Boundaries;
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            DrawHelper.DrawBorderedBackground(searchBox.SelectableArea, theme.GetColor(ColorRegistry.BorderAccentId),
-                                              theme.GetColor(ColorRegistry.BackgroundId), 1);
-
-            FontService.Regular.DrawVerticallyCenteredText(searchBox.TextSize, searchBox.Text,
-                new Vector2(searchBox.Boundaries.X + searchBox.TextOffset, searchBox.Boundaries.Y), searchBox.Boundaries.Height,
-                textColor);
-
-            Rectangle selectionBox = searchBox.SelectionBox;
-            DrawHelper.DrawBackground(new Rectangle(searchBox.Boundaries.X + selectionBox.X + searchBox.TextOffset,
-                                                    searchBox.Boundaries.Y + selectionBox.Y,
-                                                    selectionBox.Width, selectionBox.Height),
-                                      theme.GetColor(ColorRegistry.SelectionBoxOverlayId));
-
-            if (searchBox.ReceivingInput)
-            {
-                const int CaretWidth = 1;
-
-                int caretHeight = FontService.Regular.GetLineSpacing(searchBox.TextSize);
-                DrawHelper.DrawBackground(new Rectangle(searchBox.Boundaries.X + searchBox.CaretX + searchBox.TextOffset,
-                                                        searchBox.Boundaries.Y + (searchBox.Boundaries.Height - caretHeight) / 2,
-                                                        CaretWidth,
-                                                        caretHeight),
-                                          textColor);
-            }
-
+            PanelElementRenderer.RenderScrollableButtonListBackground(resultsList, searcherResults, _resultsListRendering, ResultsListLayoutCalculator.Instance);
             DrawHelper.EndBatch();
-        }
 
-        public void RenderResultsListBackgrounds(ScrollableButtonList resultsList, IReadOnlyList<SearcherResult> searcherResults, bool showClosingOption)
-        {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
-
-            DrawHelper.Device.ScissorRectangle = resultsList.Boundaries;
-            DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            for (int i = 0; i < resultsList.ButtonCount; i++)
+            for (int i = 0; i < searcherResults.Count; i++)
             {
-                Rectangle relativeButtonBounds = resultsList.GetButtonBounds(i);
-                Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + resultsList.Boundaries.Location, relativeButtonBounds.Size);
-
-                if (FileIconCache.TryGetIcon(searcherResults[i].FileName, out Texture2D icon) && icon != null)
+                foreach (ResultsListButtonRegion region in _resultsListRendering.SlidingTextRegions)
                 {
-                    DrawHelper.Batch.Draw(icon, ResultsListLayoutCalculator.ButtonIconBounds(buttonScreenBounds), Color.White);
-                }
-
-                if (i == resultsList.HoveredButtonIndex)
-                {
-                    Rectangle overlayBounds = buttonScreenBounds;
-
-                    if (showClosingOption)
-                    {
-                        Rectangle closeButtonBounds = ResultsListLayoutCalculator.ButtonCloseBounds(buttonScreenBounds);
-                        DrawHelper.Batch.Draw(theme.GetIcon(IconRegistry.CloseButtonId), closeButtonBounds, Color.White);
-
-                        if (ResultsListLayoutCalculator.HitCloseBounds(buttonScreenBounds.Size, resultsList.RelativeMouseToHovered))
-                        {
-                            overlayBounds = closeButtonBounds;
-                        }
-                    }
-
-                    DrawHelper.DrawBackground(overlayBounds, resultsList.IsHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
-                                                                                             : theme.GetColor(ColorRegistry.HoverOverlayId));
+                    DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
+                    PanelElementRenderer.RenderScrollableButtonListSlidingText(resultsList, region, i, searcherResults[i], 
+                                                                               _resultsListRendering, ResultsListLayoutCalculator.Instance);
+                    DrawHelper.EndBatch();
                 }
             }
 
-            DrawHelper.EndBatch();
-        }
-
-        public void RenderResultsListText(ScrollableButtonList resultsList, SearcherResult result, int buttonIndex)
-        {
-            Rectangle relativeButtonBounds = resultsList.GetButtonBounds(buttonIndex);
-            Rectangle buttonScreenBounds = new Rectangle(relativeButtonBounds.Location + resultsList.Boundaries.Location, relativeButtonBounds.Size);
-            Rectangle buttonNameScreenBounds = ResultsListLayoutCalculator.ButtonNameBounds(buttonScreenBounds);
-
-            int verticalCenterOffset = (resultsList.ButtonHeight - ResultListTextLineSpacing) / 2;
-            Vector2 fileNameTextPosition = buttonNameScreenBounds.Location.ToVector2() + new Vector2(0, verticalCenterOffset);
-            Vector2 filePathTextPosition = buttonNameScreenBounds.Location.ToVector2() + new Vector2(0, verticalCenterOffset + ResultListFileNameTextLineSpacing);
-
-            // apply sliding offset
-            if (buttonIndex == resultsList.HoveredButtonIndex)
-            {
-                float fileNameTextWidth = FontService.Regular.MeasureWidth(ResultListFileNameTextSize, result.FileName);
-                fileNameTextPosition.X += ResultsListLayoutCalculator.GetTextSlideOffset(fileNameTextWidth, buttonScreenBounds.Width);
-
-                float filePathTextWidth = FontService.Regular.MeasureWidth(ResultListFilePathTextSize, result.FileRelativePath);
-                filePathTextPosition.X += ResultsListLayoutCalculator.GetTextSlideOffset(filePathTextWidth, buttonScreenBounds.Width);
-            }
-
-            Color textColor = ThemeService.CurrentTheme.GetColor(ColorRegistry.TextColorId);
-
-            // we need intersect here since button may have been cut through if because of scrolling, so text should be cut too
-            DrawHelper.Device.ScissorRectangle = Rectangle.Intersect(resultsList.Boundaries, buttonNameScreenBounds);
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);
-
-            FontService.Regular.DrawText(ResultListFileNameTextSize, result.FileName, fileNameTextPosition, textColor);
-            FontService.Regular.DrawText(ResultListFilePathTextSize, result.FileRelativePath, filePathTextPosition, textColor);
-
+            PanelElementRenderer.RenderScrollableButtonListHoverOverlay(resultsList, _resultsListRendering, ResultsListLayoutCalculator.Instance);
             DrawHelper.EndBatch();
         }
     }

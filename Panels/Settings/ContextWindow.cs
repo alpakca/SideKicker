@@ -3,7 +3,6 @@ using PopUpUI.Elements;
 using PopUpUI.Input;
 using SideKicker.PanelSystem.Message;
 using SideKicker.PanelSystem.Settings;
-using SideKicker.Theming;
 using System;
 using System.Collections.Generic;
 
@@ -56,7 +55,7 @@ namespace SideKicker.Panels.Settings
 
             _closeAppButton = new IconedButton
             {
-                IconId = IconRegistry.CloseButtonId,
+                IconType = Rendering.IconType.CloseButton,
                 Boundaries = new Rectangle(20, 208, 32, 32),
 
                 ClickCommand = new ActionCommander<Clickable>(_ => CloseApp?.Invoke()),
@@ -106,14 +105,7 @@ namespace SideKicker.Panels.Settings
 
         protected override void RenderUpdateWithoutMessages()
         {
-            _renderer.BeginRendering();
-
-            _renderer.RenderMainElements(_plaques, _closeAppButton);
-            _renderer.RenderSettingToggles(_optionToggles.Values);
-            _renderer.RenderSectionSwapper(_panelSwapper, _panelOrder);
-            _renderer.RenderOriginMover(_originMover);
-
-            _renderer.EndRendering();
+            _renderer.Render(_plaques, _closeAppButton, _optionToggles.Values, _panelSwapper, _panelOrder, _originMover);
         }
 
         protected override void OnMousePositionChangeWithoutMessages(PopWindowMouseEventArgs e)

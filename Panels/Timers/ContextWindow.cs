@@ -2,7 +2,7 @@
 using PopUpUI.Elements;
 using PopUpUI.Input;
 using SideKicker.PanelSystem.Message;
-using SideKicker.Theming;
+using SideKicker.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -89,7 +89,7 @@ namespace SideKicker.Panels.Timers
             _timesList = new ScrollableButtonList
             {
                 Boundaries = new Rectangle(260, 340, 178, 114),
-                ButtonHeight = TimesListLayoutCalculator.TimesListButtonHeight,
+                ButtonHeight = TimesListLayoutCalculator.IconSideLength,
                 ButtonMargin = 4
             };
             _timesList.ButtonPressed += ActiveTimesList_ButtonPressed;
@@ -286,7 +286,9 @@ namespace SideKicker.Panels.Timers
 
         private void ActiveTimesList_ButtonPressed(int buttonIndex)
         {
-            if (TimesListLayoutCalculator.HitEditButton(_timesList.GetButtonBounds(buttonIndex).Size, _timesList.RelativeMouseToHovered))
+            if (TimesListLayoutCalculator.Instance.TryGetHoveredCommonIconRegion(_timesList.RelativeMouseToHovered, _timesList.ButtonSize,
+                                                                                 out TimesListRegion region) &&
+                region == TimesListRegion.EditButton)
             {
                 TimesListButtonEditPressed?.Invoke(buttonIndex);
             }
@@ -321,7 +323,7 @@ namespace SideKicker.Panels.Timers
         {
             _renderer.StartMainBatch();
 
-            _renderer.RenderMainElements(_textPlaques, _alarmCalendar, _weekdaysButtons, _anyRepeatingDaysSelected);
+            _renderer.Render(_textPlaques, _alarmCalendar, _weekdaysButtons, _anyRepeatingDaysSelected);
 
             _renderer.RenderIconedButtons(_alarmMonthChangeButtons);
             if (_isInspectingAlarm)
@@ -363,14 +365,7 @@ namespace SideKicker.Panels.Timers
             _renderer.RenderTextBox(_alarmLabelTextbox);
             _renderer.RenderTextBox(_timerLabelTextbox);
 
-            // times list
-            DateTime now = DateTime.Now;
-            for (int i = 0; i < _registedTimes.Count; i++)
-            {
-                ITimeInfo timeInfo = _registedTimes[i];
-                _renderer.RenderTimesListText(_timesList, i, timeInfo.DisplayString(now));
-            }
-            _renderer.RenderTimesListBackgrounds(_timesList);
+            _renderer.RenderScrollableButtonList(_timesList, _registedTimes);
         }
 
         protected override void OnMouseButtonStateChangeWithoutMessages(PopWindowMouseEventArgs e)
@@ -404,7 +399,7 @@ namespace SideKicker.Panels.Timers
             _alarmCalendar.ButtonMargin = TimesListLayoutCalculator.CalendarDayButtonMargin;
             _alarmCalendar.Location = new Point(20, 100);
 
-            int numberSelectingDistance = FontService.Regular.GetLineSpacing(NumberSelectorTextSize) + 4;
+            int numberSelectingDistance = FontService.GetLineSpacing(NumberSelectorTextSize) + 4;
             _alarmNumberSelectors[NumberSelectorType.Hour] = new ScrollableNumberSelector(0, 23)
             {
                 DistanceToChangeNumber = numberSelectingDistance,
@@ -421,6 +416,7 @@ namespace SideKicker.Panels.Timers
             _alarmButtons[AlarmButtonType.Add] = new TextedButton
             {
                 Text = "Add",
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(164, 385, 80, 30),
                 ClickCommand = new ActionCommander<Clickable>(_ => AlarmButtonPressed?.Invoke(AlarmButtonType.Add)),
 
@@ -430,6 +426,7 @@ namespace SideKicker.Panels.Timers
             _alarmButtons[AlarmButtonType.Delete] = new TextedButton
             {
                 Text = "Delete",
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(86, 385, 70, 30),
                 ClickCommand = new ActionCommander<Clickable>(_ => AlarmButtonPressed?.Invoke(AlarmButtonType.Delete)),
 
@@ -439,6 +436,7 @@ namespace SideKicker.Panels.Timers
             _alarmButtons[AlarmButtonType.Save] = new TextedButton
             {
                 Text = "Save",
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(174, 385, 70, 30),
                 ClickCommand = new ActionCommander<Clickable>(_ => AlarmButtonPressed?.Invoke(AlarmButtonType.Save)),
 
@@ -448,7 +446,7 @@ namespace SideKicker.Panels.Timers
 
             _alarmMonthChangeButtons[0] = new IconedButton
             {
-                IconId = ContextWindowRenderer.AlarmCalendarPreviousMonthButtonId,
+                IconType = Rendering.IconType.UpArrow,
                 Boundaries = new Rectangle(175, 45, TimesListLayoutCalculator.CalendarDayButtonHeight, TimesListLayoutCalculator.CalendarDayButtonHeight),
                 ClickCommand = new ActionCommander<Clickable>(_ => _alarmCalendar.MoveMonth(-1)),
 
@@ -457,7 +455,7 @@ namespace SideKicker.Panels.Timers
             };
             _alarmMonthChangeButtons[1] = new IconedButton
             {
-                IconId = ContextWindowRenderer.AlarmCalendarNextMonthButtonId,
+                IconType = Rendering.IconType.DownArrow,
                 Boundaries = new Rectangle(210, 45, TimesListLayoutCalculator.CalendarDayButtonHeight, TimesListLayoutCalculator.CalendarDayButtonHeight),
                 ClickCommand = new ActionCommander<Clickable>(_ => _alarmCalendar.MoveMonth(+1)),
 
@@ -491,7 +489,7 @@ namespace SideKicker.Panels.Timers
             _timerLabelTextbox.Boundaries = new Rectangle(270, 140, 160, 28);
             _timerLabelTextbox.SelectableMargin = 4;
 
-            int numberSelectingDistance = FontService.Regular.GetLineSpacing(NumberSelectorTextSize) + 4;
+            int numberSelectingDistance = FontService.GetLineSpacing(NumberSelectorTextSize) + 4;
             _timerNumberSelectors[NumberSelectorType.Hour] = new ScrollableNumberSelector(0, 23)
             {
                 DistanceToChangeNumber = numberSelectingDistance,
@@ -512,7 +510,7 @@ namespace SideKicker.Panels.Timers
             HoldablePacket holdPacket = new HoldablePacket();
             _timerButtons[TimerButtonType.Add] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerAddButton,
+                IconType = Rendering.IconType.TimerAddButton,
                 Boundaries = new Rectangle(338, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Add)),
 
@@ -521,7 +519,7 @@ namespace SideKicker.Panels.Timers
             };
             _timerButtons[TimerButtonType.Discard] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerDiscardButton,
+                IconType = Rendering.IconType.TimerDiscardButton,
                 Boundaries = new Rectangle(299, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Discard)),
 
@@ -530,7 +528,7 @@ namespace SideKicker.Panels.Timers
             };
             _timerButtons[TimerButtonType.Stop] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerStopButton,
+                IconType = Rendering.IconType.TimerPauseButton,
                 Boundaries = new Rectangle(341, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Stop)),
 
@@ -539,7 +537,7 @@ namespace SideKicker.Panels.Timers
             };
             _timerButtons[TimerButtonType.Continue] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerAddButton,
+                IconType = Rendering.IconType.TimerAddButton,
                 Boundaries = new Rectangle(341, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Continue)),
 
@@ -548,7 +546,7 @@ namespace SideKicker.Panels.Timers
             };
             _timerButtons[TimerButtonType.Save] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerSaveButton,
+                IconType = Rendering.IconType.TimerSaveButton,
                 Boundaries = new Rectangle(383, 215, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => TimerButtonPressed?.Invoke(TimerButtonType.Save)),
 
@@ -563,6 +561,7 @@ namespace SideKicker.Panels.Timers
 
             _recentTimeButtons[0] = new RecentTimeButton
             {
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(266, 178, 80, 30),
                 ClickCommand = recentTimeButtonAction,
 
@@ -571,6 +570,7 @@ namespace SideKicker.Panels.Timers
             };
             _recentTimeButtons[1] = new RecentTimeButton
             {
+                TextSize = TextBoxTextSize,
                 Boundaries = new Rectangle(354, 178, 80, 30),
                 ClickCommand = recentTimeButtonAction,
 
@@ -585,7 +585,7 @@ namespace SideKicker.Panels.Timers
             HoldablePacket holdPacket = new HoldablePacket();
             _stopwatchButtons[TimerButtonType.Add] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerAddButton,
+                IconType = Rendering.IconType.TimerAddButton,
                 Boundaries = new Rectangle(338, 300, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: true, isPaused: false)),
 
@@ -594,7 +594,7 @@ namespace SideKicker.Panels.Timers
             };
             _stopwatchButtons[TimerButtonType.Discard] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerDiscardButton,
+                IconType = Rendering.IconType.TimerDiscardButton,
                 Boundaries = new Rectangle(317, 300, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: false, isPaused: true)),
 
@@ -603,7 +603,7 @@ namespace SideKicker.Panels.Timers
             };
             _stopwatchButtons[TimerButtonType.Stop] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerStopButton,
+                IconType = Rendering.IconType.TimerPauseButton,
                 Boundaries = new Rectangle(359, 300, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: true, isPaused: true)),
 
@@ -612,7 +612,7 @@ namespace SideKicker.Panels.Timers
             };
             _stopwatchButtons[TimerButtonType.Continue] = new IconedButton
             {
-                IconId = ContextWindowRenderer.TimerAddButton,
+                IconType = Rendering.IconType.TimerAddButton,
                 Boundaries = new Rectangle(359, 300, 32, 32),
                 ClickCommand = new ActionCommander<Clickable>(_ => SetStopwatchStatus(isStarted: true, isPaused: false)),
 

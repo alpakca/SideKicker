@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using PopUpUI.Input;
 using PopUpUI.Toolkit;
-using SideKicker.Theming;
+using SideKicker.Rendering;
 using System;
 using System.Collections.Generic;
 
@@ -95,7 +95,7 @@ namespace SideKicker.PanelSystem.Message
                         continue;
                     }
 
-                    if (FontService.Regular.MeasureWidth(TextSize, text[lastStart..i]) >= MaxTextRowWidth)
+                    if (FontService.MeasureWidth(TextSize, text[lastStart..i]) >= MaxTextRowWidth)
                     {
                         if (lastSpaceIndex == lastStart) // no space found, force break
                         {
@@ -114,7 +114,7 @@ namespace SideKicker.PanelSystem.Message
             }
 
             _textStartPosition = new Point(FrameMargin, FrameMargin);
-            Point textSize = new Point(MaxTextRowWidth, FontService.Regular.GetLineSpacing(TextSize) * _lines.Count);
+            Point textSize = new Point(MaxTextRowWidth, FontService.GetLineSpacing(TextSize) * _lines.Count);
 
             _rightMostButtonPosition = new Point(_textStartPosition.X + textSize.X - BottomButtonWidth, 
                                                  _textStartPosition.Y + textSize.Y + BottomButtonMargin);
@@ -124,35 +124,30 @@ namespace SideKicker.PanelSystem.Message
 
         public void Render()
         {
-            ResolvedTheme theme = ThemeService.CurrentTheme;
+            PanelElementRenderer.RenderBackground(new Rectangle(Location, WindowSize));
+            DrawHelper.DrawTextureCenteralized(TopCloseButtonBounds, RenderData.GetIcon(IconType.CloseButton));
 
-            DrawHelper.DrawBorderedBackground(new Rectangle(Location, WindowSize), theme.GetColor(ColorRegistry.BorderId),
-                                              theme.GetColor(ColorRegistry.SurfaceId), 1);
-
-            DrawHelper.DrawTextureCenteralized(TopCloseButtonBounds, theme.GetIcon(IconRegistry.CloseButtonId));
-
+            Color textColor = RenderData.Text;
             Vector2 currentTextPosition = (Location + _textStartPosition).ToVector2();
-            Color textColor = theme.GetColor(ColorRegistry.TextColorId);
+
             for (int i = 0; i < _lines.Count; i++)
             {
-                FontService.Regular.DrawText(TextSize, _lines[i], currentTextPosition, textColor);
-                currentTextPosition.Y += FontService.Regular.GetLineSpacing(TextSize);
+                FontService.DrawText(TextSize, _lines[i], currentTextPosition, textColor);
+                currentTextPosition.Y += FontService.GetLineSpacing(TextSize);
             }
 
             Point currentButtonPosition = Location + _rightMostButtonPosition;
-            Color buttonColor = theme.GetColor(ColorRegistry.BackgroundId);
             for (int i = _buttonTexts.Count - 1; i >= 0; i--)
             {
                 Rectangle bounds = new Rectangle(currentButtonPosition.X, currentButtonPosition.Y, BottomButtonWidth, BottomButtonHeight);
 
-                DrawHelper.DrawBackground(bounds, buttonColor);
-                FontService.Regular.DrawCenteredText(TextSize, _buttonTexts[i].Text, bounds, textColor);
+                DrawHelper.DrawBackground(bounds, RenderData.Background);
+                FontService.DrawCenteredText(TextSize, _buttonTexts[i].Text, bounds, textColor);
 
                 currentButtonPosition.X -= BottomButtonMargin + BottomButtonWidth;
             }
 
-            DrawHelper.DrawBackground(_hoveredButtonBounds, _isHoveredButtonHeld ? theme.GetColor(ColorRegistry.HeldOverlayId)
-                                                                                 : theme.GetColor(ColorRegistry.HoverOverlayId));
+            DrawHelper.DrawBackground(_hoveredButtonBounds, _isHoveredButtonHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
         }
 
         public void OnMousePositionChange(PopWindowMouseEventArgs e)

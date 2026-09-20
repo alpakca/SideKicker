@@ -8,5 +8,6 @@ namespace SideKicker.Panels
     internal class TextedButton : Clickable
     {
         public string Text { get; set; }
+        public int TextSize { get; set; }
     }
 }

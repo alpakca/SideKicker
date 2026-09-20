@@ -56,13 +56,6 @@ namespace SideKicker
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            ContentAssistant.LoadTexture2Ds(
-                Directory.EnumerateFiles(Program.AssetsFolderPath, "*.png", SearchOption.AllDirectories)
-                .Where(path => Path.GetExtension(path) != ".pui")
-                .Select(path => (path, path))
-                .ToArray()
-            );
-
             ContentAssistant.LoadWithContentManager<SpriteFont>(
                 Directory.EnumerateFiles(Path.Combine(Program.AssetsFolderPath, "fonts"))
                 .Select(path =>

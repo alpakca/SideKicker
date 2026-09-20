@@ -4,11 +4,12 @@ using System.Text;
 
 namespace SideKicker.Panels.PinnedCommands
 {
-    internal enum CommandButtonLayout
+    internal enum CommandsListButtonRegion
     {
-        None,
         Body,
+        FileIcon,
         ReorderButton,
-        EditButton
+        EditButton,
+        SavedName
     }
 }
