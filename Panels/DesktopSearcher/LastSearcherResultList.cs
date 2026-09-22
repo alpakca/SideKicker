@@ -79,17 +79,54 @@ namespace SideKicker.Panels.DesktopSearcher
             _count--;
         }
 
-        public IEnumerator<SearcherResult> GetEnumerator()
+        public Enumerator GetEnumerator()
         {
-            for (int i = 0; i < _count; i++)
-            {
-                yield return _items[i];
-            }
+            return new Enumerator(_items, _count);
+        }
+
+        IEnumerator<SearcherResult> IEnumerable<SearcherResult>.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public struct Enumerator : IEnumerator<SearcherResult>
+        {
+            private readonly int _count;
+            private readonly SearcherResult[] _array;
+
+            private int _index;
+
+            public readonly SearcherResult Current => _array[_index];
+            readonly object IEnumerator.Current => _array[_index];
+
+            public Enumerator(SearcherResult[] array, int count)
+            {
+                _count = count;
+                _array = array;
+                _index = -1;
+            }
+
+            public readonly void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                if (++_index >= _count)
+                    return false;
+
+                return true;
+            }
+
+            public void Reset()
+            {
+                _index = -1;
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace SideKicker.Rendering
@@ -17,20 +18,8 @@ namespace SideKicker.Rendering
         private readonly List<(TRegion, IconType)> _commonIconRegions;
 
         public IEnumerable<TRegion> CachedFileIconRegions => _cachedFileIconRegions;
-        public IEnumerable<TRegion> SlidingTextRegions
-        {
-            get
-            {
-                foreach (var (region, _) in _slidingTextRegions) yield return region;
-            }
-        }
-        public IEnumerable<TRegion> CommonIconRegions
-        {
-            get
-            {
-                foreach (var (region, _) in _commonIconRegions) yield return region;
-            }
-        }
+        public TupleEnumerator<TRegion, int> SlidingTextRegions => new TupleEnumerator<TRegion, int>(_slidingTextRegions);
+        public TupleEnumerator<TRegion, IconType> CommonIconRegions => new TupleEnumerator<TRegion, IconType>(_commonIconRegions);
 
         public ButtonListRendering(LayoutValueGatherer<TRegion, TSource>? cachedFileIconGatherer, LayoutValueGatherer<TRegion, TSource>? slidingTextGatherer,
                                 CommonIconEligibility<TRegion> commonIconPredicate)
@@ -104,6 +93,44 @@ namespace SideKicker.Rendering
         public void AddRegionCommonIcon(TRegion region, IconType iconType)
         {
             _commonIconRegions.Add((region, iconType));
+        }
+
+        public struct TupleEnumerator<T, U> : IEnumerator<T>
+        {
+            private readonly List<(T, U)> _list;
+
+            private int _index;
+
+            public readonly T Current => _list[_index].Item1;
+            readonly object IEnumerator.Current => Current;
+
+            public TupleEnumerator(List<(T, U)> list)
+            {
+                _list = list;
+                _index = -1;
+            }
+
+            public readonly TupleEnumerator<T, U> GetEnumerator()
+            {
+                return this;
+            }
+
+            public readonly void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                if (++_index >= _list.Count)
+                    return false;
+
+                return true;
+            }
+
+            public void Reset()
+            {
+                _index = -1;
+            }
         }
     }
 }

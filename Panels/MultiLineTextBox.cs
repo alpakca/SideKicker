@@ -4,6 +4,7 @@ using PopUpUI.Elements;
 using PopUpUI.Input;
 using SideKicker.Rendering;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -46,67 +47,15 @@ namespace SideKicker.Panels
         public Rectangle SelectableArea => new Rectangle(Boundaries.X - SelectableMargin, Boundaries.Y - SelectableMargin,
                                                          Boundaries.Width + 2 * SelectableMargin, Boundaries.Height + 2 * SelectableMargin);
 
-        public IEnumerable<Rectangle> SelectionBoxes
-        {
-            get
-            {
-                if (_selectedStartCaretPosition.Index == _selectedEndCaretPosition.Index)
-                {
-                    yield break;
-                }
-
-                CaretInfo left = _selectedStartCaretPosition;
-                CaretInfo right = _selectedEndCaretPosition;
-
-                int leftCaretX = _selectedStartCaretX;
-                int rightCaretX = _selectedEndCaretX;
-
-                if (_selectedStartCaretPosition.Index > _selectedEndCaretPosition.Index)
-                {
-                    (left, right) = (right, left);
-                    (leftCaretX, rightCaretX) = (rightCaretX, leftCaretX);
-                }
-
-                int lineSpacing = FontService.GetLineSpacing(TextSize);
-                LineInfo leftLine = _lines[left.LineIndex];
-
-                // single line case
-                if (left.LineIndex == right.LineIndex)
-                {
-                    yield return new Rectangle(leftCaretX, left.LineIndex * lineSpacing, rightCaretX - leftCaretX, lineSpacing);
-                    yield break;
-                }
-
-                // top line
-                int leftInline = left.Index - leftLine.StartIndex;
-                int topWidth = (int)MeasureWidth(leftLine.Text.Substring(leftInline));
-
-                yield return new Rectangle(leftCaretX, left.LineIndex * lineSpacing, topWidth, lineSpacing);
-
-                // middle lines
-                for (int lineIndex = left.LineIndex + 1; lineIndex < right.LineIndex; lineIndex++)
-                {
-                    yield return new Rectangle(0, lineIndex * lineSpacing, (int)MeasureWidth(_lines[lineIndex].Text), lineSpacing);
-                }
-
-                // bottom line
-                yield return new Rectangle(0, right.LineIndex * lineSpacing, rightCaretX, lineSpacing);
-            }
-        }
-
         public bool ReceivingInput { get; set; }
         public int SelectableMargin { get; set; }
         public int TextSize { get; set; }
 
         public int ScrollOffset => _scrolledOffset;
         public string Text => _text.ToString();
-        public IEnumerable<string> Lines
-        {
-            get
-            {
-                foreach (var info in _lines) yield return info.Text;
-            }
-        }
+        public LineEnumerator Lines => new LineEnumerator(_lines);
+        public SelectionBoxEnumerator SelectionBoxes => new SelectionBoxEnumerator(this);
+
         public Point CaretPosition
         {
             get
@@ -126,7 +75,7 @@ namespace SideKicker.Panels
             }
         }
 
-        private struct LineInfo
+        public struct LineInfo
         {
             /// <summary>Index into the raw text where this visual line's text begins.</summary>
             public int StartIndex;
@@ -654,6 +603,188 @@ namespace SideKicker.Panels
             }
 
             return _text.ToString(left, right - left);
+        }
+
+        public struct LineEnumerator : IEnumerator<string>
+        {
+            private readonly List<LineInfo> _lines;
+
+            private int _index;
+
+            public readonly string Current => _lines[_index].Text;
+            readonly object IEnumerator.Current => Current;
+
+            public LineEnumerator(List<LineInfo> lines)
+            {
+                _lines = lines;
+                _index = -1;
+            }
+
+            public readonly LineEnumerator GetEnumerator()
+            {
+                return this;
+            }
+
+            public readonly void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                if (++_index >= _lines.Count)
+                    return false;
+
+                return true;
+            }
+
+            public void Reset()
+            {
+                _index = -1;
+            }
+        }
+
+        public struct SelectionBoxEnumerator : IEnumerator<Rectangle>
+        {
+            private readonly CaretInfo _leftCaret;
+            private readonly CaretInfo _rightCaret;
+            private readonly int _leftCaretX;
+            private readonly int _rightCaretX;
+            private readonly int _lineSpacing;
+
+            private readonly MultiLineTextBox _textbox;
+
+            private State _state;
+            private int _currentLineIndex;
+            private int _measuredCurrentLine;
+
+            public readonly Rectangle Current
+            {
+                get
+                {
+                    return _state switch
+                    {
+                        State.SingleLine => new Rectangle(_leftCaretX, _leftCaret.LineIndex * _lineSpacing, _rightCaretX - _leftCaretX, _lineSpacing),
+                        State.MultiLineTop => new Rectangle(_leftCaretX, _leftCaret.LineIndex * _lineSpacing, _measuredCurrentLine, _lineSpacing),
+                        State.MultiLineMiddle => new Rectangle(0, _currentLineIndex * _lineSpacing, _measuredCurrentLine, _lineSpacing),
+                        State.MultiLineBottom => new Rectangle(0, _rightCaret.LineIndex * _lineSpacing, _rightCaretX, _lineSpacing),
+                        _ => throw new InvalidOperationException(),
+                    };
+                }
+            }
+
+            readonly object IEnumerator.Current => Current;
+
+            private enum State
+            {
+                NotStarted,
+                SingleLine,
+                MultiLineTop,
+                MultiLineMiddle,
+                MultiLineBottom,
+                End
+            }
+
+            public SelectionBoxEnumerator(MultiLineTextBox textbox)
+            {
+                _leftCaret = textbox._selectedStartCaretPosition;
+                _rightCaret = textbox._selectedEndCaretPosition;
+
+                _leftCaretX = textbox._selectedStartCaretX;
+                _rightCaretX = textbox._selectedEndCaretX;
+
+                if (_leftCaret.Index > _rightCaret.Index)
+                {
+                    (_leftCaret, _rightCaret) = (_rightCaret, _leftCaret);
+                    (_leftCaretX, _rightCaretX) = (_rightCaretX, _leftCaretX);
+                }
+
+                _state = State.NotStarted;
+                _textbox = textbox;
+                _lineSpacing = FontService.GetLineSpacing(_textbox.TextSize);
+            }
+
+            public readonly SelectionBoxEnumerator GetEnumerator()
+            {
+                return this;
+            }
+
+            public readonly void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                switch (_state)
+                {
+                    case State.NotStarted:
+
+                        if (_leftCaret.Index == _rightCaret.Index)
+                        {
+                            _state = State.End;
+                            return false;
+                        }
+
+                        if (_leftCaret.LineIndex == _rightCaret.LineIndex)
+                        {
+                            _state = State.SingleLine;
+                        }
+                        else
+                        {
+                            _state = State.MultiLineTop;
+
+                            LineInfo leftLine = _textbox._lines[_leftCaret.LineIndex];
+                            _measuredCurrentLine = (int)_textbox.MeasureWidth(leftLine.Text.Substring(_leftCaret.Index - leftLine.StartIndex));
+                        }
+
+                        _currentLineIndex = _leftCaret.LineIndex;
+                        return true;
+
+                    case State.SingleLine:
+
+                        _state = State.End;
+                        return false;
+
+                    case State.MultiLineTop:
+
+                        if (++_currentLineIndex >= _rightCaret.LineIndex)
+                        {
+                            _state = State.MultiLineBottom;
+                        }
+                        else
+                        {
+                            _state = State.MultiLineMiddle;
+                            _measuredCurrentLine = (int)_textbox.MeasureWidth(_textbox._lines[_currentLineIndex].Text);
+                        }
+
+                        return true;
+
+                    case State.MultiLineMiddle:
+
+                        if (++_currentLineIndex >= _rightCaret.LineIndex)
+                        {
+                            _state = State.MultiLineBottom;
+                        }
+                        else
+                        {
+                            _measuredCurrentLine = (int)_textbox.MeasureWidth(_textbox._lines[_currentLineIndex].Text); ;
+                        }
+
+                        return true;
+
+                    case State.MultiLineBottom:
+
+                        _state = State.End;
+                        return false;
+
+                    default:
+                        return false;
+                }
+            }
+
+            public void Reset()
+            {
+                _state = State.NotStarted;
+            }
         }
     }
 }
