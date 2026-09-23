@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using PopUpUI.Input;
 using SideKicker.PanelSystem.Message;
+using SideKicker.Rendering;
 
 namespace SideKicker.Panels.PinnedCommands
 {

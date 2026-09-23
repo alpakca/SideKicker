@@ -25,7 +25,7 @@ namespace SideKicker.Panels.Settings
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaBlendDrawOptions);
             PanelElementRenderer.RenderBackground(_windowSize);
             PanelElementRenderer.RenderTextPlaque(plaques);
-            PanelElementRenderer.RenderIconedButton(closeButton);
+            PanelElementRenderer.RenderIconedButtons(closeButton);
             PanelElementRenderer.RenderToggleButton(toggles);
             RenderSectionSwapper(swaper, panelOrder);
             RenderOriginMover(mover);

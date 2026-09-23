@@ -24,9 +24,9 @@ namespace SideKicker.Panels.Timers
 
         public int CurrentNumber => _currentNumber;
 
-        public string PreviousNumberFormatted => (_currentNumber == _startNumber ? _endNumber : _currentNumber - 1).ToString(_digitsStringFormat);
-        public string CurrentNumberFormatted => _currentNumber.ToString(_digitsStringFormat);
-        public string NextNumberFormatted => (_currentNumber == _endNumber ? _startNumber : _currentNumber + 1).ToString(_digitsStringFormat);
+        public string PreviousNumberFormatted { get; private set; }
+        public string CurrentNumberFormatted { get; private set; }
+        public string NextNumberFormatted { get; private set; }
 
         public int DistanceToChangeNumber { get; set; }
 
@@ -60,7 +60,7 @@ namespace SideKicker.Panels.Timers
                 throw new ArgumentOutOfRangeException("value must be inside or equal to start-end numbers: " + value);
             }
 
-            _currentNumber = value;
+            SetCurrentNumber(value);
         }
 
         public void UpdateNumber(int delta)
@@ -68,15 +68,15 @@ namespace SideKicker.Panels.Timers
             int num = _currentNumber + delta;
             if (delta < 0 && num < _startNumber)
             {
-                _currentNumber = _endNumber + delta + 1;
+                SetCurrentNumber(_endNumber + delta + 1);
             }
             else if (delta > 0 && num > _endNumber)
             {
-                _currentNumber = _startNumber + delta - 1;
+                SetCurrentNumber(_startNumber + delta - 1);
             }
             else
             {
-                _currentNumber = num;
+                SetCurrentNumber(num);
             }
         }
 
@@ -88,7 +88,7 @@ namespace SideKicker.Panels.Timers
 
                 if (_remainingNextKeyTime <= 0)
                 {
-                    _currentNumber = Math.Clamp(_lastKeyValue, _startNumber, _endNumber);
+                    SetCurrentNumber(Math.Clamp(_lastKeyValue, _startNumber, _endNumber));
                 }
             }
 
@@ -116,12 +116,21 @@ namespace SideKicker.Panels.Timers
             if (_lastKeyValue > _endNumber) // already bigger than possible, terminate consecutive presses
             {
                 _remainingNextKeyTime = 0;
-                _currentNumber = _endNumber;
+                SetCurrentNumber(_endNumber);
                 return;
             }
 
-            _currentNumber = _lastKeyValue;
+            SetCurrentNumber(_lastKeyValue);
             _remainingNextKeyTime = ConsecutiveKeyDownTime;
+        }
+
+        private void SetCurrentNumber(int value)
+        {
+            _currentNumber = value;
+
+            PreviousNumberFormatted = (_currentNumber == _startNumber ? _endNumber : _currentNumber - 1).ToString(_digitsStringFormat);
+            CurrentNumberFormatted = _currentNumber.ToString(_digitsStringFormat);
+            NextNumberFormatted = (_currentNumber == _endNumber ? _startNumber : _currentNumber + 1).ToString(_digitsStringFormat);
         }
 
         public void OnKeyUp(PopWindowMouseEventArgs e, Keys key)

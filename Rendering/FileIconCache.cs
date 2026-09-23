@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace SideKicker.Panels
+namespace SideKicker.Rendering
 {
     internal static class FileIconCache
     {

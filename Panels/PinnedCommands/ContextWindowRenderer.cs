@@ -28,13 +28,13 @@ namespace SideKicker.Panels.PinnedCommands
             _commandsListRendering.AddRegionCommonIcon(CommandsListButtonRegion.EditButton, IconType.EditButton);
         }
 
-        public void Render(TextPlaque[] editorTextPlaques, TextedButton[] editorButtons, IEnumerable<LinearTextBox> textboxes, 
+        public void Render(TextPlaque[] editorTextPlaques, TextedButton[] editorButtons, Dictionary<CommandEditorTextBox, LinearTextBox>.ValueCollection textboxes, 
                            ScrollableButtonList commandsList, IReadOnlyList<SavedCommand> savedCommands)
         {
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaBlendDrawOptions);
             PanelElementRenderer.RenderBackground(_windowSize);
             PanelElementRenderer.RenderTextPlaque(editorTextPlaques);
-            PanelElementRenderer.RenderTextedButton(editorButtons);
+            PanelElementRenderer.RenderTextedButtons(editorButtons);
             DrawHelper.EndBatch();
 
             foreach (var textbox in textboxes)

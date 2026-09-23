@@ -34,7 +34,7 @@ namespace SideKicker.Rendering
             }
         }
 
-        public static void RenderIconedButton(params ReadOnlySpan<IconedButton> buttons)
+        public static void RenderIconedButtons(params ReadOnlySpan<IconedButton> buttons)
         {
             foreach (IconedButton button in buttons)
             {
@@ -47,7 +47,7 @@ namespace SideKicker.Rendering
             }
         }
 
-        public static void RenderTextedButton(params ReadOnlySpan<TextedButton> buttons)
+        public static void RenderTextedButtons(params ReadOnlySpan<TextedButton> buttons)
         {
             foreach (TextedButton button in buttons)
             {
@@ -58,6 +58,40 @@ namespace SideKicker.Rendering
                 if (button.IsHovered)
                 {
                     DrawHelper.DrawBackground(button.Boundaries, button.IsHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
+                }
+            }
+        }
+
+        public static void RenderIconedButtons<TKey>(Dictionary<TKey, IconedButton>.ValueCollection buttons)
+        {
+            foreach (IconedButton button in buttons)
+            {
+                if (button.Enabled)
+                {
+                    DrawHelper.Batch.Draw(RenderData.GetIcon(button.IconType), button.Boundaries, Color.White);
+
+                    if (button.IsHovered)
+                    {
+                        DrawHelper.DrawBackground(button.Boundaries, button.IsHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
+                    }
+                }
+            }
+        }
+
+        public static void RenderTextedButtons<TKey>(Dictionary<TKey, TextedButton>.ValueCollection buttons)
+        {
+            foreach (TextedButton button in buttons)
+            {
+                if (button.Enabled)
+                {
+                    DrawHelper.DrawBorderedBackground(button.Boundaries, RenderData.BorderAccent, RenderData.Background, 1);
+
+                    FontService.DrawCenteredText(button.TextSize, button.Text, button.Boundaries, RenderData.Text);
+
+                    if (button.IsHovered)
+                    {
+                        DrawHelper.DrawBackground(button.Boundaries, button.IsHeld ? RenderData.HeldOverlay : RenderData.HoverOverlay);
+                    }
                 }
             }
         }

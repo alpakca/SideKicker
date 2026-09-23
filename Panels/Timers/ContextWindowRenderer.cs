@@ -78,9 +78,6 @@ namespace SideKicker.Panels.Timers
             }
         }
 
-        public void RenderIconedButtons(params ReadOnlySpan<IconedButton> buttons) => PanelElementRenderer.RenderIconedButton(buttons);
-        public void RenderTextedButtons(params ReadOnlySpan<TextedButton> buttons) => PanelElementRenderer.RenderTextedButton(buttons);
-
         public void RenderTextBox(MultiLineTextBox textbox)
         {
             DrawHelper.SetBeginBatch(_windowTexture, DrawHelper.AlphaScissoredDrawOptions);

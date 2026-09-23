@@ -79,6 +79,7 @@ namespace SideKicker.Panels.Timers
             _stopWatchShowcase = new StopwatchShowcase();
             _stopwatchButtons = new Dictionary<TimerButtonType, IconedButton>();
             InitializeStopwatchUI();
+            SetStopwatchStatus(isStarted: false, isPaused: true);
 
             _textPlaques = new TextPlaque[]
             {
@@ -214,6 +215,7 @@ namespace SideKicker.Panels.Timers
             _timerButtons[TimerButtonType.Discard].Enabled = false;
             _timerButtons[TimerButtonType.Stop].Enabled = false;
             _timerButtons[TimerButtonType.Continue].Enabled = false;
+            _timerButtons[TimerButtonType.Save].Enabled = false;
             _timerButtons[TimerButtonType.Add].Enabled = true;
 
             _inspectingTimer = null;
@@ -229,6 +231,7 @@ namespace SideKicker.Panels.Timers
             _timerButtons[TimerButtonType.Discard].Enabled = true;
             _timerButtons[TimerButtonType.Stop].Enabled = !info.IsPaused;
             _timerButtons[TimerButtonType.Continue].Enabled = info.IsPaused;
+            _timerButtons[TimerButtonType.Save].Enabled = true;
             _timerButtons[TimerButtonType.Add].Enabled = false;
 
             _inspectingTimer = info;
@@ -325,40 +328,17 @@ namespace SideKicker.Panels.Timers
 
             _renderer.Render(_textPlaques, _alarmCalendar, _weekdaysButtons, _anyRepeatingDaysSelected);
 
-            _renderer.RenderIconedButtons(_alarmMonthChangeButtons);
-            if (_isInspectingAlarm)
-            {
-                _renderer.RenderTextedButtons(_alarmButtons[AlarmButtonType.Delete], _alarmButtons[AlarmButtonType.Save]);
-            }
-            else
-            {
-                _renderer.RenderTextedButtons(_alarmButtons[AlarmButtonType.Add]);
-            }
+            PanelElementRenderer.RenderIconedButtons(_alarmMonthChangeButtons);
+            PanelElementRenderer.RenderTextedButtons(_alarmButtons.Values);
 
-            _renderer.RenderTextedButtons(_recentTimeButtons);
-            if (_inspectingTimer != null)
-            {
-                _renderer.RenderIconedButtons(_timerButtons[TimerButtonType.Discard], _timerButtons[TimerButtonType.Save], 
-                                              _timerButtons[_inspectingTimer.IsPaused ? TimerButtonType.Continue : TimerButtonType.Stop]);
-            }
-            else
-            {
-                _renderer.RenderIconedButtons(_timerButtons[TimerButtonType.Add]);
-            }
+            PanelElementRenderer.RenderTextedButtons(_recentTimeButtons);
+            PanelElementRenderer.RenderIconedButtons(_timerButtons.Values);
 
             _renderer.RenderNumberSelectors(_alarmNumberSelectors.Values);
             _renderer.RenderNumberSelectors(_timerNumberSelectors.Values);
 
             _renderer.RenderStopwatch(_stopWatchShowcase);
-            if (_stopWatchShowcase.IsStarted)
-            {
-                _renderer.RenderIconedButtons(_stopwatchButtons[TimerButtonType.Discard], _stopWatchShowcase.IsPaused ? _stopwatchButtons[TimerButtonType.Continue]
-                                                                                                                      : _stopwatchButtons[TimerButtonType.Stop]);
-            }
-            else
-            {
-                _renderer.RenderIconedButtons(_stopwatchButtons[TimerButtonType.Add]);
-            }
+            PanelElementRenderer.RenderIconedButtons(_stopwatchButtons.Values);
 
             _renderer.EndMainBatch();
 

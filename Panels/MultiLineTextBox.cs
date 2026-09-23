@@ -12,10 +12,11 @@ namespace SideKicker.Panels
 {
     internal class MultiLineTextBox : PopElement, ISelectable, IKeyReceiver, ITextReceiver, IMouseWheelReceiver, IHoldable, IClipboardSupporter
     {
-        private readonly StringBuilder _text;
+        private readonly StringBuilder _textBuilder;
         private readonly List<LineInfo> _lines;
 
         private CaretInfo _caret;
+        private string _text = ""; // cached text
 
         private float _desiredCaretX;
         private int _scrolledOffset;
@@ -52,7 +53,7 @@ namespace SideKicker.Panels
         public int TextSize { get; set; }
 
         public int ScrollOffset => _scrolledOffset;
-        public string Text => _text.ToString();
+        public string Text => _text;
         public LineEnumerator Lines => new LineEnumerator(_lines);
         public SelectionBoxEnumerator SelectionBoxes => new SelectionBoxEnumerator(this);
 
@@ -92,12 +93,12 @@ namespace SideKicker.Panels
         public MultiLineTextBox()
         {
             _lines = new List<LineInfo>();
-            _text = new StringBuilder();
+            _textBuilder = new StringBuilder();
         }
 
         public void SetText(string value)
         {
-            _text.Clear();
+            _textBuilder.Clear();
             _caret = new CaretInfo();
 
             InsertText(value);
@@ -105,9 +106,10 @@ namespace SideKicker.Panels
 
         public void InsertText(string str)
         {
-            _text.Insert(_caret.Index, str);
-            RebuildLayout();
+            _textBuilder.Insert(_caret.Index, str);
+            _text = _textBuilder.ToString();
 
+            RebuildLayout();
             UpdateCaret(_caret.Index + str.Length);
         }
 
@@ -128,16 +130,18 @@ namespace SideKicker.Panels
                     (left, right) = (right, left);
                 }
 
-                _text.Remove(left, right - left);
-                RebuildLayout();
+                _textBuilder.Remove(left, right - left);
+                _text = _textBuilder.ToString();
 
+                RebuildLayout();
                 UpdateCaret(left);
             }
             else
             {
-                _text.Remove(_caret.Index - 1, 1);
-                RebuildLayout();
+                _textBuilder.Remove(_caret.Index - 1, 1);
+                _text = _textBuilder.ToString();
 
+                RebuildLayout();
                 UpdateCaret(_caret.Index - 1);
             }
         }
@@ -362,14 +366,13 @@ namespace SideKicker.Panels
         private void RebuildLayout()
         {
             _lines.Clear();
-            string full = _text.ToString();
 
             int paragraphStart = 0;
-            for (int i = 0; i <= full.Length; i++)
+            for (int i = 0; i <= _text.Length; i++)
             {
-                if (i == full.Length || full[i] == '\n')
+                if (i == _text.Length || _text[i] == '\n')
                 {
-                    string paragraph = full[paragraphStart..i];
+                    string paragraph = _text[paragraphStart..i];
                     WrapParagraph(paragraph, paragraphStart);
                     paragraphStart = i + 1;
                 }
@@ -602,7 +605,7 @@ namespace SideKicker.Panels
                 (left, right) = (right, left);
             }
 
-            return _text.ToString(left, right - left);
+            return _textBuilder.ToString(left, right - left);
         }
 
         public struct LineEnumerator : IEnumerator<string>
