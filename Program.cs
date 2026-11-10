@@ -24,9 +24,6 @@ namespace SideKicker
 
             RootPath = AppContext.BaseDirectory;
 
-#if DEBUG
-            RootPath = "C:\\Users\\user\\Desktop\\C#\\SideKicker\\SideKicker";
-#endif
             AssetsFolderPath = Path.Combine(RootPath, "assets");
             SavesFolderPath = Path.Combine(RootPath, "saves");
 
