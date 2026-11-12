@@ -10,39 +10,38 @@
 
 #-------------------------------- References --------------------------------#
 
-/reference:..\..\..\DefringedFontProcessor\DefringedFontProcessor\bin\Debug\net8.0\DefringedFontProcessor.dll
 
 #---------------------------------- Content ---------------------------------#
 
 #begin ../assets/fonts/SegoeUI_12.spritefont
 /importer:FontDescriptionImporter
-/processor:DefringedFontProcessor
+/processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Color
-/processorParam:Version=1.0.0.0
+/processorParam:TextureFormat=Compressed
+/processorParam:Version=3.8.5.1
 /build:../assets/fonts/SegoeUI_12.spritefont;SegoeUI_12.spritefont
 
 #begin ../assets/fonts/SegoeUI_16.spritefont
 /importer:FontDescriptionImporter
-/processor:DefringedFontProcessor
+/processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Color
-/processorParam:Version=1.0.0.0
+/processorParam:TextureFormat=Compressed
+/processorParam:Version=3.8.5.1
 /build:../assets/fonts/SegoeUI_16.spritefont;SegoeUI_16.spritefont
 
 #begin ../assets/fonts/SegoeUI_20.spritefont
 /importer:FontDescriptionImporter
-/processor:DefringedFontProcessor
+/processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Color
-/processorParam:Version=1.0.0.0
+/processorParam:TextureFormat=Compressed
+/processorParam:Version=3.8.5.1
 /build:../assets/fonts/SegoeUI_20.spritefont;SegoeUI_20.spritefont
 
 #begin ../assets/fonts/SegoeUI_24.spritefont
 /importer:FontDescriptionImporter
-/processor:DefringedFontProcessor
+/processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Color
-/processorParam:Version=1.0.0.0
+/processorParam:TextureFormat=Compressed
+/processorParam:Version=3.8.5.1
 /build:../assets/fonts/SegoeUI_24.spritefont;SegoeUI_24.spritefont
 

@@ -30,12 +30,16 @@ namespace SideKicker.Panels
             }
             catch (IOException)
             {
+                Directory.CreateDirectory(Program.SavesFolderPath);
+
                 string emptyJson = JsonSerializer.Serialize(Array.Empty<T>());
                 File.WriteAllText(_saveFilePath, emptyJson);
                 return [];
             }
             catch (JsonException)
             {
+                Directory.CreateDirectory(Program.SavesFolderPath);
+
                 string emptyJson = JsonSerializer.Serialize(Array.Empty<T>());
                 File.WriteAllText(_saveFilePath, emptyJson);
                 return [];
@@ -44,12 +48,16 @@ namespace SideKicker.Panels
 
         public static async Task SaveAsync(IEnumerable<T> commands)
         {
+            Directory.CreateDirectory(Program.SavesFolderPath);
+
             string json = JsonSerializer.Serialize(commands);
             await File.WriteAllTextAsync(_saveFilePath, json);
         }
 
         public static void Save(IEnumerable<T> commands)
         {
+            Directory.CreateDirectory(Program.SavesFolderPath);
+
             string json = JsonSerializer.Serialize(commands);
             File.WriteAllText(_saveFilePath, json);
         }
